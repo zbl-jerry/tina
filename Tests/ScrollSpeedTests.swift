@@ -85,7 +85,7 @@ enum ScrollSpeedTests {
             suite.expect(recovered.modifier == .option, "missing or unknown speed keys use the displayed Option default")
         }
 
-        let runtime = (try? String(contentsOfFile: "Sources/Vorssaint/App/FeatureRuntime.swift",
+        let runtime = (try? String(contentsOfFile: "Sources/Tina/App/FeatureRuntime.swift",
                                    encoding: .utf8)) ?? ""
         suite.expect(runtime.contains(
             ".scrollSpeed: { ScrollInverter.shared.syncWithPreferences() }"),

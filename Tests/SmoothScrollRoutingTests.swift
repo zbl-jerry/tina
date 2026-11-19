@@ -467,7 +467,7 @@ enum SmoothScrollRoutingTests {
         let unprotected = wheel(flags: .maskControl)
         suite.expect(tick(Service(), unprotected) === unprotected && unprotected.flags == .maskControl,
                      "a glide cannot claim Control speed while the shared target protection is down")
-        for path in ["Sources/Vorssaint/Services/SmoothScrollService.swift", "Sources/Vorssaint/Services/ScrollInverter.swift"] {
+        for path in ["Sources/Tina/Services/SmoothScrollService.swift", "Sources/Tina/Services/ScrollInverter.swift"] {
             let source = (try? String(contentsOfFile: path, encoding: .utf8)) ?? ""
             suite.expect(source.contains("tap: ScrollWheelSupport.tapLocation"),
                          "both wheel taps retain their ordering at the stage with window annotations")
@@ -476,20 +476,20 @@ enum SmoothScrollRoutingTests {
                      "wheel routing starts after the window server identifies its receiver")
         // A listener is told asynchronously and could note an event after it
         // already reached the wheel taps; an active tap holds it until then.
-        let stage = (try? String(contentsOfFile: "Sources/Vorssaint/Services/ScrollWheelHIDStage.swift",
+        let stage = (try? String(contentsOfFile: "Sources/Tina/Services/ScrollWheelHIDStage.swift",
                                  encoding: .utf8)) ?? ""
         suite.expect(stage.contains("tap: .cghidEventTap") && stage.contains("options: .defaultTap"),
                      "the HID stage is watched by an active HID tap, so its note is in before the event moves on")
-        let smooth = (try? String(contentsOfFile: "Sources/Vorssaint/Services/SmoothScrollService.swift",
+        let smooth = (try? String(contentsOfFile: "Sources/Tina/Services/SmoothScrollService.swift",
                                   encoding: .utf8)) ?? ""
-        let inverter = (try? String(contentsOfFile: "Sources/Vorssaint/Services/ScrollInverter.swift",
+        let inverter = (try? String(contentsOfFile: "Sources/Tina/Services/ScrollInverter.swift",
                                     encoding: .utf8)) ?? ""
         suite.expect(smooth.contains("ScrollWheelHIDStage.shared.setWatching(true, for: .smoothScroll)")
                 && inverter.contains("ScrollWheelHIDStage.shared.setWatching(true, for: .wheelTap)"),
                      "both wheel taps keep the HID stage watched while they run")
         // That stage comes after the session taps that keep the wheel for
         // themselves, so they turn it the way Scroll Direction would.
-        let layout = (try? String(contentsOfFile: "Sources/Vorssaint/Services/WindowLayout/WindowLayoutService.swift",
+        let layout = (try? String(contentsOfFile: "Sources/Tina/Services/WindowLayout/WindowLayoutService.swift",
                                   encoding: .utf8)) ?? ""
         suite.expect(layout.contains("let wheel = ScrollInverter.directionApplied(to: event)")
                 && layout.contains("let deltaY = wheel.getDoubleValueField(.scrollWheelEventPointDeltaAxis1)")

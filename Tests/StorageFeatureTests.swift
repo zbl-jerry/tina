@@ -47,8 +47,8 @@ enum StorageFeatureTests {
                "no failure, no permission note")
         // Both done states have to route through that decision and name what
         // survived; neither may spell a tick of its own.
-        for path in ["Sources/Vorssaint/UI/Uninstall/UninstallerView.swift",
-                     "Sources/Vorssaint/UI/MenuPanel/PanelUninstallerView.swift"] {
+        for path in ["Sources/Tina/UI/Uninstall/UninstallerView.swift",
+                     "Sources/Tina/UI/MenuPanel/PanelUninstallerView.swift"] {
             let source = (try? String(contentsOfFile: path, encoding: .utf8)) ?? ""
             suite.expect(source.contains("UninstallFailureNote(items:"),
                    "\(path) names what the removal left behind")
@@ -61,7 +61,7 @@ enum StorageFeatureTests {
                        "the Settings uninstaller scrolls the entire empty page, including the permission buttons")
             }
         }
-        let sharedUISource = (try? String(contentsOfFile: "Sources/Vorssaint/UI/SharedUI.swift",
+        let sharedUISource = (try? String(contentsOfFile: "Sources/Tina/UI/SharedUI.swift",
                                           encoding: .utf8)) ?? ""
         suite.expect(sharedUISource.contains("uninstallerFailedNeedsFDA"),
                "the failure note explains the permission the removal needed")

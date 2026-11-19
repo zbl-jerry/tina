@@ -1,11 +1,4 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/logo-dark.svg">
-    <img src="docs/assets/readme/logo.svg" width="220" alt="Vorssaint logo">
-  </picture>
-</p>
-
-<h1 align="center">Vorssaint</h1>
+<h1 align="center">Tina</h1>
 
 <p align="center">
   One menu bar icon doing the job of a dozen paid Mac apps.<br>
@@ -13,65 +6,42 @@
 </p>
 
 <p align="center">
-  <a href="https://vorssaint.com">Website</a> ·
-  <a href="#install">Install</a> ·
+  <a href="#build-from-source">Build</a> ·
   <a href="#everything-it-does">Features</a> ·
   <a href="#private-by-default">Privacy</a> ·
-  <a href="CHANGELOG.md">Changelog</a> ·
-  <a href="mailto:hello@vorssaint.com">Contact</a> ·
-  <a href="https://discord.gg/M6BwWH4BJp">Discord</a>
+  <a href="docs/TROUBLESHOOTING.md">Troubleshooting</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/vorssaint/vorssaint-utils/releases"><img src="https://img.shields.io/github/v/release/vorssaint/vorssaint-utils?label=release&color=4c8dff" alt="Latest release"></a>
-  <a href="https://github.com/vorssaint/vorssaint-utils/releases"><img src="https://img.shields.io/github/downloads/vorssaint/vorssaint-utils/total?color=4c8dff" alt="Downloads"></a>
-  <a href="https://github.com/vorssaint/vorssaint-utils/actions/workflows/ci.yml"><img src="https://github.com/vorssaint/vorssaint-utils/actions/workflows/ci.yml/badge.svg?branch=main&event=push" alt="CI status"></a>
+  <a href="https://github.com/zbl-jerry/tina/actions/workflows/ci.yml"><img src="https://github.com/zbl-jerry/tina/actions/workflows/ci.yml/badge.svg?branch=dev&event=push" alt="CI status"></a>
   <a href="#what-you-need"><img src="https://img.shields.io/badge/macOS-14%2B%20Apple%20Silicon-black" alt="macOS 14 and newer, Apple Silicon"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue" alt="License GPL 3.0 or later"></a>
 </p>
 
 <p align="center">
-  <a href="https://buymeacoffee.com/vorssaint">
-    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="217" height="60" alt="Buy Me a Coffee">
-  </a>
-</p>
-
-<p align="center">
-  For anything private, email
-  <a href="mailto:hello@vorssaint.com"><strong>hello@vorssaint.com</strong></a>.
-</p>
-
-<p align="center">
-  <a href="https://trendshift.io/repositories/53716?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-53716" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/53716" alt="vorssaint/vorssaint-utils | Trendshift" width="250" height="55"></a>
-  <a href="https://trendshift.io/repositories/53716?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-53716" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/53716/weekly?language=Swift" alt="vorssaint/vorssaint-utils | Trendshift weekly ranking" width="250" height="55"></a>
-  <a href="https://trendshift.io/repositories/53716?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-53716" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/53716/monthly?language=Swift" alt="vorssaint/vorssaint-utils | Trendshift monthly ranking" width="250" height="55"></a>
-</p>
-
-<h2 align="center">Sponsors</h2>
-
-<p align="center">
-  Help keep Vorssaint free and open source. Share your product with Mac users.
-</p>
-
-<table align="center">
-  <tr>
-    <td align="center" width="520">
-      <br>
-      <strong>Your product here</strong><br>
-      <sub>Your logo · Your name · Your link</sub><br><br>
-      <a href="SPONSORS.md"><strong>Become our first sponsor →</strong></a><br><br>
-    </td>
-  </tr>
-</table>
-
-<p align="center">
-  <img src="docs/assets/readme/panel-mixer.png" width="196" alt="Volume mixer with per app sliders, one app boosted past 100 percent">
+  <img src="docs/assets/readme/panel-mixer.png" width="196" alt="Volume mixer with per app sliders">
   <img src="docs/assets/readme/panel-system.png" width="196" alt="System tab with temperatures, usage graphs and memory pressure">
   <img src="docs/assets/readme/panel-controls.png" width="196" alt="Window controls with the app switcher and Dock features">
   <img src="docs/assets/readme/panel-utilities.png" width="196" alt="Utilities with cleaner, Homebrew, media tools and clipboard">
 </p>
 
 Per app volume, a real system monitor, a better app switcher, window snapping, Dock previews, clipboard history, text snippets, a file shelf, an uninstaller. The utilities Mac users usually buy one by one, together behind a single menu bar icon, with no account, no telemetry and no subscription.
+
+Tina is a fork of [Vorssaint Utils](https://github.com/vorssaint/vorssaint-utils), rebranded and developed independently. The original project and its contributors deserve the credit for the feature set described below.
+
+## Build from source
+
+There are no prebuilt Tina releases. Build locally with the Xcode Command Line Tools:
+
+```sh
+git clone https://github.com/zbl-jerry/tina.git
+cd tina
+./build.sh --dev            # build the separate Developer variant
+./build.sh --dev --install  # install and launch it
+```
+
+A plain `./build.sh` builds the optimized variant. See the [contributing guide](CONTRIBUTING.md) for the layout, tests and conventions.
 
 ## Install only what you use
 
@@ -146,7 +116,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **Shelf.** Park files, text and links near your cursor while dragging, then drop or share them later.
 - **Finder shortcuts.** Move files with ⌘X and ⌘V, rename with F2, or paste copied images as PNG files.
 - **Clean URL.** Remove tracking parameters from links, manually or automatically.
-- **Disk image installer.** Install an app from a mounted disk image and eject it, with optional download cleanup. Place an empty `.vorssaint-no-install` file in a build folder to skip prompts for images in that folder and its subfolders. Removing the file restores prompts. Hidden mounts and images in system temporary folders are always skipped. Other visible mounts can prompt, including scripted mounts in unmarked folders. For an untagged image outside Downloads, moving it to Trash requires selecting that option for the current install.
+- **Disk image installer.** Install an app from a mounted disk image and eject it, with optional download cleanup. Place an empty `.tina-no-install` file in a build folder to skip prompts for images in that folder and its subfolders. Removing the file restores prompts. Hidden mounts and images in system temporary folders are always skipped. Other visible mounts can prompt, including scripted mounts in unmarked folders. For an untagged image outside Downloads, moving it to Trash requires selecting that option for the current install.
 
 ### Everyday tools
 
@@ -163,8 +133,8 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 ### Capture and create
 
 - **Screen capture.** Switch between screenshots, recording, text recognition and color picking in one selector with a pixel magnifier.
-- **Screenshot.** Capture an area, window, screen or scrolling page. Annotate, crop, redact, add backgrounds and watermarks, pin captures, send them through the Share menu or share an expiring link.
-- **Screen recording.** Record with separate system-audio and microphone tracks. Trim, cut, add automatic zooms, blur private details and export video or GIFs, or share an expiring link.
+- **Screenshot.** Capture an area, window, screen or scrolling page. Annotate, crop, redact, add backgrounds and watermarks, pin captures or send them through the Share menu.
+- **Screen recording.** Record with separate system-audio and microphone tracks. Trim, cut, add automatic zooms, blur private details and export video or GIFs.
 - **Camera preview.** Check your camera in a floating mirror or Dynamic Island before a call.
 - **Copy text from screen.** Recognize text offline from any screen area, or read a QR code.
 - **Color picker.** Copy a screen color as HEX, RGB, HSL or SwiftUI code.
@@ -184,37 +154,13 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **Keep awake.** Keep your Mac working on a timer, with the lid closed, or while selected apps, power or external displays are present.
 - **Displays.** Control individual displays and brightness, with hardware control where supported, half or quarter steps for the brightness keys, optional extra dimming below a monitor's minimum, software dimming as a fallback, and the volume and mute of a monitor's built-in speakers.
 - **Extra brightness.** Use a MacBook Pro XDR display's HDR headroom to go beyond its normal maximum brightness.
-- **Bluetooth on sleep.** Disconnect Bluetooth during sleep and restore it on wake only if Vorssaint turned it off.
-
-## Install
-
-With [Homebrew](https://brew.sh):
-
-```sh
-brew install --cask vorssaint
-```
-
-Or grab the disk image from the [releases page](https://github.com/vorssaint/vorssaint-utils/releases) and drag Vorssaint into Applications.
-
-Builds are signed with an Apple Developer ID and notarized, so macOS opens them without a fuss and your permissions survive updates.
-
-## Uninstall
-
-With Homebrew:
-
-```sh
-brew uninstall --cask vorssaint
-```
-
-To remove Vorssaint completely, including its settings and permissions:
-
-```sh
-./Tools/uninstall.sh
-```
+- **Bluetooth on sleep.** Disconnect Bluetooth during sleep and restore it on wake only if Tina turned it off.
 
 ## Private by default
 
-Vorssaint is local-first, with no account, analytics or tracking. The network is touched only by things you can see: update checks, the speed test, Homebrew actions, optional online lyric lookup, temporary screenshot or recording links and feedback you explicitly send. The full story is in the [privacy notes](docs/PRIVACY.md).
+Tina is local-first, with no account, analytics or tracking. The network is touched only by things you can see: update checks, the speed test, Homebrew actions and optional online lyric lookup. The full story is in the [privacy notes](docs/PRIVACY.md).
+
+This fork does not operate the original project's hosted screenshot/recording sharing or feedback backend. The local capture, editing and export tools all work; the expiring-link upload buttons will report that the service is unavailable.
 
 Permissions get the same treatment. Every one is optional, the app explains each in plain words, shows which features actually use it, and even tells you when a permission you granted is no longer needed by anything, with a shortcut to revoke it.
 
@@ -228,17 +174,19 @@ See the [permissions guide](docs/PERMISSIONS.md) for which features need access 
 
 - A Mac with Apple Silicon
 - macOS 14 Sonoma or newer
+- Xcode Command Line Tools to build
 
-### Build it yourself
+## Uninstall
+
+To remove Tina completely, including its settings and permissions:
 
 ```sh
-git clone https://github.com/vorssaint/vorssaint-utils.git
-cd vorssaint-utils
-./build.sh --dev            # build the separate Developer variant
-./build.sh --dev --install  # install and launch it
+./Tools/uninstall.sh
 ```
 
-Xcode Command Line Tools are the only requirement. The [contributing guide](CONTRIBUTING.md) covers the layout and conventions. Official builds come only from the maintainer: the GPL covers the source, while the Vorssaint name, icon and look are covered by [TRADEMARKS.md](TRADEMARKS.md), so forks need their own identity.
+## Development
+
+`main` mirrors the upstream project and is used only to sync upstream changes. All development happens on `dev`, which is the repository's default branch.
 
 ## When something misbehaves
 
@@ -253,20 +201,11 @@ See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions 
 - [Support](SUPPORT.md), where to get help
 - [Security](SECURITY.md), how to report a vulnerability
 
-## Community
-
-Vorssaint went from first commit to the front of GitHub trending in three days, top of the Swift charts, and issues and pull requests have shaped every release since. Bug reports, feature ideas and translations are all welcome, starting from the [contributing guide](CONTRIBUTING.md).
-
-Vorssaint is free and will stay that way. If it earned its place in your menu bar, a star helps other people find it, and a [coffee](https://buymeacoffee.com/vorssaint) keeps the maintainer awake, with or without the Keep awake feature.
-
 ## Acknowledgements
 
-- App icon designed by [@divisionseven](https://github.com/divisionseven)
+- Tina is a fork of [Vorssaint Utils](https://github.com/vorssaint/vorssaint-utils). Original source copyright 2026 Vorssaint, licensed under GPL-3.0-or-later.
+- The feature set, documentation and interface were created by the upstream project and its contributors.
 
 ## License
 
-[GPL 3.0 or later](LICENSE), copyright 2026 Vorssaint. The license covers the source code; the Vorssaint name, logo and look are covered separately in [TRADEMARKS.md](TRADEMARKS.md).
-
-<p align="center">
-  <sub>Made by <a href="https://x.com/vorssaint">@vorssaint</a></sub>
-</p>
+[GPL 3.0 or later](LICENSE). The license covers the source code. The original project's name, logo and look remain covered by the upstream project's own terms; Tina uses a separate name and should be given its own visual identity before any public distribution.

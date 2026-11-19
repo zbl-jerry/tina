@@ -16,15 +16,15 @@ enum SettingsSearchCoverageTests {
     /// Where Settings search gets its words. `selfType` names the strings
     /// type whose own members a region lists without a receiver.
     private static let searchSources: [(path: String, declaration: String, selfType: String?)] = [
-        ("Sources/Vorssaint/UI/Settings/SettingsDirectory.swift", "    static func searchItems(", nil),
-        ("Sources/Vorssaint/UI/Settings/SettingsDirectory.swift", "    static func sections(", nil),
-        ("Sources/Vorssaint/UI/Settings/SettingsSearchSupport.swift",
+        ("Sources/Tina/UI/Settings/SettingsDirectory.swift", "    static func searchItems(", nil),
+        ("Sources/Tina/UI/Settings/SettingsDirectory.swift", "    static func sections(", nil),
+        ("Sources/Tina/UI/Settings/SettingsSearchSupport.swift",
          "    static func keyboardBrightnessShortcutItem(", nil),
-        ("Sources/Vorssaint/UI/Settings/SettingsSearchSupport.swift",
+        ("Sources/Tina/UI/Settings/SettingsSearchSupport.swift",
          "    static func screenCaptureFeatureKeywords(", nil),
         // Every feature's name is a search result of its own.
-        ("Sources/Vorssaint/UI/Settings/FeatureHubSettings.swift", "    func hubTitle(", nil),
-        ("Sources/Vorssaint/Core/NotchMascotStrings.swift", "    var searchKeywords:", "NotchMascotStrings"),
+        ("Sources/Tina/UI/Settings/FeatureHubSettings.swift", "    func hubTitle(", nil),
+        ("Sources/Tina/Core/NotchMascotStrings.swift", "    var searchKeywords:", "NotchMascotStrings"),
     ]
 
     /// Labels that name no setting, so a search for them has nowhere to go.
@@ -34,7 +34,7 @@ enum SettingsSearchCoverageTests {
     ]
 
     static func run(_ suite: TestSuite) {
-        let resolver = Resolver(sourceRoot: "Sources/Vorssaint")
+        let resolver = Resolver(sourceRoot: "Sources/Tina")
         var indexed = Set<String>()
         for source in searchSources {
             let words = (try? String(contentsOfFile: source.path, encoding: .utf8)).flatMap {

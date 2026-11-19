@@ -62,19 +62,19 @@ enum ScreenshotScrollingCaptureTests {
         }
     }
     @MainActor enum ScreenshotCaptureEngine {
-        nonisolated static func pickableWindows(hideVorssaintWindows: Bool,
+        nonisolated static func pickableWindows(hideTinaWindows: Bool,
                                                 protectedWindowIDs: Set<CGWindowID>)
             -> [(id: CGWindowID, bounds: CGRect)] {
             let id: CGWindowID = 31
             return ScreenshotCapturePolicy.canPickWindow(id,
                 isOwnWindow: Desktop.pid == ProcessInfo.processInfo.processIdentifier,
-                hideVorssaintWindows: hideVorssaintWindows, protectedWindowIDs: protectedWindowIDs)
+                hideTinaWindows: hideTinaWindows, protectedWindowIDs: protectedWindowIDs)
                 ? [(id, Desktop.bounds)] : []
         }
         static var source: Source!
         static var preparations = 0
         static func prepareDisplayRegion(displayID: CGDirectDisplayID, pixelRect: CGRect,
-                                         includePointer: Bool, hideVorssaintWindows: Bool,
+                                         includePointer: Bool, hideTinaWindows: Bool,
                                          protectedWindowIDs: Set<CGWindowID>) async -> Source? {
             preparations += 1
             return source
@@ -290,7 +290,7 @@ enum ScreenshotScrollingCaptureTests {
             ScreenshotCaptureEngine.source = .init(frames, finish: signal)
             ScreenshotCaptureEngine.preparations = 0
             let result = await ScreenshotScrollingCapture.capture(
-                region: region, includePointer: false, hideVorssaintWindows: true,
+                region: region, includePointer: false, hideTinaWindows: true,
                 protectedWindowIDs: [], finishSignal: signal, onProgress: { _ in })
             suite.expect(ScreenshotCaptureEngine.preparations == 1,
                          "scrolling session resolves its capture configuration only once")
@@ -335,7 +335,7 @@ enum ScreenshotScrollingCaptureTests {
         func scroller(window: CGWindowID? = nil, hide: Bool = true, protected: Set<CGWindowID> = [])
             -> ScreenshotAutomaticScroller? {
             ScreenshotAutomaticScroller(region: .init(windowID: window, anchorRect: targetRect),
-                                        hideVorssaintWindows: hide, protectedWindowIDs: protected)
+                                        hideTinaWindows: hide, protectedWindowIDs: protected)
         }
         Desktop.bounds = Desktop.originalBounds
         Desktop.pid = 42
@@ -399,7 +399,7 @@ enum ScreenshotScrollingCaptureTests {
             ScreenshotCaptureEngine.source = source
             var heights: [Int] = []
             let result = await ScreenshotScrollingCapture.capture(
-                region: region, includePointer: false, hideVorssaintWindows: true,
+                region: region, includePointer: false, hideTinaWindows: true,
                 protectedWindowIDs: [], finishSignal: signal,
                 autoScroll: source, onProgress: { heights.append($0) })
             if case .success(let capture) = result {
@@ -416,7 +416,7 @@ enum ScreenshotScrollingCaptureTests {
         animatedSource.animateBeforeFirstScroll = true
         ScreenshotCaptureEngine.source = animatedSource
         let animatedResult = await ScreenshotScrollingCapture.capture(
-            region: region, includePointer: false, hideVorssaintWindows: true,
+            region: region, includePointer: false, hideTinaWindows: true,
             protectedWindowIDs: [], finishSignal: animatedSignal,
             autoScroll: animatedSource, onProgress: { _ in })
         if case .success(let capture) = animatedResult {
@@ -433,7 +433,7 @@ enum ScreenshotScrollingCaptureTests {
             }
         }
         _ = await ScreenshotScrollingCapture.capture(
-            region: region, includePointer: false, hideVorssaintWindows: true,
+            region: region, includePointer: false, hideTinaWindows: true,
             protectedWindowIDs: [], finishSignal: stopSignal,
             autoScroll: stopSource, onProgress: { _ in })
         suite.expect(stopSource.scrolls == 0, "Done during frame acquisition prevents the next scheduled wheel event")
@@ -446,7 +446,7 @@ enum ScreenshotScrollingCaptureTests {
         ScreenshotCaptureEngine.source = cancelSource
         let cancelTask = Task {
             await ScreenshotScrollingCapture.capture(
-                region: region, includePointer: false, hideVorssaintWindows: true,
+                region: region, includePointer: false, hideTinaWindows: true,
                 protectedWindowIDs: [], finishSignal: cancelSignal, autoScroll: cancelSource, onProgress: { _ in })
         }
         if case .cancelled = await cancelTask.value {
@@ -461,7 +461,7 @@ enum ScreenshotScrollingCaptureTests {
         }
         ScreenshotCaptureEngine.source = coveredSource
         let covered = await ScreenshotScrollingCapture.capture(
-            region: region, includePointer: false, hideVorssaintWindows: true,
+            region: region, includePointer: false, hideTinaWindows: true,
             protectedWindowIDs: [], finishSignal: coveredSignal,
             autoScroll: coveredSource, onProgress: { _ in })
         if case .partial(let capture) = covered {
@@ -475,7 +475,7 @@ enum ScreenshotScrollingCaptureTests {
             finish: bannerSignal, automatic: true)
         ScreenshotCaptureEngine.source = bannerSource
         let banner = await ScreenshotScrollingCapture.capture(
-            region: region, includePointer: false, hideVorssaintWindows: true,
+            region: region, includePointer: false, hideTinaWindows: true,
             protectedWindowIDs: [], finishSignal: bannerSignal, autoScroll: bannerSource, onProgress: { _ in })
         if case .partial(let capture) = banner {
             suite.expect(capture.image.height == 120 && bannerSource.scrolls == 1,
@@ -488,7 +488,7 @@ enum ScreenshotScrollingCaptureTests {
         ScreenshotCaptureEngine.source = sparseSource
         var sparseHeights: [Int] = []
         let sparseResult = await ScreenshotScrollingCapture.capture(
-            region: region, includePointer: false, hideVorssaintWindows: true,
+            region: region, includePointer: false, hideTinaWindows: true,
             protectedWindowIDs: [], finishSignal: sparseSignal, autoScroll: sparseSource,
             onProgress: { sparseHeights.append($0) })
         if case .success(let capture) = sparseResult {
@@ -603,7 +603,7 @@ enum ScreenshotScrollingCaptureTests {
         ScreenshotCaptureEngine.source = .init([frame(offset: 0)], finish: signal)
         let cancelled = Task {
             await ScreenshotScrollingCapture.capture(
-                region: region, includePointer: false, hideVorssaintWindows: true,
+                region: region, includePointer: false, hideTinaWindows: true,
                 protectedWindowIDs: [], finishSignal: signal, onProgress: { _ in })
         }
         cancelled.cancel()

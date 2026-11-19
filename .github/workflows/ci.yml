@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
   pull_request:
 
 permissions:
@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/dev' }}
 
 jobs:
   compatibility:
@@ -33,7 +33,7 @@ jobs:
         run: ./build.sh
 
       - name: Selftest
-        run: ./build/Vorssaint --selftest
+        run: ./build/Tina --selftest
 
       - name: Unit tests
         run: ./build.sh --test
@@ -51,7 +51,7 @@ jobs:
         run: ./build.sh
 
       - name: Selftest
-        run: ./build/Vorssaint --selftest
+        run: ./build/Tina --selftest
 
       - name: Package DMG
         run: ./Tools/make-dmg.sh

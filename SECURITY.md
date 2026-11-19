@@ -1,6 +1,6 @@
 # Security Policy
 
-Thanks for helping keep Vorssaint and the people who use it safe.
+Thanks for helping keep Tina and the people who use it safe.
 
 ## Reporting a vulnerability
 
@@ -8,7 +8,7 @@ Please report security vulnerabilities in private. Do not open a public issue, p
 
 Use GitHub's private vulnerability reporting for this repository.
 
-- **[Report a vulnerability privately](https://github.com/vorssaint/vorssaint-utils/security/advisories/new)**
+- **[Report a vulnerability privately](https://github.com/zbl-jerry/tina/security/advisories/new)**
 
 That opens a private security advisory that only you and the maintainer can see.
 
@@ -16,7 +16,7 @@ When you write it up, please include as much as you can.
 
 - A description of the issue and the impact it could have.
 - Steps to reproduce, or a proof of concept.
-- The Vorssaint version from Settings under About and your macOS version.
+- The Tina version from Settings under About and your macOS version.
 
 ## What to expect
 
@@ -26,8 +26,8 @@ When you write it up, please include as much as you can.
 
 ## Supported versions
 
-Security fixes land on the latest released version. Before you report, please make sure you can reproduce the issue on the most recent release.
+Security fixes land on the `dev` branch. Before you report, please make sure you can reproduce the issue on a build from the current `dev` branch.
 
 ## Scope
 
-Vorssaint runs locally and ships as a signed and notarized macOS app. The reports that matter most are the ones that could affect the integrity of the app or its self update flow, or that could let the app's permissions be misused. Issues in the outside services the app merely talks to, like GitHub's releases API or the speed test endpoint, are best taken to those providers.
+Tina runs locally and is built from source in this fork. The reports that matter most are the ones that could affect the integrity of the app or its self update flow, or that could let the app's permissions be misused. Issues in the outside services the app merely talks to, like GitHub's releases API or the speed test endpoint, are best taken to those providers.

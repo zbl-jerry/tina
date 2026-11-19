@@ -60,7 +60,7 @@ enum UninstallerBulkSelectionTests {
         defer { try? fm.removeItem(at: root) }
         let appURL = root.appendingPathComponent("Editor.app", isDirectory: true)
         do {
-            try UninstallerTrashTests.writeBundle(at: appURL, id: "org.vorssaint.fixture.editor")
+            try UninstallerTrashTests.writeBundle(at: appURL, id: "org.tina.fixture.editor")
             uninstaller.targetSelection = UninstallerSupport.selection(for: appURL)
         } catch {
             suite.expect(false, "could not create the bulk selection fixture: \(error)")
@@ -75,7 +75,7 @@ enum UninstallerBulkSelectionTests {
                              confidence: .related, include: false),
         ]
         uninstaller.items = original
-        uninstaller.target = Fixture.Target(name: "Editor", bundleID: "org.vorssaint.fixture.editor",
+        uninstaller.target = Fixture.Target(name: "Editor", bundleID: "org.tina.fixture.editor",
                                             url: appURL, icon: NSImage())
         func expectSelection(_ flags: [Bool], _ state: Bulk, _ count: Int, _ size: Int64, _ context: String) {
             var expected = original

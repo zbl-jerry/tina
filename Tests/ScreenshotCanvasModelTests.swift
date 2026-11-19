@@ -333,7 +333,7 @@ enum ScreenshotCanvasModelTests {
 
     static func run(_ suite: TestSuite) {
         historyStopsByBytes(suite)
-        if ProcessInfo.processInfo.environment["VORSSAINT_SCREENSHOT_MEMORY_SMOKE"] == "1" {
+        if ProcessInfo.processInfo.environment["TINA_SCREENSHOT_MEMORY_SMOKE"] == "1" {
             largeCanvasHistory(suite)
         }
         cropOwnsItsPixels(suite)

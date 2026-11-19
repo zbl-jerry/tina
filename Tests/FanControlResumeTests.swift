@@ -36,7 +36,7 @@ enum FanControlResumeContract {
         enum AccessState { case notRegistered, requiresApproval, enabled, unavailable }
         static let shared = Service()
         static var helperVersion = "bundled"
-        static let log = Logger(subsystem: "com.vorssaint.tests", category: "FanControlResume")
+        static let log = Logger(subsystem: "com.tina.tests", category: "FanControlResume")
         var accessState = AccessState.enabled
         var snapshot = FanControlSnapshot.empty
         var error: FanControlErrorCode?

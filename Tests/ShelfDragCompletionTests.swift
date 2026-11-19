@@ -361,7 +361,7 @@ enum ShelfDragCompletionTests {
             batchService.completeInternalDrag(dropAccepted: false)
 
             let missing = item(root.appendingPathComponent("missing"))
-            let offline = item(URL(fileURLWithPath: "/Volumes/VorssaintOffline-\(UUID())/offline"))
+            let offline = item(URL(fileURLWithPath: "/Volumes/TinaOffline-\(UUID())/offline"))
             batchService.items = [missing, offline]
             batchService.selection = [missing.id, offline.id]
             let missingTile = Context.Tile(item: missing)

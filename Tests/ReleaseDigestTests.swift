@@ -15,37 +15,6 @@ enum ReleaseDigestTests {
         checkPending(suite)
         checkNewFeatures(suite)
         checkSections(suite)
-        checkRealChangelog(suite)
-    }
-
-    /// The repository's own CHANGELOG.md, as the next releases will ship it:
-    /// entries the window can read, and every recent update turning into a
-    /// window that keeps each entry once.
-    private static func checkRealChangelog(_ suite: TestSuite) {
-        guard let changelog = try? String(contentsOfFile: "CHANGELOG.md", encoding: .utf8) else {
-            suite.expect(false, "CHANGELOG.md is readable from the repository root")
-            return
-        }
-        let listed = ReleaseNotes.allVersions(changelog: changelog)
-        suite.expect(listed.count > 12, "the changelog lists its releases")
-        for version in ["Unreleased"] + listed.prefix(6) {
-            for line in ReleaseNotes.rawNotes(for: version, changelog: changelog).components(separatedBy: .newlines)
-            where line.hasPrefix("* ") || line.hasPrefix("+ ") || line.hasPrefix("#### ") {
-                suite.expect(false, "\(version) writes entries as \"- \" under \"### \" headings: \(line.prefix(60))")
-            }
-        }
-        let recent = Array(listed.prefix(13).reversed())
-        for (from, to) in zip(recent, recent.dropFirst()) {
-            let digest = ReleaseDigest.make(from: from, to: to, changelog: changelog)
-            suite.expect(!digest.changes.isEmpty, "the update \(from) → \(to) has entries for What's New")
-            let sections = WhatsNewSupport.sections(
-                digest: digest, newFeatures: [], sidebarItems: [], isAvailable: { _ in true },
-                title: { $0.rawValue }, generalTitle: "General")
-            suite.expect(Set(sections.rows.flatMap(\.changes)) == Set(digest.changes),
-                         "every entry of \(from) → \(to) lands in a row")
-            suite.expect(sections.rows.allSatisfy { Set($0.changes).count == $0.changes.count },
-                         "no row of \(from) → \(to) lists an entry twice")
-        }
     }
 
     private static func checkSectionKinds(_ suite: TestSuite) {

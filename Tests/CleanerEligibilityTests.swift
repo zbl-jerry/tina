@@ -248,7 +248,7 @@ enum CleanerEligibilityTests {
     static func run(_ suite: TestSuite) {
         let manager = FileManager.default
         let sandbox = manager.temporaryDirectory.resolvingSymlinksInPath()
-            .appendingPathComponent("vorssaint-cleaner-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("tina-cleaner-\(UUID().uuidString)", isDirectory: true)
         let root = sandbox.appendingPathComponent("user", isDirectory: true)
         fixtureRoot = root
         defer { fixtureRoot = nil; try? manager.removeItem(at: sandbox) }

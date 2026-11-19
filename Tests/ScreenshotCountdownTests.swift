@@ -53,7 +53,7 @@ enum ScreenshotCountdownTests {
         }
     }
 
-    static let suiteName = "com.vorssaint.tests.scrolling-countdown." + UUID().uuidString
+    static let suiteName = "com.tina.tests.scrolling-countdown." + UUID().uuidString
     static let defaults = UserDefaults(suiteName: suiteName)!
 
     static func run(_ suite: TestSuite) {

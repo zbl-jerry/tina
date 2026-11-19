@@ -9,7 +9,7 @@ import Foundation
 /// production check, both generated from source.
 enum NotchPresentationProbeArgumentTests {
     static func run(_ suite: TestSuite) {
-        let binary = "/Applications/Vorssaint (Developer).app/Contents/MacOS/VorssaintDeveloper"
+        let binary = "/Applications/Tina (Developer).app/Contents/MacOS/TinaDeveloper"
         for mode in Probe.Mode.allCases {
             suite.expect(Probe.isRequested(by: [binary, mode.rawValue]),
                          "\(mode.rawValue) on its own runs the presentation probe")

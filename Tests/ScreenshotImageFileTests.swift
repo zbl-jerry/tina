@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 
 enum ScreenshotImageFileTests {
     enum UserDefaults {
-        static let domain = "com.vorssaint.tests.screenshot-image-file.\(UUID().uuidString)"
+        static let domain = "com.tina.tests.screenshot-image-file.\(UUID().uuidString)"
         static let standard = Foundation.UserDefaults(suiteName: domain)!
     }
     final class Service {

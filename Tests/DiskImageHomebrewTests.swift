@@ -114,7 +114,7 @@ enum DiskImageHomebrewTests {
             suite.expect(download?.imageURL == downloaded && download?.downloadTrashPreference(true) == true
                          && download?.downloadTrashPreference(false) == false,
                          "ordinary downloads honor and can update either saved cleanup choice")
-            try Data().write(to: buildRoot.appendingPathComponent(".vorssaint-no-install"))
+            try Data().write(to: buildRoot.appendingPathComponent(".tina-no-install"))
             try info(temporary)
             suite.expect(service.candidate(mountedAt: mount) == nil,
                          "an image in the system temporary directory is not offered")

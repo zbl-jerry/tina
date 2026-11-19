@@ -302,18 +302,18 @@ enum SettingsFeatureTests {
             renamePattern: MediaImageRenamePattern("{name}-{index}"))
         // MARK: Settings backup
 
-        suite.expect(SettingsBackupSupport.command(in: ["Vorssaint", "--export-settings", "out.plist"])
+        suite.expect(SettingsBackupSupport.command(in: ["Tina", "--export-settings", "out.plist"])
                 == .export(path: "out.plist")
-                && SettingsBackupSupport.command(in: ["Vorssaint", "--import-settings", "./-in.plist"])
+                && SettingsBackupSupport.command(in: ["Tina", "--import-settings", "./-in.plist"])
                 == .import(path: "./-in.plist"),
                "the backup flags take the file that follows them")
-        suite.expect(SettingsBackupSupport.command(in: ["Vorssaint", "--import-settings"])
+        suite.expect(SettingsBackupSupport.command(in: ["Tina", "--import-settings"])
                 == .missingFile(flag: "--import-settings")
-                && SettingsBackupSupport.command(in: ["Vorssaint", "--export-settings", "--selftest"])
+                && SettingsBackupSupport.command(in: ["Tina", "--export-settings", "--selftest"])
                 == .missingFile(flag: "--export-settings"),
                "a backup flag without a file is reported rather than treated as one")
-        suite.expect(SettingsBackupSupport.command(in: ["Vorssaint"]) == nil
-                && SettingsBackupSupport.command(in: ["Vorssaint", "--selftest"]) == nil,
+        suite.expect(SettingsBackupSupport.command(in: ["Tina"]) == nil
+                && SettingsBackupSupport.command(in: ["Tina", "--selftest"]) == nil,
                "a normal launch is not a backup command")
 
         for flags in [
@@ -321,16 +321,16 @@ enum SettingsFeatureTests {
             ["--export-settings", "--import-settings", "backup.plist"],
             ["--export-settings", "one.plist", "--export-settings", "two.plist"],
         ] {
-            suite.expect(SettingsBackupSupport.command(in: ["Vorssaint"] + flags) == .conflictingFlags,
+            suite.expect(SettingsBackupSupport.command(in: ["Tina"] + flags) == .conflictingFlags,
                          "conflicting or repeated backup flags cannot choose an operation")
         }
         for arguments in [
-            ["Vorssaint", "--export-settings", "--uninstall"],
-            ["Vorssaint", "--export-settings", "--mouse-acceleration-cleanup"],
-            ["Vorssaint", "--export-settings", "--super-key-mapping-cleanup", "capsLock"],
-            ["Vorssaint", "--selftest", "--import-settings"],
-            ["Vorssaint", "--import-settings", "--export-settings", "backup.plist"],
-            ["Vorssaint", "--export-settings", "backup.plist"],
+            ["Tina", "--export-settings", "--uninstall"],
+            ["Tina", "--export-settings", "--mouse-acceleration-cleanup"],
+            ["Tina", "--export-settings", "--super-key-mapping-cleanup", "capsLock"],
+            ["Tina", "--selftest", "--import-settings"],
+            ["Tina", "--import-settings", "--export-settings", "backup.plist"],
+            ["Tina", "--export-settings", "backup.plist"],
         ] {
             CommandDispatchHost.CommandLine.arguments = arguments
             CommandDispatchHost.SettingsBackup.commands = []
@@ -339,12 +339,12 @@ enum SettingsFeatureTests {
                          == [SettingsBackupSupport.command(in: arguments)!],
                          "the production entry point dispatches backup mode before other modes")
         }
-        CommandDispatchHost.CommandLine.arguments = ["Vorssaint", "--super-key-mapping-cleanup", "capsLock"]
+        CommandDispatchHost.CommandLine.arguments = ["Tina", "--super-key-mapping-cleanup", "capsLock"]
         CommandDispatchHost.SettingsBackup.commands = []
         CommandDispatchHost.run()
         suite.expect(CommandDispatchHost.SettingsBackup.commands.isEmpty,
                      "a real cleanup invocation remains on its normal startup path")
-        let startup = (try? String(contentsOfFile: "Sources/Vorssaint/main.swift", encoding: .utf8)) ?? ""
+        let startup = (try? String(contentsOfFile: "Sources/Tina/main.swift", encoding: .utf8)) ?? ""
         let backupDispatch = startup.range(of: "if let command = SettingsBackupSupport.command(")
         if let migrate = startup.range(of: "Defaults.register()"),
            let overlay = startup.range(of: "SettingsBackup.applyConfigFileAtLaunch()") {
@@ -928,7 +928,7 @@ enum SettingsFeatureTests {
         // Strip comments before asserting: "X appears before Y" would otherwise
         // be satisfied by a doc comment mentioning either.
         let backupServiceLines = ((try? String(
-            contentsOfFile: "Sources/Vorssaint/Services/SettingsBackup.swift",
+            contentsOfFile: "Sources/Tina/Services/SettingsBackup.swift",
             encoding: .utf8)) ?? "").components(separatedBy: "\n")
         let captureAt = backupServiceLines.firstIndex {
             isCodeLine($0) && $0.contains("SettingsBackupSupport.pathIdentities(")
@@ -1010,17 +1010,17 @@ enum SettingsFeatureTests {
         let configPath: ([String: String], Bool) -> String = {
             SettingsBackupSupport.configFileURL(environment: $0, home: configHome, isDeveloperBuild: $1).path
         }
-        suite.expect(configPath([:], false) == "/Users/someone/.config/vorssaint/settings.plist",
+        suite.expect(configPath([:], false) == "/Users/someone/.config/tina/settings.plist",
                "without XDG_CONFIG_HOME the settings file lives in ~/.config")
         suite.expect(configPath(["XDG_CONFIG_HOME": "/Users/someone/dotfiles"], false)
-                == "/Users/someone/dotfiles/vorssaint/settings.plist",
+                == "/Users/someone/dotfiles/tina/settings.plist",
                "an absolute XDG_CONFIG_HOME holds the settings file")
         suite.expect(configPath(["XDG_CONFIG_HOME": ""], false) == configPath([:], false)
                 && configPath(["XDG_CONFIG_HOME": "dotfiles"], false) == configPath([:], false),
                "an empty or relative XDG_CONFIG_HOME is ignored, as the XDG spec asks")
-        suite.expect(configPath([:], true) == "/Users/someone/.config/vorssaint-dev/settings.plist",
+        suite.expect(configPath([:], true) == "/Users/someone/.config/tina-dev/settings.plist",
                "the Developer build never reads the official app's settings file")
-        let binary = "/Applications/Vorssaint.app/Contents/MacOS/Vorssaint"
+        let binary = "/Applications/Tina.app/Contents/MacOS/Tina"
         suite.expect(SettingsBackupSupport.appliesConfigFile(arguments: [binary])
                 && SettingsBackupSupport.appliesConfigFile(arguments: [binary, "-NSDocumentRevisionsDebugMode", "YES"]),
                "a plain launch applies the settings file")

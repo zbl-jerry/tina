@@ -4,7 +4,7 @@
 import Foundation
 
 /// Pure timing/document checks. Actual AVFoundation exports still need the
-/// macOS smoke checks described in docs/recorder-export-speed.md.
+/// Automated export checks and the manual smoke checks below.
 enum RecorderExportSpeedTests {
     static func run(_ suite: TestSuite) {
         let original = RecorderEditDocument()
