@@ -277,9 +277,16 @@ struct NightWarmthSettingsCard: View {
     }
 
     private var transitionRow: some View {
-        Picker(strings.transition, selection: $transition) {
-            Text(strings.transitionSlow).tag(NightWarmthTransition.slow.rawValue)
-            Text(strings.transitionFast).tag(NightWarmthTransition.fast.rawValue)
+        HStack {
+            Text(strings.transition)
+                .font(.subheadline)
+            Spacer()
+            Picker(strings.transition, selection: $transition) {
+                Text(strings.transitionSlow).tag(NightWarmthTransition.slow.rawValue)
+                Text(strings.transitionFast).tag(NightWarmthTransition.fast.rawValue)
+            }
+            .labelsHidden()
+            .frame(width: 160)
         }
     }
 
