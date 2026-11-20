@@ -1,5 +1,5 @@
-name: "🐛 Bug Report"
-description: Report a bug or unexpected behavior in Tina
+name: "🐛 Bug 报告"
+description: 报告 Tina 中的 Bug 或异常行为
 labels:
   - bug
 
@@ -7,84 +7,84 @@ body:
   - type: markdown
     attributes:
       value: |
-        Fill in what you can. A partial report is still useful.
+        请尽量填写，信息不完整也可以提交。
 
-        **One problem per issue.** A second problem added to an existing thread
-        tends to get lost while the first one is being discussed.
+        **一个 issue 只报一个问题。** 在已有讨论里追加第二个问题，很容易在
+        第一个问题处理过程中被忽略。
 
-        [Reporting a useful bug](https://github.com/zbl-jerry/tina/blob/dev/docs/TROUBLESHOOTING.md#reporting-a-useful-bug)
-        lists what a report needs to be actionable.
+        [如何提交有用的 Bug 报告](https://github.com/zbl-jerry/tina/blob/dev/docs/TROUBLESHOOTING.md#reporting-a-useful-bug)
+        列出了让报告可被处理所需的信息。
 
   - type: checkboxes
     id: preflight
     attributes:
-      label: Before you file
-      description: The [troubleshooting guide](https://github.com/zbl-jerry/tina/blob/dev/docs/TROUBLESHOOTING.md) covers both of these.
+      label: 提交前确认
+      description: "[故障排查指南](https://github.com/zbl-jerry/tina/blob/dev/docs/TROUBLESHOOTING.md) 覆盖了下面两项。"
       options:
-        - label: "If the feature does nothing at all, I checked that Tina is listed and switched on for the permission it needs in System Settings, Privacy and Security, and toggled it off and back on."
+        - label: "如果功能完全没有反应，我已在「系统设置 → 隐私与安全性」中确认 Tina 已列出并开启了它需要的权限，并试过关闭再重新开启。"
           required: true
-        - label: "It still happens on the latest version."
+        - label: "在最新版本上仍然可以复现。"
           required: true
 
   - type: textarea
     id: description
     attributes:
-      label: Description
-      description: A clear and concise description of what the bug is.
-      placeholder: Describe the bug... (expected and actual behaviour)
+      label: 问题描述
+      description: 清楚、简要地描述这个 Bug。
+      placeholder: 描述这个 Bug……（期望行为和实际行为）
     validations:
       required: true
 
   - type: textarea
     id: reproduce
     attributes:
-      label: Steps to Reproduce
-      description: Steps to reproduce the behavior.
+      label: 复现步骤
+      description: 复现该问题的操作步骤。
       placeholder: |
-        1. Open Tina
-        2. Click on '...'
-        3. See error
+        1. 打开 Tina
+        2. 点击「...」
+        3. 出现错误
     validations:
       required: true
 
   - type: dropdown
     id: feature_area
     attributes:
-      label: Feature Area
-      description: The same groups you see in Settings.
+      label: 功能区域
+      description: 与设置页中的分组一致。
       options:
-        - Essentials
-        - Utilities
-        - Sound
-        - Energy and display
-        - Windows and Dock
-        - Mouse and keyboard
-        - Files
-        - App management
+        - 基础功能（Essentials）
+        - 实用工具（Utilities）
+        - 声音（Sound）
+        - 能耗与显示（Energy and display）
+        - 窗口与程序坞（Windows and Dock）
+        - 鼠标与键盘（Mouse and keyboard）
+        - 文件（Files）
+        - App 管理（App management）
         - App
-        - Other
+        - 其他（Other）
     validations:
       required: true
 
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots / Recordings
-      description: Add screenshots or recordings if applicable.
+      label: 截图 / 录屏
+      description: 如果适用，请附上截图或录屏。
 
   - type: input
     id: tina_version
     attributes:
-      label: Tina Version
-      description: The number shown in Settings, on the About page.
-      placeholder: Copy the number from the About page
+      label: Tina 版本
+      description: 设置页「关于」中显示的版本号。
+      placeholder: 粘贴「关于」页面中的版本号
     validations:
       required: true
 
   - type: dropdown
     id: macos_version
     attributes:
-      label: macOS Version
+      label: macOS 版本
       options:
         - macOS 27 (Golden Gate)
         - macOS 26 (Tahoe)
@@ -96,21 +96,21 @@ body:
   - type: input
     id: language
     attributes:
-      label: Language
-      description: The language Tina is running in, and your macOS language if it differs. Several bugs so far were invisible in English, so this narrows things down fast.
-      placeholder: "简体中文 · macOS in 简体中文"
+      label: 语言
+      description: Tina 当前使用的语言；如果与 macOS 系统语言不同，请一并说明。此前有多个 Bug 只在非英语环境下出现，这一项能大幅缩小排查范围。
+      placeholder: "简体中文 · macOS 为简体中文"
     validations:
       required: true
 
   - type: input
     id: hardware
     attributes:
-      label: Mac and displays
-      description: Skip only if the bug touches neither windows nor hardware. The Mac model decides the sensors, fans and brightness range; the display and Spaces layout decides almost every window bug.
-      placeholder: "MacBook Pro 14 (M3 Pro) · built-in + one 4K external, scaled, two Spaces"
+      label: Mac 机型与显示器
+      description: 仅当该问题与窗口或硬件无关时可以跳过。Mac 机型决定传感器、风扇和亮度范围；显示器和空间布局几乎影响所有窗口问题。
+      placeholder: "MacBook Pro 14 (M3 Pro) · 内置屏 + 一台 4K 外接屏，缩放显示，两个空间"
 
   - type: input
     id: installation_method
     attributes:
-      label: Installation Method
-      placeholder: Homebrew, DMG, GitHub Release, built from source
+      label: 安装方式
+      placeholder: Homebrew、DMG、GitHub Release、从源码构建

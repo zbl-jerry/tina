@@ -1,5 +1,5 @@
-name: "✨ Feature Request"
-description: Suggest a new feature or improvement for Tina
+name: "✨ 功能需求"
+description: 为 Tina 建议新功能或改进
 labels:
   - enhancement
 
@@ -7,52 +7,49 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Someone may have asked already.** [Enhancement Summary](https://github.com/zbl-jerry/tina/issues/838)
-        indexes every open request, sorted into what already shipped, what is
-        worth doing, and what has been ruled out and why.
-
-        A comment and a 👍 on the existing request carries further than a
-        second issue for the same thing, since the votes stay in one place.
+        **这个需求可能已经有人提过了。** 提交前请先搜索
+        [已有 issue](https://github.com/zbl-jerry/tina/issues?q=is%3Aissue)，
+        并在相同的需求下评论、点 👍，而不是再开一个重复的 issue，这样投票会集中在一处。
 
   - type: textarea
     id: problem
     attributes:
-      label: Problem or Motivation
-      description: Is your feature request related to a problem?
-      placeholder: I'm frustrated when...
+      label: 问题或动机
+      description: 这个需求是否与某个问题有关？
+      placeholder: 当我……时感到很困扰
     validations:
       required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: Proposed Solution
-      description: Describe the solution you'd like to see.
-      placeholder: It would be great if Tina could...
+      label: 期望的解决方案
+      description: 描述你希望看到的效果。
+      placeholder: 如果 Tina 能……就好了
     validations:
       required: true
 
   - type: dropdown
     id: feature_area
     attributes:
-      label: Feature Area
-      description: The same groups you see in Settings.
+      label: 功能区域
+      description: 与设置页中的分组一致。
       options:
-        - Essentials
-        - Utilities
-        - Sound
-        - Energy and display
-        - Windows and Dock
-        - Mouse and keyboard
-        - Files
-        - App management
+        - 基础功能（Essentials）
+        - 实用工具（Utilities）
+        - 声音（Sound）
+        - 能耗与显示（Energy and display）
+        - 窗口与程序坞（Windows and Dock）
+        - 鼠标与键盘（Mouse and keyboard）
+        - 文件（Files）
+        - App 管理（App management）
         - App
-        - Other
+        - 其他（Other）
     validations:
       required: true
 
   - type: textarea
     id: mockups
     attributes:
-      label: Mockups / References
-      description: Attach sketches, screenshots, or references.
+      label: 草图 / 参考
+      description: 可附上草图、截图或参考链接。
