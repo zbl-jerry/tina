@@ -6,7 +6,7 @@ The permission and uninstall commands below all point at Tina's bundle identifie
 
 ## The app will not open
 
-Tina has no prebuilt official binaries in this fork; you build it yourself with `./build.sh`. Local builds are signed with a stable local identity when possible, but they are not notarized. macOS Gatekeeper may stop one on the first launch. To open it anyway, do one of these.
+Tina's GitHub releases and local builds are signed with a stable local identity when possible, but they are not notarized. macOS Gatekeeper may stop one on the first launch. To open it anyway, do one of these.
 
 1. Right click, or Control click, Tina in Applications, choose Open, and confirm.
 2. Or open System Settings, Privacy and Security, find the note about Tina being blocked, and click Open Anyway.

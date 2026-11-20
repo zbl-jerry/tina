@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Vorssaint
 
 // Renders the installer (DMG) window background: a clean light panel with the

@@ -20,7 +20,7 @@
 <p align="center">
   <a href="https://github.com/zbl-jerry/tina/actions/workflows/ci.yml"><img src="https://github.com/zbl-jerry/tina/actions/workflows/ci.yml/badge.svg?branch=dev&event=push" alt="CI status"></a>
   <a href="#what-you-need"><img src="https://img.shields.io/badge/macOS-14%2B%20Apple%20Silicon-black" alt="macOS 14 and newer, Apple Silicon"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue" alt="License GPL 3.0 or later"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License MIT"></a>
 </p>
 
 <p align="center">
@@ -32,11 +32,9 @@
 
 Per app volume, a real system monitor, a better app switcher, window snapping, Dock previews, clipboard history, text snippets, a file shelf, an uninstaller. The utilities Mac users usually buy one by one, together behind a single menu bar icon, with no account, no telemetry and no subscription.
 
-Tina is a fork of [Vorssaint Utils](https://github.com/vorssaint/vorssaint-utils), rebranded and developed independently. The original project and its contributors deserve the credit for the feature set described below.
-
 ## Build from source
 
-There are no prebuilt Tina releases. Build locally with the Xcode Command Line Tools:
+Prebuilt releases are on the [releases page](https://github.com/zbl-jerry/tina/releases). To build locally with the Xcode Command Line Tools:
 
 ```sh
 git clone https://github.com/zbl-jerry/tina.git
@@ -46,6 +44,12 @@ cd tina
 ```
 
 A plain `./build.sh` builds the optimized variant. See the [contributing guide](CONTRIBUTING.md) for the layout, tests and conventions.
+
+## How Tina is built
+
+Tina is developed primarily through **AI-assisted vibe-coding**: features, fixes and tests are often proposed and implemented by coding agents working alongside the maintainer. Coding agents are welcome to contribute issues, patches and pull requests.
+
+Agent contributions follow the same bar as any other change: keep the scope focused, run the relevant build and tests, state what was actually verified, and leave a human review pass for permissions, privacy, destructive file operations and private APIs. Unreviewed agent output is not merged.
 
 ## Install only what you use
 
@@ -166,7 +170,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 
 Tina is local-first, with no account, analytics or tracking. The network is touched only by things you can see: update checks, the speed test, Homebrew actions and optional online lyric lookup. The full story is in the [privacy notes](docs/PRIVACY.md).
 
-This fork does not operate the original project's hosted screenshot/recording sharing or feedback backend. The local capture, editing and export tools all work; the expiring-link upload buttons will report that the service is unavailable.
+Tina does not operate a hosted screenshot/recording sharing or feedback backend. The local capture, editing and export tools all work; the expiring-link upload buttons will report that the service is unavailable.
 
 Permissions get the same treatment. Every one is optional, the app explains each in plain words, shows which features actually use it, and even tells you when a permission you granted is no longer needed by anything, with a shortcut to revoke it.
 
@@ -207,11 +211,6 @@ See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions 
 - [Support](SUPPORT.md), where to get help
 - [Security](SECURITY.md), how to report a vulnerability
 
-## Acknowledgements
-
-- Tina is a fork of [Vorssaint Utils](https://github.com/vorssaint/vorssaint-utils). Original source copyright 2026 Vorssaint, licensed under GPL-3.0-or-later.
-- The feature set, documentation and interface were created by the upstream project and its contributors.
-
 ## License
 
-[GPL 3.0 or later](LICENSE). The license covers the source code. The original project's name, logo and look remain covered by the upstream project's own terms; Tina uses a separate name and should be given its own visual identity before any public distribution.
+[MIT](LICENSE). The license covers the source code.

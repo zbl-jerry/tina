@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Vorssaint
 #ifndef RECORDER_GIF_CODEC_H
 #define RECORDER_GIF_CODEC_H

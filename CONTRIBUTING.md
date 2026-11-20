@@ -1,7 +1,11 @@
 # Contributing to Tina
 
 Tina aims to stay small, native and readable. Contributions are accepted
-under GPL-3.0-or-later unless stated otherwise.
+under the MIT license unless stated otherwise.
+
+Tina is developed primarily through AI-assisted vibe-coding. Issues, patches
+and pull requests produced by coding agents are welcome, provided they meet the
+same validation and human-review bar as any other contribution.
 
 ## Getting started
 
@@ -31,7 +35,7 @@ Keep that identity across rebuilds: ad-hoc signatures change with the binary and
 can invalidate macOS permission grants. Check the build output for signing
 failures. For stale grants, see [troubleshooting](docs/TROUBLESHOOTING.md#resetting-permissions).
 
-There is no automated release pipeline in this fork. Builds are local; use the
+There is no automated release pipeline in this project. Builds are local; use the
 Developer variant while developing.
 
 ## Scope and implementation

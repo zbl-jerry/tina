@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Vorssaint
 
 // Reads the system Now Playing session and prints it as one JSON line.

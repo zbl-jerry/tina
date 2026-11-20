@@ -1,5 +1,5 @@
 #!/bin/zsh
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 # Copyright (C) 2026 Vorssaint
 
 # Runs the real Space arrangement check from Tools/uninstall.sh, lifted out of

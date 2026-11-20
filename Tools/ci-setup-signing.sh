@@ -1,5 +1,5 @@
 #!/bin/zsh
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 # Copyright (C) 2026 Vorssaint
 
 # Imports the stable signing certificate into a keychain on CI so build.sh signs

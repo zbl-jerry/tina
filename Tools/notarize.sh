@@ -1,5 +1,5 @@
 #!/bin/zsh
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 # Copyright (C) 2026 Vorssaint
 
 # Notarizes and staples a built artifact (the .app or the .dmg) with Apple's

@@ -1,6 +1,6 @@
 # Privacy
 
-Tina is built to be local-first. Core features run on your Mac, and the app has no Tina account or cloud dashboard. This fork does not operate any hosted service: there is no temporary-link backend and no in-app feedback endpoint, so neither feature sends anything.
+Tina is built to be local-first. Core features run on your Mac, and the app has no Tina account or cloud dashboard. Tina does not operate any hosted service: there is no temporary-link backend and no in-app feedback endpoint, so neither feature sends anything.
 
 ## The short version
 
@@ -61,11 +61,11 @@ The Online source also downloads the complete public app catalog from `formulae.
 
 The check runs when you open the list or press Check now, and on a schedule only if you set one. The three source switches under App updates control these connections independently. Turning off the App Store source stops its store and bundle identifier lookups. Turning off the Online source stops both developer feed requests and public catalog requests on subsequent checks.
 
-5. **Temporary screenshot links.** Not available in this fork. The upload endpoint is intentionally unset, so no image is sent anywhere and the share action reports that the service is unavailable.
+5. **Temporary screenshot links.** Not available in this project. The upload endpoint is intentionally unset, so no image is sent anywhere and the share action reports that the service is unavailable.
 
-6. **Temporary recording links.** Not available in this fork, for the same reason: the upload endpoint is intentionally unset and no recording leaves the Mac.
+6. **Temporary recording links.** Not available in this project, for the same reason: the upload endpoint is intentionally unset and no recording leaves the Mac.
 
-7. **Feedback.** Not available in this fork. There is no feedback endpoint; use the repository's GitHub issue forms instead, which you open yourself in a browser.
+7. **Feedback.** Not available in this project. There is no feedback endpoint; use the repository's GitHub issue forms instead, which you open yourself in a browser.
 
 8. **Online lyrics, only after you enable the separate lookup option.** While the lyrics view is open, a lookup sends the current song's title, artist, album and duration over HTTPS to `lrclib.net`. If normal matching fails, artist names and album titles may also be sent to `musicbrainz.org` to verify alternate artist names. This lets a native name, transliteration or historical credit match the same artist (for example, 林宥嘉 and Yoga Lin) without embedding artist-specific mappings. When artist aliases are insufficient, the song title may also be checked against recording credits and duration there; lyrics and audio are not sent to MusicBrainz. Audio, artwork, local paths, accounts and listening history are not included. These providers receive ordinary request data, including your public IP address, under their own policies. Requests use an ephemeral session without stored cookies, reject redirects and stop when you hide the view or disable lookup. Lyrics are kept only in memory for the current song. A bounded, temporary metadata cache avoids repeating artist verification; it is cleared when lyrics stop. Local lyric import works without these connections.
 

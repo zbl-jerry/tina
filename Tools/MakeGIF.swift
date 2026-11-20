@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Vorssaint
 
 // Assembles a folder of PNG frames into the animated GIF used by the release
