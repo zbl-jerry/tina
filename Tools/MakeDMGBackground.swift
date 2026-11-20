@@ -76,7 +76,8 @@ if let logo = NSImage(contentsOfFile: logoPath) {
     NSGraphicsContext.current = ctx
     ctx.cgContext.scaleBy(x: scale, y: scale)
     let mark = NSRect(x: widthPt / 2 - 16, y: heightPt - 112, width: 32, height: 32)
-    logo.draw(in: mark, from: .zero, operation: .sourceOver, fraction: 0.12)
+    logo.draw(in: mark, from: NSRect(origin: .zero, size: logo.size),
+              operation: .sourceOver, fraction: 0.12)
     NSGraphicsContext.restoreGraphicsState()
 }
 
