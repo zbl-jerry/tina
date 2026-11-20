@@ -143,6 +143,8 @@ final class CommandBarService: ObservableObject {
     /// goodbye, or determined once something ran.
     var farewell = NotchMascotMood.wink
 
+    private let menusHotkey = QuickToolHotkey(id: 190)
+    @Published private(set) var menusShortcutRegistrationFailed = false
     private let hotkey = QuickToolHotkey(id: 20)
     private var rowHotkeys: [QuickToolHotkey] = []
     private var panel: NSPanel?
@@ -262,6 +264,9 @@ final class CommandBarService: ObservableObject {
 
     private init() {
         queryHabitStore.reload(UserDefaults.standard.string(forKey: DefaultsKey.commandBarQueryHabits))
+        menusHotkey.onPress = { [weak self] in
+            self?.show(promptingFor: nil, category: .menus)
+        }
         hotkey.onPress = { [weak self] in self?.toggle() }
         scriptRunner.onResult = { [weak self] in self?.refreshResults() }
         fileSearch.onResult = { [weak self] in self?.refreshResults() }
@@ -277,6 +282,10 @@ final class CommandBarService: ObservableObject {
                                             fallback: .commandBarDefault)
         shortcutRegistrationFailed = !hotkey.sync(enabled: enabled, shortcut: shortcut,
                                                   storageKey: DefaultsKey.commandBarShortcut)
+        menusShortcutRegistrationFailed = !menusHotkey.sync(
+            enabled: available && UserDefaults.standard.bool(forKey: DefaultsKey.commandBarMenusShortcutEnabled),
+            shortcut: GlobalShortcut.saved(for: DefaultsKey.commandBarMenusShortcut, fallback: .commandBarMenusDefault),
+            storageKey: DefaultsKey.commandBarMenusShortcut)
         reloadPreferenceCaches()
         syncRowHotkeys()
         if available {
@@ -326,6 +335,7 @@ final class CommandBarService: ObservableObject {
 
     func suspend() {
         pendingAppShortcut.cancel()
+        menusHotkey.unregister()
         hotkey.unregister()
         for hotkey in rowHotkeys { hotkey.unregister() }
         rowHotkeys = []
@@ -345,7 +355,7 @@ final class CommandBarService: ObservableObject {
         show(promptingFor: nil)
     }
 
-    private func show(promptingFor stableKey: String?) {
+    private func show(promptingFor stableKey: String?, category: CommandBarSource? = nil) {
         guard AppFeature.commandBar.isAvailable else { return }
         let panel = ensurePanel()
         // The window that shows the bar takes the keyboard before anything is
@@ -357,6 +367,7 @@ final class CommandBarService: ObservableObject {
             TextSnippetService.shared.setCommandBarVisible(true)
         }
         let id = beginPresentation()
+        activeCategory = category
         if let stableKey { deferredRowShortcut.schedule(stableKey, for: id) }
         reloadPreferenceCaches()
         query = ""

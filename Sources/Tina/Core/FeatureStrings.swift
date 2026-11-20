@@ -213,7 +213,12 @@ extension ClipboardFeatureStrings {
         historyLayout: "기록 레이아웃",
         historyLayoutCards: "카드",
         historyLayoutList: "목록",
-        showSourceAppIconsInList: "목록 보기에 원본 앱 아이콘 표시"
+        showSourceAppIconsInList: "목록 보기에 원본 앱 아이콘 표시",
+        transformText: "텍스트 변환",
+        uppercase: "대문자",
+        lowercase: "소문자",
+        titleCase: "첫 글자만 대문자",
+        sentenceCase: "문장 시작만 대문자"
     )
 }
 
@@ -285,6 +290,7 @@ extension WindowLayoutFeatureStrings {
         center: "가운데",
         nextDisplay: "다음 디스플레이",
         restore: "복원",
+        minimize: "최소화",
         fullScreen: "전체 화면",
         previousDisplay: "이전 디스플레이",
         edgeSnapEnable: "화면 가장자리에 윈도우 맞추기",
@@ -297,6 +303,8 @@ extension WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "이 가장자리의 영역",
         marginMaximize: "여백 두고 최대화",
         marginPerEdge: "가장자리별 여백",
+        makeLarger: "조금 크게",
+        makeSmaller: "조금 작게",
         gapsSection: "간격",
         gapsCaption: "스냅된 윈도우 사이, 그리고 윈도우와 화면 가장자리 사이의 간격입니다.",
         windowGap: "윈도우 간격",
@@ -539,6 +547,11 @@ struct ClipboardFeatureStrings {
     let historyLayoutCards: String
     let historyLayoutList: String
     let showSourceAppIconsInList: String
+    let transformText: String
+    let uppercase: String
+    let lowercase: String
+    let titleCase: String
+    let sentenceCase: String
 
     static let enUS = ClipboardFeatureStrings(
         title: "Clipboard",
@@ -603,7 +616,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "History layout",
         historyLayoutCards: "Cards",
         historyLayoutList: "List",
-        showSourceAppIconsInList: "Show source app icons in list view"
+        showSourceAppIconsInList: "Show source app icons in list view",
+        transformText: "Transform Text",
+        uppercase: "UPPERCASE",
+        lowercase: "lowercase",
+        titleCase: "Title Case",
+        sentenceCase: "Sentence case"
     )
 
     static let ptBR = ClipboardFeatureStrings(
@@ -669,7 +687,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "Layout do histórico",
         historyLayoutCards: "Cartões",
         historyLayoutList: "Lista",
-        showSourceAppIconsInList: "Mostrar ícones dos apps de origem na lista"
+        showSourceAppIconsInList: "Mostrar ícones dos apps de origem na lista",
+        transformText: "Transformar texto",
+        uppercase: "MAIÚSCULAS",
+        lowercase: "minúsculas",
+        titleCase: "Iniciais Maiúsculas",
+        sentenceCase: "Capitalização de frase"
     )
 
     static let tr = ClipboardFeatureStrings(
@@ -735,7 +758,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "Geçmiş yerleşimi",
         historyLayoutCards: "Kartlar",
         historyLayoutList: "Liste",
-        showSourceAppIconsInList: "Liste görünümünde kaynak uygulama simgelerini göster"
+        showSourceAppIconsInList: "Liste görünümünde kaynak uygulama simgelerini göster",
+        transformText: "Metni Dönüştür",
+        uppercase: "BÜYÜK HARF",
+        lowercase: "küçük harf",
+        titleCase: "Baş Harfler Büyük",
+        sentenceCase: "Cümle Düzeni"
     )
 
     static let ru = ClipboardFeatureStrings(
@@ -801,7 +829,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "Макет истории",
         historyLayoutCards: "Карточки",
         historyLayoutList: "Список",
-        showSourceAppIconsInList: "Показывать значки исходных приложений в списке"
+        showSourceAppIconsInList: "Показывать значки исходных приложений в списке",
+        transformText: "Преобразовать текст",
+        uppercase: "ПРОПИСНЫЕ",
+        lowercase: "строчные",
+        titleCase: "Каждое Слово С Заглавной",
+        sentenceCase: "Как в предложении"
     )
 
     static let es = ClipboardFeatureStrings(
@@ -867,7 +900,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "Diseño del historial",
         historyLayoutCards: "Tarjetas",
         historyLayoutList: "Lista",
-        showSourceAppIconsInList: "Mostrar iconos de las apps de origen en la lista"
+        showSourceAppIconsInList: "Mostrar iconos de las apps de origen en la lista",
+        transformText: "Transformar texto",
+        uppercase: "MAYÚSCULAS",
+        lowercase: "minúsculas",
+        titleCase: "Iniciales Mayúsculas",
+        sentenceCase: "Tipo frase"
     )
 
     static let sk = ClipboardFeatureStrings(
@@ -933,7 +971,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "Rozloženie histórie",
         historyLayoutCards: "Karty",
         historyLayoutList: "Zoznam",
-        showSourceAppIconsInList: "Zobraziť ikony zdrojových aplikácií v zozname"
+        showSourceAppIconsInList: "Zobraziť ikony zdrojových aplikácií v zozname",
+        transformText: "Transformovať text",
+        uppercase: "VEĽKÉ PÍSMENÁ",
+        lowercase: "malé písmená",
+        titleCase: "Veľké Začiatočné Písmená",
+        sentenceCase: "Ako vo vete"
     )
 
     static let de = ClipboardFeatureStrings(
@@ -999,7 +1042,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "Verlaufslayout",
         historyLayoutCards: "Karten",
         historyLayoutList: "Liste",
-        showSourceAppIconsInList: "Symbole der Quell-Apps in der Liste anzeigen"
+        showSourceAppIconsInList: "Symbole der Quell-Apps in der Liste anzeigen",
+        transformText: "Text umwandeln",
+        uppercase: "GROSSBUCHSTABEN",
+        lowercase: "kleinbuchstaben",
+        titleCase: "Erste Buchstaben Groß",
+        sentenceCase: "Satzanfang groß"
     )
 
     static let fr = ClipboardFeatureStrings(
@@ -1065,7 +1113,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "Disposition de l’historique",
         historyLayoutCards: "Cartes",
         historyLayoutList: "Liste",
-        showSourceAppIconsInList: "Afficher les icônes des apps sources dans la liste"
+        showSourceAppIconsInList: "Afficher les icônes des apps sources dans la liste",
+        transformText: "Transformer le texte",
+        uppercase: "MAJUSCULES",
+        lowercase: "minuscules",
+        titleCase: "Initiales En Majuscules",
+        sentenceCase: "Casse de phrase"
     )
 
     static let it = ClipboardFeatureStrings(
@@ -1131,7 +1184,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "Layout cronologia",
         historyLayoutCards: "Schede",
         historyLayoutList: "Elenco",
-        showSourceAppIconsInList: "Mostra le icone delle app di origine nell’elenco"
+        showSourceAppIconsInList: "Mostra le icone delle app di origine nell’elenco",
+        transformText: "Trasforma testo",
+        uppercase: "MAIUSCOLE",
+        lowercase: "minuscole",
+        titleCase: "Iniziali Maiuscole",
+        sentenceCase: "Tipo frase"
     )
 
     static let ja = ClipboardFeatureStrings(
@@ -1197,7 +1255,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "履歴のレイアウト",
         historyLayoutCards: "カード",
         historyLayoutList: "リスト",
-        showSourceAppIconsInList: "リストにコピー元のアプリのアイコンを表示"
+        showSourceAppIconsInList: "リストにコピー元のアプリのアイコンを表示",
+        transformText: "テキストを変換",
+        uppercase: "大文字",
+        lowercase: "小文字",
+        titleCase: "先頭を大文字",
+        sentenceCase: "文頭のみ大文字"
     )
 
     static let zhHans = ClipboardFeatureStrings(
@@ -1263,7 +1326,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "历史布局",
         historyLayoutCards: "卡片",
         historyLayoutList: "列表",
-        showSourceAppIconsInList: "在列表中显示来源应用图标"
+        showSourceAppIconsInList: "在列表中显示来源应用图标",
+        transformText: "转换文本",
+        uppercase: "全部大写",
+        lowercase: "全部小写",
+        titleCase: "首字母大写",
+        sentenceCase: "句首大写"
     )
 
     static let zhTW = ClipboardFeatureStrings(
@@ -1329,7 +1397,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "剪貼簿紀錄佈局",
         historyLayoutCards: "卡片",
         historyLayoutList: "列表",
-        showSourceAppIconsInList: "在列表中顯示來源 App 圖示"
+        showSourceAppIconsInList: "在列表中顯示來源 App 圖示",
+        transformText: "轉換文字",
+        uppercase: "全部大寫",
+        lowercase: "全部小寫",
+        titleCase: "首字母大寫",
+        sentenceCase: "句首大寫"
     )
 
     static let zhHK = ClipboardFeatureStrings(
@@ -1395,7 +1468,12 @@ struct ClipboardFeatureStrings {
         historyLayout: "剪貼簿記錄佈局",
         historyLayoutCards: "卡片",
         historyLayoutList: "列表",
-        showSourceAppIconsInList: "在列表中顯示來源 App 圖示"
+        showSourceAppIconsInList: "在列表中顯示來源 App 圖示",
+        transformText: "轉換文字",
+        uppercase: "全部大寫",
+        lowercase: "全部小寫",
+        titleCase: "首字母大寫",
+        sentenceCase: "句首大寫"
     )
 }
 
@@ -1466,6 +1544,7 @@ struct WindowLayoutFeatureStrings {
     let center: String
     let nextDisplay: String
     let restore: String
+    let minimize: String
     let fullScreen: String
     let previousDisplay: String
     let edgeSnapEnable: String
@@ -1478,6 +1557,8 @@ struct WindowLayoutFeatureStrings {
     let edgeSnapAreasOnEdge: String
     let marginMaximize: String
     let marginPerEdge: String
+    let makeLarger: String
+    let makeSmaller: String
     let gapsSection: String
     let gapsCaption: String
     let windowGap: String
@@ -1558,6 +1639,7 @@ struct WindowLayoutFeatureStrings {
         center: "Center",
         nextDisplay: "Next display",
         restore: "Restore",
+        minimize: "Minimize",
         fullScreen: "Full Screen",
         previousDisplay: "Previous display",
         edgeSnapEnable: "Snap windows at screen edges",
@@ -1570,6 +1652,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Areas on this edge",
         marginMaximize: "Maximize with Margin",
         marginPerEdge: "Margin per edge",
+        makeLarger: "Make larger",
+        makeSmaller: "Make smaller",
         gapsSection: "Gaps",
         gapsCaption: "Space between snapped windows, and between windows and the screen edge.",
         windowGap: "Window gap",
@@ -1651,6 +1735,7 @@ struct WindowLayoutFeatureStrings {
         center: "Centralizar",
         nextDisplay: "Próximo display",
         restore: "Restaurar",
+        minimize: "Minimizar",
         fullScreen: "Tela cheia",
         previousDisplay: "Display anterior",
         edgeSnapEnable: "Encaixar janelas nas bordas da tela",
@@ -1663,6 +1748,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Áreas nesta borda",
         marginMaximize: "Maximizar com margem",
         marginPerEdge: "Margem por borda",
+        makeLarger: "Aumentar",
+        makeSmaller: "Diminuir",
         gapsSection: "Espaçamento",
         gapsCaption: "Espaço entre janelas ajustadas e entre as janelas e a borda da tela.",
         windowGap: "Espaço entre janelas",
@@ -1744,6 +1831,7 @@ struct WindowLayoutFeatureStrings {
         center: "Ortala",
         nextDisplay: "Sonraki ekran",
         restore: "Geri yükle",
+        minimize: "Küçült",
         fullScreen: "Tam ekran",
         previousDisplay: "Önceki ekran",
         edgeSnapEnable: "Pencereleri ekran kenarlarına yerleştir",
@@ -1756,6 +1844,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Bu kenardaki alanlar",
         marginMaximize: "Kenar boşluklu büyüt",
         marginPerEdge: "Her kenardaki boşluk",
+        makeLarger: "Biraz büyüt",
+        makeSmaller: "Biraz küçült",
         gapsSection: "Boşluklar",
         gapsCaption: "Yaslanan pencereler arasındaki ve pencerelerle ekran kenarı arasındaki boşluk.",
         windowGap: "Pencere boşluğu",
@@ -1837,6 +1927,7 @@ struct WindowLayoutFeatureStrings {
         center: "По центру",
         nextDisplay: "Следующий дисплей",
         restore: "Восстановить",
+        minimize: "Свернуть",
         fullScreen: "Во весь экран",
         previousDisplay: "Предыдущий дисплей",
         edgeSnapEnable: "Привязывать окна к краям экрана",
@@ -1849,6 +1940,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Области на этом краю",
         marginMaximize: "Развернуть с отступом",
         marginPerEdge: "Отступ с каждой стороны",
+        makeLarger: "Увеличить",
+        makeSmaller: "Уменьшить",
         gapsSection: "Отступы",
         gapsCaption: "Расстояние между прикреплёнными окнами и между окнами и краем экрана.",
         windowGap: "Отступ между окнами",
@@ -1930,6 +2023,7 @@ struct WindowLayoutFeatureStrings {
         center: "Centrar",
         nextDisplay: "Siguiente pantalla",
         restore: "Restaurar",
+        minimize: "Minimizar",
         fullScreen: "Pantalla completa",
         previousDisplay: "Pantalla anterior",
         edgeSnapEnable: "Ajustar ventanas a los bordes de la pantalla",
@@ -1942,6 +2036,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Áreas en este borde",
         marginMaximize: "Maximizar con margen",
         marginPerEdge: "Margen por borde",
+        makeLarger: "Agrandar",
+        makeSmaller: "Reducir",
         gapsSection: "Espaciado",
         gapsCaption: "Espacio entre ventanas ajustadas y entre las ventanas y el borde de la pantalla.",
         windowGap: "Espacio entre ventanas",
@@ -2023,6 +2119,7 @@ struct WindowLayoutFeatureStrings {
         center: "Vycentrovať",
         nextDisplay: "Ďalší displej",
         restore: "Obnoviť",
+        minimize: "Minimalizovať",
         fullScreen: "Celá obrazovka",
         previousDisplay: "Predchádzajúci displej",
         edgeSnapEnable: "Priťahovať okná k okrajom obrazovky",
@@ -2035,6 +2132,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Oblasti na tomto okraji",
         marginMaximize: "Maximalizovať s okrajom",
         marginPerEdge: "Okraj na každej strane",
+        makeLarger: "Zväčšiť",
+        makeSmaller: "Zmenšiť",
         gapsSection: "Medzery",
         gapsCaption: "Priestor medzi priťahovanými oknami a medzi oknami a okrajom obrazovky.",
         windowGap: "Medzera medzi oknami",
@@ -2116,6 +2215,7 @@ struct WindowLayoutFeatureStrings {
         center: "Zentrieren",
         nextDisplay: "Nächstes Display",
         restore: "Wiederherstellen",
+        minimize: "Minimieren",
         fullScreen: "Vollbild",
         previousDisplay: "Vorheriges Display",
         edgeSnapEnable: "Fenster an Bildschirmrändern einrasten",
@@ -2128,6 +2228,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Bereiche an diesem Rand",
         marginMaximize: "Mit Rand maximieren",
         marginPerEdge: "Rand pro Seite",
+        makeLarger: "Vergrößern",
+        makeSmaller: "Verkleinern",
         gapsSection: "Abstände",
         gapsCaption: "Abstand zwischen angedockten Fenstern sowie zwischen Fenstern und dem Bildschirmrand.",
         windowGap: "Fensterabstand",
@@ -2209,6 +2311,7 @@ struct WindowLayoutFeatureStrings {
         center: "Centrer",
         nextDisplay: "Écran suivant",
         restore: "Restaurer",
+        minimize: "Réduire",
         fullScreen: "Plein écran",
         previousDisplay: "Écran précédent",
         edgeSnapEnable: "Ancrer les fenêtres aux bords de l’écran",
@@ -2221,6 +2324,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Zones sur ce bord",
         marginMaximize: "Agrandir avec marge",
         marginPerEdge: "Marge de chaque côté",
+        makeLarger: "Agrandir un peu",
+        makeSmaller: "Réduire un peu",
         gapsSection: "Espacements",
         gapsCaption: "Espace entre les fenêtres ancrées et entre les fenêtres et le bord de l’écran.",
         windowGap: "Espace entre fenêtres",
@@ -2302,6 +2407,7 @@ struct WindowLayoutFeatureStrings {
         center: "Centra",
         nextDisplay: "Display successivo",
         restore: "Ripristina",
+        minimize: "Riduci",
         fullScreen: "Schermo intero",
         previousDisplay: "Display precedente",
         edgeSnapEnable: "Allinea le finestre ai bordi dello schermo",
@@ -2314,6 +2420,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Aree su questo bordo",
         marginMaximize: "Massimizza con margine",
         marginPerEdge: "Margine per lato",
+        makeLarger: "Ingrandisci",
+        makeSmaller: "Riduci",
         gapsSection: "Spaziatura",
         gapsCaption: "Spazio tra le finestre agganciate e tra le finestre e il bordo dello schermo.",
         windowGap: "Spazio tra finestre",
@@ -2395,6 +2503,7 @@ struct WindowLayoutFeatureStrings {
         center: "中央",
         nextDisplay: "次のディスプレイ",
         restore: "復元",
+        minimize: "しまう",
         fullScreen: "フルスクリーン",
         previousDisplay: "前のディスプレイ",
         edgeSnapEnable: "画面の端にウインドウをスナップ",
@@ -2407,6 +2516,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "この端の領域",
         marginMaximize: "余白付きで最大化",
         marginPerEdge: "各辺の余白",
+        makeLarger: "少し大きく",
+        makeSmaller: "少し小さく",
         gapsSection: "間隔",
         gapsCaption: "スナップしたウインドウ同士、およびウインドウと画面端の間隔です。",
         windowGap: "ウインドウの間隔",
@@ -2488,6 +2599,7 @@ struct WindowLayoutFeatureStrings {
         center: "居中",
         nextDisplay: "下一台显示器",
         restore: "恢复",
+        minimize: "最小化",
         fullScreen: "全屏幕",
         previousDisplay: "上一台显示器",
         edgeSnapEnable: "将窗口贴靠到屏幕边缘",
@@ -2500,6 +2612,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "此边缘的区域",
         marginMaximize: "带边距最大化",
         marginPerEdge: "每侧边距",
+        makeLarger: "放大",
+        makeSmaller: "缩小",
         gapsSection: "间距",
         gapsCaption: "贴靠窗口之间以及窗口与屏幕边缘之间的间距。",
         windowGap: "窗口间距",
@@ -2581,6 +2695,7 @@ struct WindowLayoutFeatureStrings {
         center: "置中",
         nextDisplay: "下一台顯示器",
         restore: "還原",
+        minimize: "最小化",
         fullScreen: "全螢幕",
         previousDisplay: "上一台顯示器",
         edgeSnapEnable: "將視窗貼齊螢幕邊緣",
@@ -2593,6 +2708,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "此邊緣的區域",
         marginMaximize: "保留邊距最大化",
         marginPerEdge: "每側邊距",
+        makeLarger: "放大",
+        makeSmaller: "縮小",
         gapsSection: "間距",
         gapsCaption: "貼齊視窗之間以及視窗與螢幕邊緣之間的間距。",
         windowGap: "視窗間距",
@@ -2674,6 +2791,7 @@ struct WindowLayoutFeatureStrings {
         center: "置中",
         nextDisplay: "下一部顯示器",
         restore: "還原",
+        minimize: "最小化",
         fullScreen: "全螢幕",
         previousDisplay: "上一部顯示器",
         edgeSnapEnable: "將視窗貼齊螢幕邊緣",
@@ -2686,6 +2804,8 @@ struct WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "此邊緣的區域",
         marginMaximize: "保留邊距最大化",
         marginPerEdge: "每側邊距",
+        makeLarger: "放大",
+        makeSmaller: "縮小",
         gapsSection: "間距",
         gapsCaption: "貼齊視窗之間以及視窗與螢幕邊緣之間的間距。",
         windowGap: "視窗間距",
@@ -3266,7 +3386,12 @@ extension ClipboardFeatureStrings {
         historyLayout: "Розкладка історії",
         historyLayoutCards: "Картки",
         historyLayoutList: "Список",
-        showSourceAppIconsInList: "Показувати значки вихідних програм у списку"
+        showSourceAppIconsInList: "Показувати значки вихідних програм у списку",
+        transformText: "Перетворити текст",
+        uppercase: "Усе великими літерами",
+        lowercase: "Усе малими літерами",
+        titleCase: "Великі перші літери",
+        sentenceCase: "Як у реченні"
     )
 }
 
@@ -3338,6 +3463,7 @@ extension WindowLayoutFeatureStrings {
         center: "Центр",
         nextDisplay: "Наступний дисплей",
         restore: "Відновити",
+        minimize: "Згорнути",
         fullScreen: "На весь екран",
         previousDisplay: "Попередній дисплей",
         edgeSnapEnable: "Прилипати вікнами до країв екрана",
@@ -3350,6 +3476,8 @@ extension WindowLayoutFeatureStrings {
         edgeSnapAreasOnEdge: "Області на цьому краю",
         marginMaximize: "Розгорнути з полем",
         marginPerEdge: "Відступ з кожного боку",
+        makeLarger: "Збільшити",
+        makeSmaller: "Зменшити",
         gapsSection: "Проміжки",
         gapsCaption: "Проміжок між прилиплими вікнами та між вікнами та краєм екрана.",
         windowGap: "Проміжок між вікнами",

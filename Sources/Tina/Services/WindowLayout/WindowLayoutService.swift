@@ -283,6 +283,17 @@ final class WindowLayoutService: ObservableObject {
             }
             return applied ? finish(.success(restored: false)) : finish(.failure(.failed))
         }
+
+        if action == .minimize {
+            // Same as full screen: a placement still settling must not write
+            // its frame onto a window on its way to the Dock. The frame stays
+            // as it was, so nothing is remembered for restore.
+            cancelSettle(for: target.windowID)
+            assistiveModeSuspensions.removeValue(forKey: target.windowID)?.resume()
+            guard minimize(target: target) else { return finish(.failure(.failed)) }
+            lastActions.removeValue(forKey: target.key)
+            return finish(.success(restored: false))
+        }
         let screens = NSScreen.screens
         guard let screen = bestScreen(for: target.frame, screens: screens) else {
             return finish(.failure(.failed))
@@ -496,6 +507,8 @@ final class WindowLayoutService: ObservableObject {
             hasRequiredCapability = canSetFrame(on: window)
         case .fullScreen:
             hasRequiredCapability = canSetFullScreen(on: window)
+        case .minimize:
+            hasRequiredCapability = canSetMinimized(on: window)
         }
         guard hasRequiredCapability else { return nil }
         let key = WindowLayoutWindowKey(
@@ -588,7 +601,7 @@ final class WindowLayoutService: ObservableObject {
 
         let original = self.frame(of: window)
         settledFrames.removeValue(forKey: windowKey)
-        if attempt(frame, targetRect: targetRect, visibleFrame: screenVisibleFrame, action: action, on: window) {
+        if attempt(frame, targetRect: targetRect, visibleFrame: screenVisibleFrame, action: action, original: original, on: window) {
             assistiveModeSuspensions.removeValue(forKey: windowID)?.resume()
             // Read-back is needed only by the side cycle or opt-in drag restore.
             if cyclePress != nil || UserDefaults.standard.bool(forKey: DefaultsKey.windowEdgeSnapRestoreOnDrag) {
@@ -685,6 +698,7 @@ final class WindowLayoutService: ObservableObject {
                         targetRect: context.targetRect,
                         visibleFrame: context.screenVisibleFrame,
                         action: context.action,
+                        original: context.original,
                         on: context.window) {
             concludeSettle(context, success: true)
             return
@@ -705,6 +719,7 @@ final class WindowLayoutService: ObservableObject {
                             targetRect: context.targetRect,
                             visibleFrame: context.screenVisibleFrame,
                             action: context.action,
+                            original: context.original,
                             on: context.window) {
                 concludeSettle(context, success: true)
                 return
@@ -716,7 +731,10 @@ final class WindowLayoutService: ObservableObject {
     private func verified(_ context: SettleContext) -> Bool {
         guard let actual = frame(of: context.window) else { return false }
         return actual.isClose(to: context.frame, tolerance: frameTolerance)
-            || accepted(actual: actual, targetRect: context.targetRect, action: context.action)
+            || accepted(actual: actual,
+                        targetRect: context.targetRect,
+                        action: context.action,
+                        original: context.original)
     }
 
     // The action already reported success while the window was settling, so a
@@ -734,6 +752,28 @@ final class WindowLayoutService: ObservableObject {
         }
         settledFrames.removeValue(forKey: context.windowKey)
         restoreFrames[context.windowKey] = context.previousRestoreFrame
+        if context.action.isStepResize,
+           let original = context.original,
+           let actual = frame(of: context.window),
+           WindowLayoutGeometry.stepResizeRefused(actualRect: appKitFrame(fromAX: actual),
+                                                  originalRect: appKitFrame(fromAX: original),
+                                                  tolerance: frameTolerance) {
+            // The app kept its size (its minimum, or a grid coarser than the
+            // step): nothing changed, so there is nothing to restore or
+            // report. The anchoring may still have moved the window, since
+            // the step's center is not the window's own once the frame hangs
+            // past the visible frame, so put the original frame back — an app
+            // only slower than the settle then applies its size there instead
+            // of off center.
+            frameHistory.discardLatest(for: context.windowKey)
+            if let previousAction = context.previousAction {
+                lastActions[context.windowKey] = previousAction
+            } else {
+                lastActions.removeValue(forKey: context.windowKey)
+            }
+            applyFrame(original, on: context.window)
+            return
+        }
         if let original = context.original {
             applyFrame(original, on: context.window)
         }
@@ -762,6 +802,7 @@ final class WindowLayoutService: ObservableObject {
                          targetRect: NSRect,
                          visibleFrame: NSRect,
                          action: WindowLayoutAction,
+                         original: WindowLayoutFrame? = nil,
                          on window: AXUIElement) -> Bool {
         for _ in 0..<3 {
             applyFrame(frame,
@@ -771,7 +812,7 @@ final class WindowLayoutService: ObservableObject {
                        on: window)
             guard let actual = self.frame(of: window) else { continue }
             if actual.isClose(to: frame, tolerance: frameTolerance)
-                || accepted(actual: actual, targetRect: targetRect, action: action) {
+                || accepted(actual: actual, targetRect: targetRect, action: action, original: original) {
                 return true
             }
         }
@@ -831,8 +872,15 @@ final class WindowLayoutService: ObservableObject {
 
     private func accepted(actual: WindowLayoutFrame,
                           targetRect: NSRect,
-                          action: WindowLayoutAction) -> Bool {
+                          action: WindowLayoutAction,
+                          original: WindowLayoutFrame? = nil) -> Bool {
         let actualRect = appKitFrame(fromAX: actual)
+        if action.isStepResize {
+            guard let original else { return false }
+            return WindowLayoutGeometry.stepResizeAccepts(actualRect: actualRect,
+                                                          targetRect: targetRect,
+                                                          originalRect: appKitFrame(fromAX: original))
+        }
         return WindowLayoutGeometry.accepts(actualRect: actualRect,
                                             targetRect: targetRect,
                                             action: action,
@@ -2728,6 +2776,14 @@ final class WindowLayoutService: ObservableObject {
                                               "AXFullScreen" as CFString,
                                               &fullScreenSettable) == .success
             && fullScreenSettable.boolValue
+    }
+
+    private func canSetMinimized(on window: AXUIElement) -> Bool {
+        var minimizedSettable = DarwinBoolean(false)
+        return AXUIElementIsAttributeSettable(window,
+                                              kAXMinimizedAttribute as CFString,
+                                              &minimizedSettable) == .success
+            && minimizedSettable.boolValue
     }
 
     private func setPosition(_ point: CGPoint, on element: AXUIElement) -> Bool {
