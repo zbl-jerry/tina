@@ -13,9 +13,9 @@ body:
 
         如果这个需求来自开源项目调研，建议先用仓库内的
         `/tina-feature-research` skill 做约束检查和价值分析。它会核对
-        macOS 15、原生实现、Release ≤30 MB、复杂度、与现有功能重复性，
-        并生成下面的字段和“开源参考”内容。只借鉴产品行为，代码按 Tina
-        架构重写。
+        macOS 15、原生实现、上游 Release 包 ≤30 MB（没有 release 则跳过）、
+        复杂度、与现有功能重复性，并生成下面的字段和“开源参考”内容。
+        只借鉴产品行为，代码按 Tina 架构重写。
 
   - type: textarea
     id: problem
@@ -58,13 +58,14 @@ body:
     id: open_source
     attributes:
       label: 开源参考（可选）
-      description: 如果需求来自开源项目，请写来源仓库、版本/commit，以及 macOS 15、原生实现、体积、复杂度和重复性检查的结论。可直接使用 `/tina-feature-research` 生成。
+      description: 如果需求来自开源项目，请写来源仓库、版本/commit，以及 macOS 15、原生实现、上游 Release 体积、复杂度和重复性检查的结论。可直接使用 `/tina-feature-research` 生成。
       placeholder: |
         来源：https://github.com/owner/repo @ <tag/commit>
         结论：pursue / MVP / defer / reject
         macOS 15：pass / conditional / fail
         原生：pass / conditional / fail
-        体积：新增约 X MB（依据）
+        上游 release 体积：X MB / 无 release（跳过）
+        Tina 增量体积：约 X MB（依据）
         复杂度：low / medium / high（依据）
         重复性：new / enhancement / duplicate
 

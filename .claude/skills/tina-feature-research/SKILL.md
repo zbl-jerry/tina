@@ -1,6 +1,6 @@
 ---
 name: tina-feature-research
-description: 调研开源项目并提取适合 Tina 的产品需求，评估 macOS 15、原生实现、30MB Release 体积、复杂度与现有功能重复，分析上游产品价值和 Tina 用户增量收益，最后按仓库 feature request 模板产出报告。当用户给出 GitHub/开源项目链接、要求分析某个 App 的功能、判断是否值得在 Tina 中实现，或要求生成 feature issue 时使用。
+description: 调研开源项目并提取适合 Tina 的产品需求，评估 macOS 15、原生实现、上游开源项目 Release 包 ≤30MB（无 release 则跳过）、复杂度与现有功能重复，分析上游产品价值和 Tina 用户增量收益，最后按仓库 feature request 模板产出报告。当用户给出 GitHub/开源项目链接、要求分析某个 App 的功能、判断是否值得在 Tina 中实现，或要求生成 feature issue 时使用。
 ---
 
 # Tina 开源产品调研
@@ -27,7 +27,7 @@ description: 调研开源项目并提取适合 Tina 的产品需求，评估 mac
 |---|---|
 | macOS 15 | 功能必须在 macOS 15 上可用。Tina 当前最低支持 macOS 14；如果功能依赖 15+ API，必须写出 14 上的降级/隐藏方案，或明确说明这是一次最低版本提升。 |
 | 原生实现 | 优先 Swift / SwiftUI / AppKit / Objective-C。Electron、Node、Java、Python 运行时默认不合格；只有在能重写成小体量原生代码时才继续评估。 |
-| Release 体积 | 完整 DMG ≤ 30 MB。当前 Release 约 28 MB，新增预算通常只有 1–2 MB；必须估算增量（二进制、资源、模型、依赖），不能只看上游安装包大小。 |
+| 上游 Release 包（若有） | 被调研项目的最新 release 产物（DMG/zip/tar/单二进制）**≤30 MB 是适配性正面信号**；超过 30 MB 说明软件本身可能过重，默认 defer 或只取可独立剥离的小范围 MVP，除非能证明目标能力与体积无关。**没有 release 时跳过此项、不扣分**，改用源码/依赖/资源估算。Tina 自身的增量体积另算，是成本项。 |
 | 复杂度 | 不引入新的特权 helper、系统扩展、DriverKit、网络服务或大规模状态机，除非用户价值足够高且风险有明确缓解。优先 MVP，避免 1:1 复刻。 |
 | 不重复 | 先查 `Sources/Tina/Core/FeatureCatalog.swift`、`Sources/Tina/Services/`、`README.md` 和已有 issue；与现有功能重叠时必须说明“增强”还是“重复”。 |
 | 用户价值 | 必须回答“上游产品解决了谁的什么痛点”和“Tina 用户多得到什么能力”，不能只列功能点。 |
@@ -44,9 +44,10 @@ description: 调研开源项目并提取适合 Tina 的产品需求，评估 mac
    - 标出哪些是核心、哪些是边缘/平台特定/历史包袱。
 
 3. **先过硬约束**
-   - 逐项判定 macOS 15、原生、体积、复杂度、重复。
+   - 逐项判定 macOS 15、原生、上游 Release 包体积、复杂度、重复。
+   - 先看被调研项目有没有 release：没有就标记 `size: n/a` 并跳过，不要因此 reject。
+   - 有 release 时记录资产实际大小（`gh release view --json assets`）；≤30 MB 是正面信号，>30 MB 是“可能过重”的负面信号。再单独估算 Tina 的增量（资源 X MB、依赖 Y、二进制 Z）。
    - 任一项“不合格”且没有可接受的替代方案，直接给出 reject/defer，不要继续堆功能描述。
-   - 对体积给出估算依据（例如：新增资源 X MB、依赖 Y、二进制 Z），并标注不确定性。
 
 4. **分析上游产品价值**
    - JTBD：用户是谁、在什么场景、多久一次、痛点严重度。
@@ -89,7 +90,8 @@ description: 调研开源项目并提取适合 Tina 的产品需求，评估 mac
 
 - 把上游的功能列表原样搬过来，不判断重复和复杂度。
 - 用 star 数、下载量代替用户价值分析。
-- 忽略 Release 体积预算，或用“压缩后可能更小”搪塞。
+- 忽略上游 Release 包体积，或用 Tina 的包体大小、star 数代替；也不要用“压缩后可能更小”搪塞。
+- 把“没有 release”当成体积不合格；这种情况应跳过该判据。
 - 忽略 macOS 14 兼容性；Tina 当前最低版本是 14。
 - 建议引入 Electron/Node/Python 运行时。
 - 为了一个功能引入新的特权 helper 或系统扩展而不给安全/维护分析。
@@ -98,6 +100,6 @@ description: 调研开源项目并提取适合 Tina 的产品需求，评估 mac
 
 ## 参考文件
 
-- `references/constraints.md`：硬约束的详细判定和体积估算方法。
+- `references/constraints.md`：硬约束的详细判定，以及上游 Release 体积（判断标准，无 release 则跳过）与 Tina 增量体积的分开估算方法。
 - `references/report-template.md`：feature issue 报告模板。
 - `scripts/probe_macos_project.sh`：macOS 项目静态探测脚本（只读，不执行目标项目代码）。

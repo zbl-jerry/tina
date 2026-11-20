@@ -43,8 +43,9 @@ over a new subsystem. Keep each PR focused on one independently useful change.
 
 If the idea comes from another open-source project, run the repository's
 `/tina-feature-research` skill first. It checks macOS 15 support, native
-implementation, the 30 MB release budget, complexity and overlap with existing
-features, then produces the issue text in the feature-request format.
+implementation, the 30 MB upstream-release guideline (skipped when the project
+has no release), complexity and overlap with existing features, then produces
+the issue text in the feature-request format.
 
 - App lifecycle lives in `Sources/Tina/App`, shared catalogs and preferences
   in `Core`, behavior in `Services`, views in `UI`, and diagnostics in `Support`.

@@ -49,7 +49,7 @@
 |---|---|---|
 | macOS 15 | pass / conditional / fail | <部署目标 / API / 14 降级方案> |
 | 原生实现 | pass / conditional / fail | <语言、可重写模块、依赖> |
-| Release ≤30 MB | pass / conditional / fail | <新增体积估算与依据> |
+| 上游 Release 体积（若有） | pass / caution / n/a | <上游主产物名与大小；无 release 写 n/a 并跳过> |
 | 复杂度 | pass / conditional / fail | <新 helper/扩展/服务/私有 API> |
 | 不重复 | new / enhancement / duplicate | <对应 Tina 现有功能> |
 
@@ -70,6 +70,7 @@
 #### 成本、风险与 MVP
 
 - 规模：S / M / L / XL（依据）
+- Tina 增量体积：<估计区间与依据；与上游 release 体积分开>
 - 主要风险：<私有 API / 权限 / 体积 / 维护>
 - MVP 边界：<第一版只做什么，明确不做什么>
 - 决策：pursue / MVP / defer / reject + 一句话理由

@@ -76,11 +76,25 @@ find "$root" -maxdepth 3 -name '*.app' -type d -print 2>/dev/null | while read -
 done
 
 echo
-echo "## Release assets (compressed size reference)"
+echo "## Upstream release size (guideline: <=30 MB; skip when there is no release)"
 if [[ -n "$repo_slug" ]]; then
-    gh release view --repo "$repo_slug" --json tagName,assets 2>/dev/null \
-        | jq -r '.tagName as $t | .assets[]? | "- \(.name) \(.size) bytes (\(.size/1048576 | floor) MB) in \($t)"' 2>/dev/null \
-        || echo "- no release assets or API unavailable"
+    if release_json="$(gh release view --repo "$repo_slug" --json tagName,assets 2>/dev/null)"; then
+        printf '%s' "$release_json" | jq -r --argjson limit 31457280 '
+            .tagName as $t |
+            (.assets // []) as $a |
+            if ($a | length) == 0 then
+                "- \($t): no downloadable assets — skip the 30 MB criterion"
+            else
+                ($a[] | "- \(.name): \(.size) bytes (\((.size / 1048576 * 10 | floor) / 10) MB)"),
+                (($a | max_by(.size)) as $m |
+                    "largest asset: \($m.name) \(((($m.size / 1048576) * 10 | floor) / 10)) MB — " +
+                    (if $m.size <= $limit then "pass (<=30 MB)" else "caution (>30 MB, likely too heavy)" end)),
+                "- note: this is the upstream package, not Tina'"'"'s DMG"
+            end' 2>/dev/null \
+            || echo "- release exists but assets could not be parsed"
+    else
+        echo "- no release — skip the 30 MB criterion; estimate from source/dependencies instead"
+    fi
 fi
 
 echo
@@ -94,4 +108,5 @@ fi
 echo
 echo "## Notes"
 echo "- This probe is static. It does not build or run target code."
-echo "- Size of an upstream release is reference only; estimate Tina's incremental size separately."
+echo "- The 30 MB guideline applies to the upstream project's release package, not Tina's DMG."
+echo "- If the upstream project has no release, skip that guideline and estimate from source/dependencies."
