@@ -266,6 +266,7 @@ final class FeatureRuntime: ObservableObject {
         .keyboardDebounce: { KeyboardDebounceService.shared.syncWithPreferences() },
         .quitWindowProtection: { QuitProtectionService.shared.syncWithPreferences() },
         .superKey: { SuperKeyService.shared.syncWithPreferences() },
+        .layoutFix: { LayoutFixService.shared.syncWithPreferences() },
         .textSnippets: {
             TextSnippetService.shared.syncWithPreferences()
             SnippetLibraryService.shared.syncWithPreferences()
@@ -383,6 +384,7 @@ final class FeatureRuntime: ObservableObject {
             if AppFeature.notch.isAvailable { NotchService.shared.syncWithPreferences() }
         },
         .scratchpad: { ScratchpadService.shared.syncWithPreferences() },
+        .launchpad: { LaunchpadService.shared.syncWithPreferences() },
         .commandBar: { CommandBarService.shared.syncWithPreferences() },
         .cleaner: {
             CleanerScheduler.shared.syncWithPreferences()

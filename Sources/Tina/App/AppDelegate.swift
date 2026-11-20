@@ -75,6 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         // appearance and then repainted.
         AppAppearanceController.shared.apply()
         GlobalShortcut.startObservingKeyboardLayout()
+        SuperKeyService.fixLayout = { LayoutFixService.shared.performExternalTrigger() }
         // UNUserNotificationCenter aborts in a process without a bundle;
         // guard keeps ad-hoc runs of the bare binary alive for probing.
         if Bundle.main.bundleIdentifier != nil {
@@ -193,7 +194,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
                     .dockPreview, .finderCutPaste, .finderRename, .autoQuit, .dockClick,
                     .middleClick, .windowMaximizer, .keyboardDebounce, .windowLayout,
                     .textSnippets, .brightness, .radialMenu, .mouseButtonShortcuts,
-                    .mouseClickDebounce, .superKey, .quitWindowProtection, .mixer, .musicBlock, .notch,
+                    .mouseClickDebounce, .superKey, .layoutFix, .quitWindowProtection, .mixer, .musicBlock, .notch,
                 ])
             }
             .store(in: &cancellables)
@@ -336,6 +337,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         WindowMaximizer.shared.stop()
         WindowLayoutService.shared.suspend()
         KeyboardDebounceService.shared.suspend()
+        LayoutFixService.shared.suspend()
         MouseClickDebounceService.shared.suspend()
         TextSnippetService.shared.suspend()
         // Takes the Super key mapping back out before the process goes away.
@@ -370,6 +372,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             ClipboardHistoryService.shared.flushBeforeTermination()
         }
         KeepAwakeManager.shared.deactivate(reason: .quit)
+    }
+
+    /// The app's own links. Only the Launchpad Dock icon sends one, and a
+    /// link a web page could also open, so it does nothing but show the grid.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard urls.contains(where: { $0.host?.lowercased() == "launchpad" }) else { return }
+        LaunchpadService.shared.toggle()
     }
 
     /// The lifeline when the menu bar icon goes missing. Opening the app again

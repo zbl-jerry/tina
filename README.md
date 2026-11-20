@@ -74,7 +74,8 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 ### Windows and the Dock
 
 - **App switcher.** Switch between apps and windows with live previews, search and display filters. A simpler mode works without screen capture.
-- **Window layout.** Snap windows into layouts, move them between displays and restore earlier positions using shortcuts, screen edges or modifier-drag gestures.
+- **Launchpad.** A full-screen app grid with folders, search, pages and drag reordering, opened from a shortcut, the Dynamic Island or an optional Dock icon.
+- **Window layout.** Snap windows into layouts, move them between displays and restore earlier positions using shortcuts, screen edges or modifier-drag gestures. Custom tiles (opt-in) show when holding Option; drag a window into a tile and release to resize it, with separate editable zones for each connected display in Window Layout settings.
 - **Dock Preview.** Hover over Dock icons to preview windows across desktops. Switch, close, move or snap them from the preview.
 - **Dock clicks.** Click an active app's Dock icon to minimize, hide or cycle through its windows.
 - **Maximize windows.** Use the green button to fill the screen without creating another Space.
@@ -106,11 +107,12 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **Extra click filter.** Ignore accidental rapid clicks from worn mouse buttons without delaying normal clicks.
 - **Key debounce.** Filter repeated letters caused by a worn keyboard.
 - **Super key.** Use Caps Lock or a right-side modifier as a shortcut combination, with a separate tap action and app exclusions.
+- **Layout Fix.** Tap the right Option key after typing in the wrong keyboard layout to retype the last word in another enabled layout.
 - **Keyboard shortcuts.** Manage feature shortcuts in one place, including optional takeover of supported macOS shortcuts while a feature is active.
 
 ### Clipboard, files and links
 
-- **Clipboard history.** Search local text, image and file history, pin favorites, preview entries and paste with shortcuts.
+- **Clipboard history.** Search local text, image and file history, pin favorites, preview entries and paste with shortcuts. Preview copied files, drag entries into other apps, queue a paste stack, and transform text case from the entry menus.
 - **Auto clear clipboard.** Clear the system clipboard after a delay, sleep or lock, while keeping saved history.
 - **Paste as plain text.** Paste without formatting while preserving the original clipboard content.
 - **Shelf.** Park files, text and links near your cursor while dragging, then drop or share them later.

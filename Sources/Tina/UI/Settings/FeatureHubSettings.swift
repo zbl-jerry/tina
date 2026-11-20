@@ -1159,6 +1159,7 @@ extension AppFeature {
         case .keyboardDebounce: return s.keyDebounceName
         case .textSnippets: return FeatureStrings.snippets(language).pageTitle
         case .superKey: return FeatureStrings.superKey(language).pageTitle
+        case .layoutFix: return FeatureStrings.layoutFix(language).pageTitle
         case .mouseClickDebounce:
             return FeatureStrings.mouseClickDebounce(language).title
         case .clipboardHistory: return FeatureStrings.clipboard(language).title
@@ -1209,6 +1210,7 @@ extension AppFeature {
         case .uninstaller: return s.uninstallerName
         case .killProcess: return FeatureStrings.killProcess(language).pageTitle
         case .portManager: return FeatureStrings.portManager(language).title
+        case .launchpad: return FeatureStrings.launchpad(language).pageTitle
         case .homebrew: return s.homebrewName
         case .appUpdates: return FeatureStrings.appUpdates(language).pageTitle
         case .monitorCPU: return s.monitorShowCPU
@@ -1246,6 +1248,7 @@ extension AppFeature {
         case .keyboardDebounce: return hub.descKeyboardDebounce
         case .textSnippets: return FeatureStrings.snippets(L10n.shared.language).hubDescription
         case .superKey: return FeatureStrings.superKey(L10n.shared.language).hubDescription
+        case .layoutFix: return FeatureStrings.layoutFix(L10n.shared.language).hubDescription
         case .mouseClickDebounce:
             return FeatureStrings.mouseClickDebounce(L10n.shared.language).caption
         case .clipboardHistory: return hub.descClipboardHistory
@@ -1302,6 +1305,7 @@ extension AppFeature {
         case .uninstaller: return hub.descUninstaller
         case .killProcess: return FeatureStrings.killProcess(L10n.shared.language).hubDescription
         case .portManager: return FeatureStrings.portManager(L10n.shared.language).hubDescription
+        case .launchpad: return FeatureStrings.launchpad(L10n.shared.language).hubDescription
         case .homebrew: return hub.descHomebrew
         case .appUpdates: return FeatureStrings.appUpdates(L10n.shared.language).hubDescription
         case .monitorCPU: return hub.descMonitorCPU

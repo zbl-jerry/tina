@@ -238,11 +238,13 @@ final class NotchService: ObservableObject {
     /// the preferences: the open page's geometry is read on every layout pass.
     private var homeControls: [NotchControlItem] = []
     private var fileInteractionActive = false
+    /// A clipboard drag keeps its native source alive until AppKit finishes.
+    private var clipboardDragging = false
     /// A screenshot preview stays when the pointer leaves or another app
     /// activates. It leaves on its own timer or on a click elsewhere.
     private var keepsWorkingSurface: Bool { keepsSurfaceOnClick || showsCapturePreview }
     private var keepsSurfaceOnClick: Bool {
-        pinned || trackingMenu || NSApp.modalWindow != nil || panel?.attachedSheet != nil
+        pinned || trackingMenu || clipboardDragging || NSApp.modalWindow != nil || panel?.attachedSheet != nil
             || NotchLyricsService.shared.isImporting
             // Like the lyrics chooser, these panels stand beside the island
             // instead of hanging from it; a click in them is not a click away.
@@ -558,6 +560,11 @@ final class NotchService: ObservableObject {
         NotchKeepAwakeSupport.showsActivity() && KeepAwakeManager.shared.isActive
     }
 
+    var hasPasteStackActivity: Bool { pasteStackCount > 0 }
+
+    /// The cards a running paste stack has left.
+    var pasteStackCount: Int { ClipboardHistoryService.shared.pasteStackIDs.count }
+
     var compactActivity: NotchCompactActivity? {
         // A new song waiting for its notice is not drawn yet.
         activitySelection.current(available: awaitsTrackNotice ? compactActivities.filter { $0 != .music } : compactActivities)
@@ -566,7 +573,8 @@ final class NotchService: ObservableObject {
     var compactActivities: [NotchCompactActivity] {
         NotchSupport.compactActivities(timer: hasTimerActivity, watch: hasWatchActivity, downloads: hasDownloadActivity,
                                       agents: hasAgentActivity, calendar: hasCalendarActivity,
-                                      music: hasMusicActivity, keepAwake: hasKeepAwakeActivity)
+                                      music: hasMusicActivity, keepAwake: hasKeepAwakeActivity,
+                                      pasteStack: hasPasteStackActivity)
     }
 
     var showsCompactActivityPicker: Bool {
@@ -692,6 +700,10 @@ final class NotchService: ObservableObject {
                                                     paired: companion != nil)
         // Its reading is a countdown like the timer's, so it takes the timer's wings.
         case .keepAwake: return geometry.compactTimerGeometry(showsDownloads: false, wing: keepAwakeStripWing(in: geometry))
+        case .pasteStack:
+            return geometry.compactTimerGeometry(
+                showsDownloads: false,
+                wing: NotchPasteStackSupport.stripWing(count: pasteStackCount, in: geometry))
         default: return geometry
         }
     }
@@ -1112,6 +1124,8 @@ final class NotchService: ObservableObject {
                 NotchKeepAwakeSupport.compactText(until: $0, now: Date(), locale: Locale(identifier: language.rawValue))
             }
             return layout.keepAwakeSurface(reading: reading, geometry: geometry)
+        case .pasteStack:
+            return layout.pasteStackSurface(count: pasteStackCount, geometry: geometry)
         }
     }
 
@@ -1352,6 +1366,7 @@ final class NotchService: ObservableObject {
         dragPlaceholder = false
         endFileDrop()
         fileInteractionActive = false
+        clipboardDragging = false
         heldDrag = false
         shelfDragExitWork?.cancel(); shelfDragExitWork = nil
         selectedMetric = nil
@@ -1550,6 +1565,18 @@ final class NotchService: ObservableObject {
               })
         else { return }
         next.makeKey()
+    }
+
+    func setClipboardDragging(_ active: Bool) {
+        guard clipboardDragging != active else { return }
+        clipboardDragging = active
+        hoverWork?.cancel()
+        hoverWork = nil
+        // An external destination may own the keyboard now. Recheck dismissal
+        // only outside the island; ending a drag must never reclaim focus.
+        if !active, windowHost?.containsHover(NSEvent.mouseLocation) != true {
+            hover(false)
+        }
     }
 
     func setMusicDetailsVisible(_ visible: Bool) {
@@ -1925,6 +1952,7 @@ final class NotchService: ObservableObject {
             case .calendar: select(.calendar)
             case .commandBar: perform { CommandBarService.shared.show() }
             case .scratchpad: openScratchpad()
+            case .launchpad: perform { LaunchpadService.shared.show() }
             case .volume, .brightness, .keyboardLight: select(.controls)
             }
         }
@@ -4301,6 +4329,14 @@ final class NotchService: ObservableObject {
                     self?.refreshPresentation()
                 }.store(in: &subscriptions)
         }
+        // A paste stack starting, ending, or its count changing, which can
+        // change the wings it needs.
+        ClipboardHistoryService.shared.$pasteStackIDs.map(\.count).removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+                self?.refreshPresentation()
+            }.store(in: &subscriptions)
         if NotchSupport.routes(.agents) {
             AgentUsageService.shared.events.receive(on: DispatchQueue.main)
                 .sink { [weak self] in self?.showAgentEvent($0) }

@@ -176,6 +176,7 @@ struct MetricsTests {
             }),
             ("keyboard", {
                 KeyboardFeatureTests.run(suite)
+                LayoutFixSupportTests.run(suite)
                 AssistiveKeyboardTests.run(suite)
                 ScreenshotToolShortcutTests.run(suite)
             }),
@@ -190,6 +191,7 @@ struct MetricsTests {
                 QuitProtectionRoutingContract.QuitProtectionService.routingChecks(suite)
             }),
             ("scratchpad", { ScratchpadMarkTests.run { suite.expect($0, $1) } }),
+            ("launchpad", { LaunchpadLayoutTests.run { suite.expect($0, $1) } }),
             ("recording", {
                 RecorderPreparationTests.run(suite)
                 RecorderSampleTimingTests.run(suite)

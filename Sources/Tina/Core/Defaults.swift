@@ -334,6 +334,10 @@ enum DefaultsKey {
     static let keyboardDebounceEnabled = "keyboardDebounceEnabled"
     static let keyboardDebounceWindowMs = "keyboardDebounceWindowMs"
     static let keyboardDebounceKeyWindows = "keyboardDebounceKeyWindows" // comma-separated keyCode:ms
+    static let layoutFixEnabled = "layoutFixEnabled"                     // tap retypes the last word in another layout (issue #3221)
+    static let layoutFixTrigger = "layoutFixTrigger"                     // LayoutFixTrigger raw value
+    static let layoutFixExcludedLayouts = "layoutFixExcludedLayouts"     // [input source id] left out of the fix
+    static let layoutFixExceptions = "layoutFixExceptions"               // apps where the fix stays off
     static let panelUtilityCleaning = "panelUtilityCleaning"
     static let cleaningModeKeepScreenVisible = "cleaningModeKeepScreenVisible"
     static let panelUtilityURLCleaner = "panelUtilityURLCleaner"
@@ -643,6 +647,10 @@ enum DefaultsKey {
     static let wallpaperExcludedOwnPaths = "wallpaperExcludedOwnPaths"
     static let scratchpadShortcutEnabled = "scratchpadShortcutEnabled"
     static let scratchpadShortcut = "scratchpadShortcut"
+    static let launchpadShortcutEnabled = "launchpadShortcutEnabled"
+    static let launchpadShortcut = "launchpadShortcut"
+    static let launchpadStyle = "launchpadStyle"             // LaunchpadSupport.Style raw value
+    static let launchpadLayout = "launchpadLayout"           // Data: LaunchpadLayout JSON, pages, folders and hidden apps
     static let commandBarMenusShortcutEnabled = "commandBarMenusShortcutEnabled"
     static let commandBarMenusShortcut = "commandBarMenusShortcut"
     static let commandBarShortcutEnabled = "commandBarShortcutEnabled"
@@ -799,6 +807,8 @@ enum DefaultsKey {
     static let windowEdgeSnapEnabled = "windowEdgeSnapEnabled"
     static let windowEdgeSnapDisabledZones = "windowEdgeSnapDisabledZones" // comma-separated visual zone ids
     static let windowEdgeSnapZoneActions = "windowEdgeSnapZoneActions" // zone=action entries, + between split areas
+    static let windowCustomZonesEnabled = "windowCustomZonesEnabled"
+    static let windowCustomZoneLayouts = "windowCustomZoneLayouts" // display UUID -> normalised tile rectangles
     static let windowEdgeSnapRestoreOnDrag = "windowEdgeSnapRestoreOnDrag" // dragging a snapped window away restores its earlier size
     static let windowGestureEnabled = "windowGestureEnabled"
     static let windowGestureModifiers = "windowGestureModifiers"
@@ -1627,6 +1637,10 @@ enum Defaults {
         DefaultsKey.keyboardDebounceEnabled: false,
         DefaultsKey.keyboardDebounceWindowMs: defaultKeyboardDebounceWindowMs,
         DefaultsKey.keyboardDebounceKeyWindows: "",
+        DefaultsKey.layoutFixEnabled: false,
+        DefaultsKey.layoutFixTrigger: LayoutFixTrigger.rightOption.rawValue,
+        DefaultsKey.layoutFixExcludedLayouts: [String](),
+        DefaultsKey.layoutFixExceptions: [String](),
         DefaultsKey.panelUtilityCleaning: true,
         DefaultsKey.cleaningModeKeepScreenVisible: false,
         DefaultsKey.panelUtilityURLCleaner: true,
@@ -1891,6 +1905,9 @@ enum Defaults {
         DefaultsKey.wallpaperFilter: "all",
         DefaultsKey.scratchpadShortcutEnabled: false,
         DefaultsKey.scratchpadShortcut: GlobalShortcut.scratchpadDefault.storageValue,
+        DefaultsKey.launchpadShortcutEnabled: true,
+        DefaultsKey.launchpadShortcut: GlobalShortcut.launchpadDefault.storageValue,
+        DefaultsKey.launchpadStyle: LaunchpadSupport.Style.fullScreen.rawValue,
         DefaultsKey.commandBarMenusShortcutEnabled: false,
         DefaultsKey.commandBarMenusShortcut: GlobalShortcut.commandBarMenusDefault.storageValue,
         DefaultsKey.commandBarShortcutEnabled: false,
@@ -2017,6 +2034,8 @@ enum Defaults {
         DefaultsKey.windowEdgeSnapEnabled: false,
         DefaultsKey.windowEdgeSnapDisabledZones: "",
         DefaultsKey.windowEdgeSnapZoneActions: "",
+        DefaultsKey.windowCustomZonesEnabled: false,
+        DefaultsKey.windowCustomZoneLayouts: "",
         DefaultsKey.windowEdgeSnapRestoreOnDrag: false,
         DefaultsKey.windowGestureEnabled: false,
         DefaultsKey.windowGestureModifiers: WindowGestureSupport.defaultModifierStorageValue,

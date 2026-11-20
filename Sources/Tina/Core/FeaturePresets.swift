@@ -94,7 +94,7 @@ extension AppFeature {
              .mouseNavigation, .mouseButtonShortcuts, .mouseClickDebounce,
              .dockPreview, .dockClick, .shelf:
             return .mouse
-        case .keyboardDebounce, .finderCutPaste, .finderRename, .quitWindowProtection, .musicBlock:
+        case .keyboardDebounce, .layoutFix, .finderCutPaste, .finderRename, .quitWindowProtection, .musicBlock:
             return .keyboard
         // The switcher's tap also takes clicks and scrolls, and the Super key
         // stamps its modifiers on mouse presses from a second tap.
@@ -108,6 +108,7 @@ extension AppFeature {
                 ).isEmpty
             let pointerTapRuns = UserDefaults.standard.bool(forKey: DefaultsKey.windowGestureEnabled)
                 || edgeSnapRuns
+                || UserDefaults.standard.bool(forKey: DefaultsKey.windowCustomZonesEnabled)
             let modifierTapRuns = UserDefaults.standard.bool(forKey: DefaultsKey.windowDirectionalEnabled)
                 && UserDefaults.standard.string(forKey: DefaultsKey.windowDirectionalShortcut)
                     .flatMap(WindowDirectionalTrigger.init(storageValue:))
@@ -153,7 +154,7 @@ extension AppFeature {
              .bluetoothSleep, .keepAwake, .quickLauncher, .quickToggles, .quitApps, .colorPicker,
              .screenOCR, .cleaningMode, .mediaTools, .cleaner, .uninstaller, .homebrew, .screenshot,
              .cameraPreview, .scratchpad, .commandBar, .screenRecorder, .wallpaper, .fanControl,
-             .diskImageInstaller, .killProcess, .portManager:
+             .diskImageInstaller, .killProcess, .portManager, .launchpad:
             return .idle
         case .appUpdates:
             // The list is on demand; only a background schedule keeps a timer.

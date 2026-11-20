@@ -17,7 +17,7 @@ enum AppFeature: String, CaseIterable {
     case switcher, dockPreview, dockClick, windowMaximizer, windowLayout, autoQuit, spacesOrder
     // Mouse and keyboard
     case scrollInverter, scrollHorizontal, scrollZoom, focusFollowsMouse, smoothScroll, linearScroll, scrollSpeed, mouseAcceleration, mouseNavigation, mouseButtonShortcuts, middleClick,
-         mouseClickDebounce, keyboardDebounce, textSnippets, superKey, quitWindowProtection
+         mouseClickDebounce, keyboardDebounce, textSnippets, layoutFix, superKey, quitWindowProtection
     // Clipboard and files
     case clipboardHistory, pastePlain, finderCutPaste, finderRename, shelf, urlCleaner,
          diskImageInstaller
@@ -28,7 +28,7 @@ enum AppFeature: String, CaseIterable {
     // Tools
     case quickLauncher, quickToggles, quitApps, colorPicker, screenOCR, cleaningMode, mediaTools,
          cleaner, uninstaller, homebrew, appUpdates, screenshot, cameraPreview, radialMenu, scratchpad,
-         commandBar, screenRecorder, wallpaper, killProcess, portManager
+         commandBar, screenRecorder, wallpaper, killProcess, portManager, launchpad
     // Dynamic Island, then its extensions
     case notch, notchCalendar, notchNotifications, notchGestures, notchTimer, notchAccessories, notchLyrics,
          notchQueue, notchLiveEqualizer, notchDownloads, notchAgents, notchWatch, notchMascot
@@ -76,14 +76,15 @@ extension AppFeature {
         case .windowLayout:
             return boolFor(DefaultsKey.windowLayoutShortcutsEnabled)
                 || boolFor(DefaultsKey.windowGestureEnabled)
+                || boolFor(DefaultsKey.windowCustomZonesEnabled)
                 || (boolFor(DefaultsKey.windowEdgeSnapEnabled)
                     && !WindowEdgeSnapZone.enabledZones(
                         from: edgeSnapDisabledZones
                     ).isEmpty)
         // Watch asks when an area is chosen and checks on every reading. The
-        // companion uses no permission at all.
+        // companion and Launchpad use no permission at all.
         case .screenOCR, .cleaningMode, .screenshot, .commandBar, .screenRecorder, .wallpaper, .notchWatch,
-             .notchMascot:
+             .notchMascot, .launchpad:
             return false
         default:
             return true
@@ -101,10 +102,10 @@ extension AppFeature {
 
     var group: FeatureGroup {
         switch self {
-        case .switcher, .dockPreview, .dockClick, .windowMaximizer, .windowLayout, .autoQuit, .spacesOrder:
+        case .switcher, .dockPreview, .dockClick, .launchpad, .windowMaximizer, .windowLayout, .autoQuit, .spacesOrder:
             return .windowsDock
         case .scrollInverter, .scrollHorizontal, .scrollZoom, .focusFollowsMouse, .smoothScroll, .linearScroll, .scrollSpeed, .mouseAcceleration, .mouseNavigation, .mouseButtonShortcuts, .middleClick,
-             .keyboardDebounce, .textSnippets, .superKey, .quitWindowProtection, .mouseClickDebounce:
+             .keyboardDebounce, .textSnippets, .layoutFix, .superKey, .quitWindowProtection, .mouseClickDebounce:
             return .mouseKeyboard
         case .clipboardHistory, .pastePlain, .finderCutPaste, .finderRename, .shelf, .urlCleaner,
              .diskImageInstaller:
@@ -149,6 +150,7 @@ extension AppFeature {
         case .middleClick: return "hand.tap"
         case .keyboardDebounce: return "keyboard"
         case .textSnippets: return "text.append"
+        case .layoutFix: return "character.cursor.ibeam"
         case .superKey:
             return SuperKeySource.sanitized(
                 UserDefaults.standard.string(forKey: DefaultsKey.superKeySource)
@@ -204,6 +206,7 @@ extension AppFeature {
         case .commandBar: return "command"
         case .killProcess: return "xmark.octagon"
         case .portManager: return "network"
+        case .launchpad: return "square.grid.3x3.fill"
         case .monitorCPU: return "cpu"
         case .monitorGPU: return "rectangle.connected.to.line.below"
         case .monitorMemory: return "memorychip"
@@ -261,6 +264,7 @@ extension AppFeature {
             return [DefaultsKey.quitProtectionQuitEnabled, DefaultsKey.quitProtectionCloseEnabled]
         case .textSnippets: return [DefaultsKey.textSnippetsEnabled, DefaultsKey.snippetLibraryEnabled]
         case .superKey: return [DefaultsKey.superKeyEnabled]
+        case .layoutFix: return [DefaultsKey.layoutFixEnabled]
         case .mouseClickDebounce: return [DefaultsKey.mouseClickDebounceEnabled]
         case .notchGestures: return [DefaultsKey.notchGesturesEnabled]
         case .notchTimer: return [DefaultsKey.notchTimerEnabled]
@@ -293,7 +297,7 @@ extension AppFeature {
         case .windowLayout, .diskImageInstaller, .mixer, .micMute, .keepAwake,
              .quickLauncher, .quickToggles, .quitApps, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .scratchpad,
-             .commandBar, .screenRecorder, .wallpaper, .killProcess, .portManager,
+             .commandBar, .screenRecorder, .wallpaper, .killProcess, .portManager, .launchpad,
              .monitorCPU, .monitorGPU, .monitorMemory, .monitorNetwork, .monitorDisk, .monitorPower,
              .connectedDevices, .fanControl:
             return []
@@ -320,6 +324,7 @@ extension AppFeature {
         let choices = self == .windowLayout
             ? [DefaultsKey.windowLayoutShortcutsEnabled, DefaultsKey.windowDirectionalEnabled,
                DefaultsKey.pointerDisplayEnabled, DefaultsKey.windowEdgeSnapEnabled,
+               DefaultsKey.windowCustomZonesEnabled,
                DefaultsKey.windowGestureEnabled]
             : enabledKeys
         guard !choices.contains(where: { savedValues[$0] != nil }) else { return }
@@ -355,7 +360,7 @@ extension AppFeature {
         case .mouseAcceleration, .spacesOrder:
             return []
         case .scrollInverter, .scrollHorizontal, .scrollZoom, .focusFollowsMouse, .smoothScroll, .linearScroll, .scrollSpeed, .mouseNavigation, .mouseButtonShortcuts, .middleClick,
-             .keyboardDebounce, .textSnippets, .superKey, .mouseClickDebounce,
+             .keyboardDebounce, .textSnippets, .layoutFix, .superKey, .mouseClickDebounce,
              .dockClick, .windowMaximizer, .windowLayout,
              .autoQuit, .quitWindowProtection, .cleaningMode, .pastePlain, .radialMenu,
              // The bar reads other apps' menus and windows and types at the
@@ -390,7 +395,7 @@ extension AppFeature {
              .soundOutputSwitcher, .audioPriority,
              .extraBrightness, .bluetoothSleep, .quickLauncher, .colorPicker, .micMute, .mediaTools,
              .scratchpad, .wallpaper, .monitorGPU, .monitorNetwork, .connectedDevices, .fanControl, .killProcess,
-             .portManager,
+             .portManager, .launchpad,
              // Each app gets the ordinary quit request it would from its own menu.
              .quitApps:
             return []
@@ -404,7 +409,7 @@ extension AppFeature {
         switch self {
         case .keepAwake, .brightness, .radialMenu, .quickToggles, .cleaner,
              .uninstaller, .homebrew, .appUpdates, .mixer, .cameraPreview,
-             .micMute, .musicBlock, .notchWatch:
+             .micMute, .musicBlock, .notchWatch, .launchpad:
             return []
         default:
             return permissions.filter { $0 == .accessibility || $0 == .screenRecording }
@@ -491,7 +496,8 @@ extension AppFeature {
              .connectedDevices:
             return true
         case .focusFollowsMouse, .scrollHorizontal, .scrollZoom, .linearScroll, .scrollSpeed, .diskImageInstaller, .audioPriority,
-             .wallpaper, .killProcess, .portManager, .fanControl, .notchMascot, .spacesOrder, .quitApps:
+             .wallpaper, .killProcess, .portManager, .fanControl, .notchMascot, .spacesOrder, .quitApps,
+             .layoutFix, .launchpad:
             return false
         }
     }

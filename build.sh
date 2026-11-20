@@ -364,6 +364,7 @@ if (( TEST )); then
         Sources/Tina/Services/Wallpaper/WallpaperSupport.swift
         Sources/Tina/UI/MenuPanel/WallpaperThumbnailView.swift
         Sources/Tina/Core/ScratchpadStrings.swift
+        Sources/Tina/Core/LaunchpadStrings.swift
         Sources/Tina/Core/FinderRenameStrings.swift
         Sources/Tina/Core/CommandBarStrings.swift
         Sources/Tina/Core/FeedbackStrings.swift
@@ -386,6 +387,7 @@ if (( TEST )); then
         Sources/Tina/Services/Snippets/TextSnippetSupport.swift
         Sources/Tina/Services/RadialMenu/RadialMenuSupport.swift
         Sources/Tina/Services/QuickTools/ScratchpadSupport.swift
+        Sources/Tina/Services/Launchpad/LaunchpadSupport.swift
         Sources/Tina/Services/QuickTools/ScratchpadStore.swift
         Sources/Tina/Services/KillProcess/KillProcessSupport.swift
         Sources/Tina/Services/Recorder/RecorderSupport.swift
@@ -436,6 +438,8 @@ if (( TEST )); then
         Sources/Tina/Services/URLCleanerLinkMetadata.swift
         Sources/Tina/Services/GeneralPasteboardAccess.swift
         Sources/Tina/Services/Clipboard/ClipboardHistoryWrite.swift
+        Sources/Tina/Services/Clipboard/ClipboardHistoryDrag.swift
+        Sources/Tina/Services/Clipboard/ClipboardHistoryFileAccess.swift
         Sources/Tina/Services/Audio/AirPlayRouteManager.swift
         Sources/Tina/Services/Audio/MixerRoutingSupport.swift
         Sources/Tina/Services/Audio/MusicLaunchSupport.swift
@@ -537,8 +541,10 @@ if (( TEST )); then
         Sources/Tina/Services/QuickTools/WindowActivationPolicy.swift
         Sources/Tina/Services/KeyboardDebounce/KeyboardDebounceSupport.swift
         Sources/Tina/Services/SuperKey/SuperKeySupport.swift
+        Sources/Tina/Services/LayoutFix/LayoutFixSupport.swift
         Sources/Tina/Services/SuperKey/SuperKeyMappingGuard.swift
         Sources/Tina/Core/SuperKeyStrings.swift
+        Sources/Tina/Core/LayoutFixStrings.swift
         Sources/Tina/Core/InputSourceSelection.swift
         Sources/Tina/Services/SessionActivity.swift
         Sources/Tina/Services/SessionActivitySupport.swift
@@ -584,6 +590,8 @@ if (( TEST )); then
         Sources/Tina/Core/WindowStageManagerStrings.swift
         Sources/Tina/Core/WindowEdgeSnapRestoreStrings.swift
         Sources/Tina/Services/WindowLayout/WindowGestureSupport.swift
+        Sources/Tina/Services/WindowLayout/WindowCustomZones.swift
+        Sources/Tina/Core/WindowCustomZoneStrings.swift
         Sources/Tina/Core/WindowDirectionalStrings.swift
         Sources/Tina/Core/PointerDisplayStrings.swift
         Sources/Tina/Core/GraphScaleStrings.swift
@@ -696,6 +704,26 @@ else
         ADAPTIVE_SKIP="actool could not compile the catalog"
     fi
 fi
+# The Launchpad Dock icon, copied into the helper app it writes.
+rm -f build/LaunchpadIcon.car build/LaunchpadIcon.icns
+if [[ -z "$ADAPTIVE_SKIP" ]]; then
+    mkdir -p "$ICON_TMP/Launchpad/catalog"
+    ditto "Resources/Brand/LaunchpadIcon.icon" "$ICON_TMP/Launchpad/AppIcon.icon"
+    if "$ACTOOL_BIN" "$ICON_TMP/Launchpad/AppIcon.icon" \
+            --compile "$ICON_TMP/Launchpad/catalog" \
+            --app-icon AppIcon \
+            --platform macosx \
+            --target-device mac \
+            --minimum-deployment-target 14.0 \
+            --enable-on-demand-resources NO \
+            --output-partial-info-plist "$ICON_TMP/Launchpad/partial-info.plist" \
+            >"$ICON_TMP/Launchpad/actool.log" 2>&1 && [[ -s "$ICON_TMP/Launchpad/catalog/Assets.car" ]]; then
+        mv "$ICON_TMP/Launchpad/catalog/Assets.car" build/LaunchpadIcon.car
+        mv "$ICON_TMP/Launchpad/catalog/AppIcon.icns" build/LaunchpadIcon.icns
+    else
+        echo "  Launchpad icon skipped (the Dock icon falls back to a drawn one)"
+    fi
+fi
 if [[ -n "$ADAPTIVE_SKIP" ]]; then
     cp "$ICON_TMP/actool.log" build/actool-failure.log 2>/dev/null || true
     echo "  adaptive icon skipped: $ADAPTIVE_SKIP (Dock falls back to AppIcon.icns)"
@@ -724,6 +752,9 @@ if (( DEV )); then
     /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" "$STAGE/Contents/Info.plist"
     /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $APP_NAME" "$STAGE/Contents/Info.plist"
     /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable $EXECUTABLE" "$STAGE/Contents/Info.plist"
+    # Its own link scheme, so the Launchpad Dock icon a build writes opens that build.
+    /usr/libexec/PlistBuddy -c "Set :CFBundleURLTypes:0:CFBundleURLName $APP_BUNDLE_ID" "$STAGE/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleURLTypes:0:CFBundleURLSchemes:0 tina-dev" "$STAGE/Contents/Info.plist"
     FAN_PLIST="$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
     /usr/libexec/PlistBuddy -c "Set :Label $FAN_HELPER_ID" "$FAN_PLIST"
     /usr/libexec/PlistBuddy -c "Set :BundleProgram Contents/Library/LaunchServices/$FAN_HELPER_ID" "$FAN_PLIST"
@@ -754,6 +785,9 @@ cp build/MenuBarIcon.png build/MenuBarIcon@2x.png build/BrandMark.png "$STAGE/Co
 if [[ -f build/Assets.car ]]; then
     cp build/Assets.car "$STAGE/Contents/Resources/Assets.car"
 fi
+for LAUNCHPAD_ICON in build/LaunchpadIcon.car build/LaunchpadIcon.icns; do
+    if [[ -f "$LAUNCHPAD_ICON" ]]; then cp "$LAUNCHPAD_ICON" "$STAGE/Contents/Resources/"; fi
+done
 if [[ -d Resources/Gifs ]]; then
     mkdir -p "$STAGE/Contents/Resources/Gifs"
     cp Resources/Gifs/*.gif "$STAGE/Contents/Resources/Gifs/"

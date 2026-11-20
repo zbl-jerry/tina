@@ -88,6 +88,7 @@ enum ReleaseChangeAliases {
             "keyboard and mouse debounce"]
         case .textSnippets: return ["text snippets", "snippets", "snippet"]
         case .superKey: return ["super key"]
+        case .layoutFix: return ["layout fix", "wrong keyboard layout", "keyboard layout correction"]
         case .quitWindowProtection: return ["quit protection", "quit & close protection",
             "quit and close protection", "command q and command w"]
         case .clipboardHistory: return ["clipboard history", .exact("Clipboard"), .island("clipboard"),
@@ -140,6 +141,7 @@ enum ReleaseChangeAliases {
         case .wallpaper: return [.exact("Wallpaper"), "wallpaper gallery", "wallpapers"]
         case .killProcess: return ["kill process", "force kill", "process tree"]
         case .portManager: return ["port manager"]
+        case .launchpad: return ["launchpad"]
         case .notch: return ["dynamic island", "island", "islands", "notch", "volume keys", "volume key",
             "mute key", "volume feedback", "volume indicator", "volume notice", "new track indicator",
             "displays without a notch", "displays without a camera cutout"]

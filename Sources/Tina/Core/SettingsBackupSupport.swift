@@ -106,6 +106,7 @@ enum SettingsBackupSupport {
         DefaultsKey.panelPowerOrder,
         DefaultsKey.panelCollapsedSections,
         DefaultsKey.quickLauncherItemOrder,
+        DefaultsKey.launchpadLayout,
         // Legacy island layouts stay restorable; absence selects the new layout.
         DefaultsKey.notchQuickAccessSide,
         DefaultsKey.notchQuickAccessSecond,
@@ -129,6 +130,8 @@ enum SettingsBackupSupport {
     /// out by construction (they are not preference keys), listed here only
     /// when they would otherwise slip in through the registered set.
     static let machineStateKeys: Set<String> = [
+        // Physical monitor UUIDs only have meaning on the originating Mac.
+        DefaultsKey.windowCustomZoneLayouts,
         DefaultsKey.displaysSwitchedOff,
         DefaultsKey.displaysSwitchedOffFingerprints,
         // Agent profiles are folders on this Mac whose sign-in the cards use,

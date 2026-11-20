@@ -232,6 +232,9 @@ struct GlobalShortcut: Equatable, Hashable {
     // N for notes, on the same free control-option-command layer.
     static let scratchpadDefault = GlobalShortcut(keyCode: Int64(kVK_ANSI_N),
                                                   modifiers: [.control, .option, .command])
+    // A for apps, on the same free control-option-command layer.
+    static let launchpadDefault = GlobalShortcut(keyCode: Int64(kVK_ANSI_A),
+                                                 modifiers: [.control, .option, .command])
     // I for island, on the same free control-option-command layer.
     static let notchDefault = GlobalShortcut(keyCode: Int64(kVK_ANSI_I),
                                              modifiers: [.control, .option, .command])
@@ -733,6 +736,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
     case cameraPreview
     case radialMenu
     case scratchpad
+    case launchpad
     case snippetLibrary
     case commandBar
     case commandBarMenus
@@ -773,6 +777,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .cameraPreview: return DefaultsKey.cameraPreviewShortcut
         case .radialMenu: return DefaultsKey.radialMenuShortcut
         case .scratchpad: return DefaultsKey.scratchpadShortcut
+        case .launchpad: return DefaultsKey.launchpadShortcut
         case .snippetLibrary: return DefaultsKey.snippetLibraryShortcut
         case .commandBar: return DefaultsKey.commandBarShortcut
         case .commandBarMenus: return DefaultsKey.commandBarMenusShortcut
@@ -813,6 +818,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .cameraPreview: return .cameraPreviewDefault
         case .radialMenu: return .radialMenuDefault
         case .scratchpad: return .scratchpadDefault
+        case .launchpad: return .launchpadDefault
         case .snippetLibrary: return .snippetLibraryDefault
         case .commandBar: return .commandBarDefault
         case .commandBarMenus: return .commandBarMenusDefault
@@ -893,6 +899,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .cameraPreview: return FeatureStrings.cameraPreview(L10n.shared.language).pageTitle
         case .radialMenu: return FeatureStrings.radialMenu(L10n.shared.language).pageTitle
         case .scratchpad: return FeatureStrings.scratchpad(L10n.shared.language).pageTitle
+        case .launchpad: return FeatureStrings.launchpad(L10n.shared.language).pageTitle
         case .snippetLibrary: return FeatureStrings.snippets(L10n.shared.language).libraryTitle
         case .commandBarMenus: return FeatureStrings.commandBar(L10n.shared.language).kindMenu
         case .commandBar: return FeatureStrings.commandBar(L10n.shared.language).pageTitle
@@ -962,6 +969,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .cameraPreview: return [DefaultsKey.cameraPreviewShortcutEnabled]
         case .radialMenu: return [DefaultsKey.radialMenuEnabled]
         case .scratchpad: return [DefaultsKey.scratchpadShortcutEnabled]
+        case .launchpad: return [DefaultsKey.launchpadShortcutEnabled]
         case .snippetLibrary: return [DefaultsKey.snippetLibraryEnabled]
         case .commandBarMenus: return [DefaultsKey.commandBarMenusShortcutEnabled]
         case .commandBar: return [DefaultsKey.commandBarShortcutEnabled]
@@ -998,6 +1006,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .cameraPreview: return .cameraPreview
         case .radialMenu: return .radialMenu
         case .scratchpad: return .scratchpad
+        case .launchpad: return .launchpad
         case .snippetLibrary: return .textSnippets
         case .commandBar, .commandBarMenus: return .commandBar
         case .screenRecorder: return .screenRecorder
