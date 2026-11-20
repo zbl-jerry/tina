@@ -20,7 +20,7 @@ Notes:
   `AppIcon.icon` bundle for Icon Composer.
 - The menu bar image must stay a monochrome template: `StatusItemController`
   sets `NSImage.isTemplate = true`, so the system applies light/dark tinting.
-- Keep the menu bar canvas at 26×20 pt. `MakeIcon` fits the silhouette to a
+- Keep the menu bar canvas at 20×20 pt. `MakeIcon` fits the silhouette to a
   17 pt ink height; changing the canvas requires updating
   `BlackHoleGlyph.pointSize`.
 - Alternate palettes are not selected at runtime; swapping the primary icon is

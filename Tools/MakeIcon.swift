@@ -122,7 +122,7 @@ let menuBarGlyphHeight: CGFloat = 17
 let menuBarGlyphDrop: CGFloat = 0
 // The same canvas holds the compact Keep Awake symbols. Keep in sync with
 // BlackHoleGlyph.pointSize in Sources/Tina/App/StatusItemController.swift.
-let menuBarCanvas = (width: 26, height: 20)
+let menuBarCanvas = (width: 20, height: 20)
 
 func renderMenuBarIcon(scale: Int) -> Data? {
     let width = menuBarCanvas.width * scale, height = menuBarCanvas.height * scale

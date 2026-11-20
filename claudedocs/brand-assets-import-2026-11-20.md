@@ -19,7 +19,7 @@
 ## 构建管线调整
 
 - **App 图标**：`Tools/MakeIcon.swift` 继续从 `AppIcon-Default.png` 生成 `.iconset`/`AppIcon.icns`。删除了旧的 `Resources/Brand/AppIcon.icon`（旧星球 mark 的 Icon Composer 工程）和 build.sh 中的 adaptive AppIcon actool 分支，并移除 `Info.plist` 的 `CFBundleIconName`。macOS 现在统一使用新 `.icns`，不会再有旧 `Assets.car` 覆盖新图标。
-- **菜单栏图标**：`MakeIcon` 从 `MenuBarIcon-Black.png` 取剪影，裁掉透明边距后按 17pt 墨高渲染到现有 26×20pt 画布；`StatusItemController` 继续设置 `isTemplate = true`，系统负责浅色/深色着色。
+- **菜单栏图标**：`MakeIcon` 从 `MenuBarIcon-Black.png` 取剪影，裁掉透明边距后按 17pt 墨高渲染到现有 20×20pt 画布；`StatusItemController` 继续设置 `isTemplate = true`，系统负责浅色/深色着色。
 - **应用内 mark**：`BrandMark.png` 改由同一剪影生成；面板头部、设置、截图编辑器等使用处自动换成新人像。
 - **DMG 背景**：`Tools/MakeDMGBackground.swift` 仍读取 `logo.png`，内容已换成透明人像。
 - **Launchpad**：`LaunchpadIcon.icon` 是独立的分区网格图标，继续保留 adaptive 编译。
@@ -36,7 +36,7 @@ README 顶部横幅已在本次提交中引用 `docs/assets/readme/tina-banner.p
 
 ## 验证
 
-- `./build.sh --dev`：通过；`build/AppIcon.iconset/icon_512x512@2x.png` 为新 lavender 人像，`build/MenuBarIcon*.png` 为 26×20 / 52×40 剪影。
+- `./build.sh --dev`：通过；`build/AppIcon.iconset/icon_512x512@2x.png` 为新 lavender 人像，`build/MenuBarIcon*.png` 为 20×20 / 40×40 剪影。
 - `Tina (Developer) --selftest`：**SELFTEST OK**。
 - `./build.sh --test`：**TESTS OK（123,836 checks）**。
 - `swift Tools/MakeDMGBackground.swift`：正常生成 1200×800 背景。
