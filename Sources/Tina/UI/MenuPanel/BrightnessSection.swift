@@ -21,9 +21,13 @@ struct BrightnessSection: View {
         PanelSection(.brightness, title: strings.pageTitle, collapsible: collapsible) {
             VStack(alignment: .leading, spacing: 10) {
                 if service.displays.isEmpty {
-                    Text(strings.noDisplays)
-                        .font(.system(size: 10.5))
-                        .foregroundStyle(.secondary)
+                    // Night warmth lives in this card too; with only it
+                    // installed there are no sliders but the card is not empty.
+                    if !AppFeature.nightWarmth.isAvailable {
+                        Text(strings.noDisplays)
+                            .font(.system(size: 10.5))
+                            .foregroundStyle(.secondary)
+                    }
                 } else {
                     ForEach(service.displays) { display in
                         row(display)
@@ -53,6 +57,10 @@ struct BrightnessSection: View {
                 if AppFeature.extraBrightness.isAvailable {
                     Divider()
                     ExtraBrightnessPanelToggle()
+                }
+                if AppFeature.nightWarmth.isAvailable {
+                    Divider()
+                    NightWarmthPanelBlock()
                 }
                 Divider()
                 optionsDisclosure

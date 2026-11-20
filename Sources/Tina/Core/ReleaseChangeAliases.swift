@@ -113,6 +113,8 @@ enum ReleaseChangeAliases {
             "brightness shortcuts", "control displays", "display controls", "extra dimming", "closed-lid dimming",
             "brightness overlay", "brightness panel"]
         case .extraBrightness: return ["extra brightness", "xdr"]
+        case .nightWarmth: return ["night warmth", "night colour", "night color", "color temperature",
+            "colour temperature", "warm screen", "night shift"]
         case .bluetoothSleep: return ["bluetooth on sleep", "bluetooth power", "bluetooth off during sleep"]
         case .quickLauncher: return ["quick panel", "quick launcher"]
         case .quickToggles: return ["quick toggles"]

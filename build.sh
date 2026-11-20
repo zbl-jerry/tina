@@ -345,6 +345,7 @@ if (( TEST )); then
         Sources/Tina/Core/FeatureCatalog.swift
         Sources/Tina/Core/FeaturePresets.swift
         Sources/Tina/Core/FeatureHubStrings.swift
+        Sources/Tina/Core/NightWarmthStrings.swift
         Sources/Tina/Core/MixerScreenSharingStrings.swift
         Sources/Tina/Core/ShortcutSettingsStrings.swift
         Sources/Tina/Core/SwitcherShortcutStrings.swift
@@ -599,6 +600,7 @@ if (( TEST )); then
         Sources/Tina/Services/CleaningMode/CleaningUnlockCounter.swift
         Sources/Tina/Services/CleaningMode/CleaningMouseReleaseGate.swift
         Sources/Tina/Services/Display/ExtraBrightnessSupport.swift
+        Sources/Tina/Services/Display/NightWarmthSupport.swift
         Sources/Tina/Services/Display/BrightnessSupport.swift
         Sources/Tina/Services/Display/MonitorVolumeKeySettings.swift
         Sources/Tina/Services/Display/LidDimmingSupport.swift

@@ -331,6 +331,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             BrightnessService.shared.restoreDisplaysBeforeTermination()
         }
         ExtraBrightnessService.shared.stop()
+        NightWarmthService.shared.restoreBeforeTermination()
         ProcessUsageService.shared.stopNetworkMonitoring(force: true)
         URLCleanerService.shared.stop()
         FocusFollowsMouseService.shared.stop()

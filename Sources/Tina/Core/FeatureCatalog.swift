@@ -24,7 +24,7 @@ enum AppFeature: String, CaseIterable {
     // Sound
     case mixer, soundOutputSwitcher, audioPriority, micMute, musicBlock
     // Energy and display
-    case keepAwake, brightness, extraBrightness, bluetoothSleep
+    case keepAwake, brightness, extraBrightness, nightWarmth, bluetoothSleep
     // Tools
     case quickLauncher, quickToggles, quitApps, colorPicker, screenOCR, cleaningMode, mediaTools,
          cleaner, uninstaller, homebrew, appUpdates, screenshot, cameraPreview, radialMenu, scratchpad,
@@ -84,7 +84,7 @@ extension AppFeature {
         // Watch asks when an area is chosen and checks on every reading. The
         // companion and Launchpad use no permission at all.
         case .screenOCR, .cleaningMode, .screenshot, .commandBar, .screenRecorder, .wallpaper, .notchWatch,
-             .notchMascot, .launchpad:
+             .notchMascot, .launchpad, .nightWarmth:
             return false
         default:
             return true
@@ -112,7 +112,7 @@ extension AppFeature {
             return .clipboardFiles
         case .mixer, .soundOutputSwitcher, .audioPriority, .micMute, .musicBlock:
             return .sound
-        case .keepAwake, .brightness, .extraBrightness, .bluetoothSleep:
+        case .keepAwake, .brightness, .extraBrightness, .nightWarmth, .bluetoothSleep:
             return .energyDisplay
         case .quickLauncher, .quickToggles, .quitApps, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .radialMenu,
@@ -172,6 +172,7 @@ extension AppFeature {
         case .keepAwake: return "moon.zzz.fill"
         case .brightness: return "display.2"
         case .extraBrightness: return "sun.max.fill"
+        case .nightWarmth: return "moon.stars.fill"
         case .bluetoothSleep: return "wave.3.right.circle"
         case .quickLauncher: return "wand.and.rays"
         case .quickToggles: return "togglepower"
@@ -293,6 +294,7 @@ extension AppFeature {
         case .musicBlock: return [DefaultsKey.musicBlockEnabled]
         case .brightness: return [DefaultsKey.brightnessControlEnabled]
         case .extraBrightness: return [DefaultsKey.extraBrightnessEnabled]
+        case .nightWarmth: return [DefaultsKey.nightWarmthEnabled]
         case .bluetoothSleep: return [DefaultsKey.bluetoothSleepEnabled]
         case .windowLayout, .diskImageInstaller, .mixer, .micMute, .keepAwake,
              .quickLauncher, .quickToggles, .quitApps, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
@@ -393,7 +395,7 @@ extension AppFeature {
         case .monitorCPU, .monitorMemory, .monitorDisk, .monitorPower: return [.notifications]
         case .clipboardHistory, .shelf, .urlCleaner,
              .soundOutputSwitcher, .audioPriority,
-             .extraBrightness, .bluetoothSleep, .quickLauncher, .colorPicker, .micMute, .mediaTools,
+             .extraBrightness, .nightWarmth, .bluetoothSleep, .quickLauncher, .colorPicker, .micMute, .mediaTools,
              .scratchpad, .wallpaper, .monitorGPU, .monitorNetwork, .connectedDevices, .fanControl, .killProcess,
              .portManager, .launchpad,
              // Each app gets the ordinary quit request it would from its own menu.
@@ -497,7 +499,7 @@ extension AppFeature {
             return true
         case .focusFollowsMouse, .scrollHorizontal, .scrollZoom, .linearScroll, .scrollSpeed, .diskImageInstaller, .audioPriority,
              .wallpaper, .killProcess, .portManager, .fanControl, .notchMascot, .spacesOrder, .quitApps,
-             .layoutFix, .launchpad:
+             .layoutFix, .launchpad, .nightWarmth:
             return false
         }
     }

@@ -224,6 +224,26 @@ enum DefaultsKey {
     static let shelfAutomaticExclusions = "shelfAutomaticExclusions" // [bundle id] blocks automatic opening only
     static let extraBrightnessEnabled = "extraBrightnessEnabled"
     static let extraBrightnessLevel = "extraBrightnessLevel"   // Int percent 0-100
+    // Night warmth: a schedule-driven gamma tint. Temperatures are stored in
+    // kelvin; times are minutes after local midnight.
+    static let nightWarmthEnabled = "nightWarmthEnabled"
+    static let nightWarmthScheduleMode = "nightWarmthScheduleMode" // NightWarmthScheduleMode raw value
+    static let nightWarmthDayKelvin = "nightWarmthDayKelvin"
+    static let nightWarmthEveningKelvin = "nightWarmthEveningKelvin"
+    static let nightWarmthBedtimeKelvin = "nightWarmthBedtimeKelvin"
+    static let nightWarmthBedtimeEnabled = "nightWarmthBedtimeEnabled"
+    static let nightWarmthBedtimeMinutes = "nightWarmthBedtimeMinutes"
+    static let nightWarmthWakeMinutes = "nightWarmthWakeMinutes"
+    static let nightWarmthNightStartMinutes = "nightWarmthNightStartMinutes"
+    static let nightWarmthNightEndMinutes = "nightWarmthNightEndMinutes"
+    static let nightWarmthTransition = "nightWarmthTransition" // NightWarmthTransition raw value
+    static let nightWarmthLatitude = "nightWarmthLatitude"
+    static let nightWarmthLongitude = "nightWarmthLongitude"
+    static let nightWarmthHasLocation = "nightWarmthHasLocation"
+    // Machine state: a pause ends on this Mac, and the marker only exists so
+    // a crash that left a tint behind can be repaired on the next start.
+    static let nightWarmthPausedUntil = "nightWarmthPausedUntil"
+    static let nightWarmthApplied = "nightWarmthApplied"
     static let brightnessControlEnabled = "brightnessControlEnabled" // sliders for every display
     static let brightnessKeysEnabled = "brightnessKeysEnabled" // brightness keys act on the display under the pointer
     static let brightnessOSDEnabled = "brightnessOSDEnabled" // brightness adjustment overlay
@@ -1429,6 +1449,22 @@ enum Defaults {
         DefaultsKey.shelfAutomaticExclusions: [String](),
         DefaultsKey.extraBrightnessEnabled: false,
         DefaultsKey.extraBrightnessLevel: 100,
+        DefaultsKey.nightWarmthEnabled: false,
+        DefaultsKey.nightWarmthScheduleMode: NightWarmthScheduleMode.sun.rawValue,
+        DefaultsKey.nightWarmthDayKelvin: NightWarmthPreset.neutral,
+        DefaultsKey.nightWarmthEveningKelvin: 3400.0,
+        DefaultsKey.nightWarmthBedtimeKelvin: 2700.0,
+        DefaultsKey.nightWarmthBedtimeEnabled: false,
+        DefaultsKey.nightWarmthBedtimeMinutes: 23 * 60,
+        DefaultsKey.nightWarmthWakeMinutes: 7 * 60,
+        DefaultsKey.nightWarmthNightStartMinutes: 21 * 60,
+        DefaultsKey.nightWarmthNightEndMinutes: 7 * 60,
+        DefaultsKey.nightWarmthTransition: NightWarmthTransition.slow.rawValue,
+        DefaultsKey.nightWarmthLatitude: 0.0,
+        DefaultsKey.nightWarmthLongitude: 0.0,
+        DefaultsKey.nightWarmthHasLocation: false,
+        DefaultsKey.nightWarmthPausedUntil: 0.0,
+        DefaultsKey.nightWarmthApplied: false,
         DefaultsKey.brightnessControlEnabled: false,
         DefaultsKey.brightnessKeysEnabled: false,
         DefaultsKey.brightnessOSDEnabled: false,

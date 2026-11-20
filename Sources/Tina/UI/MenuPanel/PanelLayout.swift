@@ -80,7 +80,7 @@ enum PanelSectionID: String, CaseIterable, Identifiable, Hashable {
     var featureGate: [AppFeature] {
         switch self {
         case .keepAwake: return [.keepAwake]
-        case .brightness: return [.brightness]
+        case .brightness: return [.brightness, .nightWarmth]
         case .mixer: return [.mixer, .audioPriority]
         case .system: return [.monitorCPU, .monitorGPU, .monitorMemory, .connectedDevices]
         case .network: return [.monitorNetwork]
