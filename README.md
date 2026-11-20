@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/readme/tina-banner.png" width="900" alt="Tina — macOS menu bar app">
+</p>
+
 <h1 align="center">Tina</h1>
 
 <p align="center">

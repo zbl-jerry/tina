@@ -2,14 +2,14 @@
 // Copyright (C) 2026 Vorssaint
 
 // Generates all icon assets:
-// - the app iconset and .icns from the exported Default rendition of the
-//   adaptive source (Resources/Brand/AppIcon-Default.png)
-// - the menu bar template glyph and BrandMark from the wordmark master
-//   (Resources/Brand/logo.png)
-// AppIcon-Default.png is a hand-exported twin of Resources/Brand/AppIcon.icon;
-// re-export it whenever the Icon Composer project changes. The build cannot read
-// .icon bundles directly: actool exists only inside full Xcode 26, and the
-// supported local floor is Command Line Tools alone.
+// - the app iconset and .icns from the supplied 1024 master
+//   (Resources/Brand/AppIcon-Default.png, lavender)
+// - the menu bar template glyph and BrandMark from the supplied silhouette
+//   (Resources/Brand/MenuBarIcon-Black.png)
+// The supplied .icns and PNGs are the source of truth; the build uses the
+// legacy .icns on every macOS version. Icon Composer's adaptive AppIcon.icon
+// is not used for the app icon because the supplied design ships as a flat
+// 1024 PNG with baked background and margins.
 import AppKit
 
 // Current macOS misreads PNG payloads in the legacy small chunks. It downsamples
@@ -25,7 +25,7 @@ let iconSizes: [(name: String, px: Int, icnsType: String?)] = [
 let outDir = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "AppIcon.iconset"
 let scriptDir = URL(fileURLWithPath: CommandLine.arguments[0]).deletingLastPathComponent()
 let projectDir = scriptDir.deletingLastPathComponent()
-let logoPath = projectDir.appendingPathComponent("Resources/Brand/logo.png").path
+let logoPath = projectDir.appendingPathComponent("Resources/Brand/MenuBarIcon-Black.png").path
 
 guard let logo = NSImage(contentsOfFile: logoPath),
       let logoTIFF = logo.tiffRepresentation,
@@ -95,7 +95,7 @@ func renderAppIcon(px: Int) -> Data? {
     // drawing; without this the draws land nowhere and the PNGs come out empty.
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = ctx
-    // The exported Default rendition is the finished icon design: background,
+    // The supplied 1024 master is the finished icon design: background,
     // layering and system-grid margins are baked in, so it maps onto the canvas
     // 1:1 instead of being re-framed like the old mark-on-squircle composite.
     // Source rect = the ENTIRE master, in the MASTER's coordinate space
@@ -114,17 +114,14 @@ func renderAppIcon(px: Int) -> Data? {
 
 // MARK: - Menu bar glyph (template)
 
-// The mark is ~1.97:1, so fitting it into a fixed box made the width the
-// limiting side and left the height unused, rendering it far shorter than the
-// menu bar icons around it. Size from the height and let the width follow.
-let menuBarGlyphHeight: CGFloat = 12.5
-// Centered geometrically the mark reads high, since the thin ring tails carry
-// the bounding box below the planet body. Drop it onto the same visual floor
-// as its neighbours.
-let menuBarGlyphDrop: CGFloat = 1
-// Taller than the mark needs: the same canvas holds the compact Keep Awake
-// symbols. Keep in sync with BlackHoleGlyph.pointSize in
-// Sources/Tina/App/StatusItemController.swift; `--selftest` enforces it.
+// The supplied menu bar mark is a nearly square portrait silhouette. Fit it
+// to the menu bar's ink height and let the width follow; the transparent
+// padding in the 256px master is trimmed by drawMark. 17 pt leaves a little
+// air above and below in the 20 pt canvas and reads like a system symbol.
+let menuBarGlyphHeight: CGFloat = 17
+let menuBarGlyphDrop: CGFloat = 0
+// The same canvas holds the compact Keep Awake symbols. Keep in sync with
+// BlackHoleGlyph.pointSize in Sources/Tina/App/StatusItemController.swift.
 let menuBarCanvas = (width: 26, height: 20)
 
 func renderMenuBarIcon(scale: Int) -> Data? {

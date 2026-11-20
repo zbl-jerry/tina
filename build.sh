@@ -677,36 +677,22 @@ swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" -emit-library \
     -o "build/$NOW_PLAYING_ADAPTER"
 
 echo "▸ Generating app icon…"
+# The supplied 1024 PNG is authoritative; MakeIcon writes AppIcon.icns and the
+# menu bar/BrandMark assets. A stale Assets.car from an older adaptive build
+# must not survive, or macOS would prefer it over the new .icns.
+rm -f build/Assets.car build/actool-failure.log
 swift Tools/MakeIcon.swift build/AppIcon.iconset
 xattr -c -r build/AppIcon.iconset build/AppIcon.icns build/MenuBarIcon.png build/MenuBarIcon@2x.png build/BrandMark.png 2>/dev/null || true
 ACTOOL_BIN="$(xcrun --find actool 2>/dev/null || true)"
 ICON_TMP="$(mktemp -d)"
-ADAPTIVE_SKIP=""
-if [[ -z "$ACTOOL_BIN" ]]; then
-    ADAPTIVE_SKIP="actool not found (adaptive icons need Xcode 26+)"
-else
-    echo "▸ Compiling adaptive icon catalog…"
-    # actool crashes on File Provider-synced paths, so compile a local copy.
-    ditto "Resources/Brand/AppIcon.icon" "$ICON_TMP/AppIcon.icon"
-    # Xcode 27 beta actool requires the --compile target directory to already exist.
-    mkdir -p "$ICON_TMP/catalog"
-    if "$ACTOOL_BIN" "$ICON_TMP/AppIcon.icon" \
-            --compile "$ICON_TMP/catalog" \
-            --app-icon AppIcon \
-            --platform macosx \
-            --target-device mac \
-            --minimum-deployment-target 14.0 \
-            --enable-on-demand-resources NO \
-            --output-partial-info-plist "$ICON_TMP/partial-info.plist" \
-            >"$ICON_TMP/actool.log" 2>&1 && [[ -s "$ICON_TMP/catalog/Assets.car" ]]; then
-        mv "$ICON_TMP/catalog/Assets.car" build/Assets.car
-    else
-        ADAPTIVE_SKIP="actool could not compile the catalog"
-    fi
-fi
 # The Launchpad Dock icon, copied into the helper app it writes.
 rm -f build/LaunchpadIcon.car build/LaunchpadIcon.icns
-if [[ -z "$ADAPTIVE_SKIP" ]]; then
+LAUNCHPAD_ICON_SKIP=""
+if [[ -z "$ACTOOL_BIN" ]]; then
+    LAUNCHPAD_ICON_SKIP="actool not found (adaptive icons need Xcode 26+)"
+else
+    echo "▸ Compiling Launchpad icon catalog…"
+    # actool crashes on File Provider-synced paths, so compile a local copy.
     mkdir -p "$ICON_TMP/Launchpad/catalog"
     ditto "Resources/Brand/LaunchpadIcon.icon" "$ICON_TMP/Launchpad/AppIcon.icon"
     if "$ACTOOL_BIN" "$ICON_TMP/Launchpad/AppIcon.icon" \
@@ -721,12 +707,12 @@ if [[ -z "$ADAPTIVE_SKIP" ]]; then
         mv "$ICON_TMP/Launchpad/catalog/Assets.car" build/LaunchpadIcon.car
         mv "$ICON_TMP/Launchpad/catalog/AppIcon.icns" build/LaunchpadIcon.icns
     else
-        echo "  Launchpad icon skipped (the Dock icon falls back to a drawn one)"
+        LAUNCHPAD_ICON_SKIP="actool could not compile the catalog"
+        cp "$ICON_TMP/Launchpad/actool.log" build/launchpad-actool-failure.log 2>/dev/null || true
     fi
 fi
-if [[ -n "$ADAPTIVE_SKIP" ]]; then
-    cp "$ICON_TMP/actool.log" build/actool-failure.log 2>/dev/null || true
-    echo "  adaptive icon skipped: $ADAPTIVE_SKIP (Dock falls back to AppIcon.icns)"
+if [[ -n "$LAUNCHPAD_ICON_SKIP" ]]; then
+    echo "  Launchpad icon skipped: $LAUNCHPAD_ICON_SKIP (the Dock icon falls back to a drawn one)"
 fi
 echo "▸ Assembling and signing bundle…"
 STAGE_TMP="$(mktemp -d)"
