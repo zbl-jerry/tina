@@ -169,7 +169,11 @@ enum PanelLayout {
     /// live panel and its preview in Settings both read.
     static func isVisibleInPanel(_ id: PanelSectionID) -> Bool {
         guard id.isAvailable, isShown(id) else { return false }
-        return id != .brightness || defaults.bool(forKey: DefaultsKey.brightnessControlEnabled)
+        guard id == .brightness else { return true }
+        // The display sliders need brightness control switched on; night
+        // warmth shares the card and must not be hidden behind that switch.
+        return defaults.bool(forKey: DefaultsKey.brightnessControlEnabled)
+            || AppFeature.nightWarmth.isAvailable
     }
 
     static func isCollapsed(_ id: PanelSectionID) -> Bool {
