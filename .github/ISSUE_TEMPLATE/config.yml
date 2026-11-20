@@ -1,9 +1,9 @@
 blank_issues_enabled: true
 
 contact_links:
-  - name: Troubleshooting Guide
-    about: The usual fixes for permissions, Gatekeeper and a feature that stopped responding.
+  - name: 故障排查指南
+    about: 权限、Gatekeeper 以及功能无响应等常见问题的处理方法。
     url: https://github.com/zbl-jerry/tina/blob/dev/docs/TROUBLESHOOTING.md
-  - name: Security Vulnerability
-    about: Please report security vulnerabilities privately.
+  - name: 安全漏洞
+    about: 请私下报告安全漏洞，不要公开提交。
     url: https://github.com/zbl-jerry/tina/security/advisories/new
