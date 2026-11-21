@@ -2516,10 +2516,10 @@ enum SwitcherModelFeatureTests {
         // decision above is made consciously, never by omission.
         let releasePlist = NSDictionary(contentsOfFile: "Resources/Info.plist")
         let plistVersion = (releasePlist?["CFBundleShortVersionString"] as? String) ?? ""
-        suite.expect(plistVersion == "3.4.5",
+        suite.expect(plistVersion == "3.5.0",
                "bumping the app version requires re-deciding the support prompt pin above")
         let plistBuild = (releasePlist?["CFBundleVersion"] as? String) ?? ""
-        suite.expect(plistBuild == "107",
+        suite.expect(plistBuild == "108",
                "every app version needs its own incremented bundle build")
         suite.expect(SupportUpdateIntroInfo.releaseVersion == "3.4.4",
                "the support prompt is prepared for the 3.4.4 stable release")
