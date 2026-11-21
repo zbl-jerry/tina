@@ -147,8 +147,12 @@ Run in the `tina-tile-windows` worktree:
   candidate generation, duplicate collapsing, clamping, ordering, frame
   geometry, gaps, cycle advance/restart, action identifiers and every
   language's text format.
-- `./build.sh --test` passes the full suite (124,912 checks), including the
-  localization contract and the repository text checks.
+- `./build.sh --test` passed the full suite (124,912 checks) on the feature
+  branch, including the localization contract and the repository text checks.
+  After merging `dev` (which added the recorder key overlay), local full runs
+  hit two unrelated, environment-dependent flakes: one switcher layout suite
+  and one speed-test check. Both suites pass when rerun alone, and CI on the
+  pre-merge head passed. CI is the authority for the merged head.
 - `./build.sh --dev` builds and signs the developer bundle.
 - `./build.sh` builds and signs the official bundle, and `./build/Tina
   --selftest` reports `SELFTEST OK`.
