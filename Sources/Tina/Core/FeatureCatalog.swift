@@ -17,7 +17,7 @@ enum AppFeature: String, CaseIterable {
     case switcher, dockPreview, dockClick, windowMaximizer, windowLayout, autoQuit, spacesOrder
     // Mouse and keyboard
     case scrollInverter, scrollHorizontal, scrollZoom, focusFollowsMouse, smoothScroll, linearScroll, scrollSpeed, mouseAcceleration, mouseNavigation, mouseButtonShortcuts, middleClick,
-         mouseClickDebounce, keyboardDebounce, textSnippets, layoutFix, superKey, quitWindowProtection
+         mouseClickDebounce, keyboardDebounce, textSnippets, layoutFix, superKey, autoInputSource, quitWindowProtection
     // Clipboard and files
     case clipboardHistory, pastePlain, finderCutPaste, finderRename, shelf, urlCleaner,
          diskImageInstaller
@@ -84,7 +84,7 @@ extension AppFeature {
         // Watch asks when an area is chosen and checks on every reading. The
         // companion and Launchpad use no permission at all.
         case .screenOCR, .cleaningMode, .screenshot, .commandBar, .screenRecorder, .wallpaper, .notchWatch,
-             .notchMascot, .launchpad, .nightWarmth:
+             .notchMascot, .launchpad, .nightWarmth, .autoInputSource:
             return false
         default:
             return true
@@ -105,7 +105,8 @@ extension AppFeature {
         case .switcher, .dockPreview, .dockClick, .launchpad, .windowMaximizer, .windowLayout, .autoQuit, .spacesOrder:
             return .windowsDock
         case .scrollInverter, .scrollHorizontal, .scrollZoom, .focusFollowsMouse, .smoothScroll, .linearScroll, .scrollSpeed, .mouseAcceleration, .mouseNavigation, .mouseButtonShortcuts, .middleClick,
-             .keyboardDebounce, .textSnippets, .layoutFix, .superKey, .quitWindowProtection, .mouseClickDebounce:
+             .keyboardDebounce, .textSnippets, .layoutFix, .superKey, .autoInputSource,
+             .quitWindowProtection, .mouseClickDebounce:
             return .mouseKeyboard
         case .clipboardHistory, .pastePlain, .finderCutPaste, .finderRename, .shelf, .urlCleaner,
              .diskImageInstaller:
@@ -209,6 +210,7 @@ extension AppFeature {
         case .killProcess: return "xmark.octagon"
         case .portManager: return "network"
         case .hostsProfiles: return "network.badge.shield.half.filled"
+        case .autoInputSource: return "keyboard.badge.ellipsis"
         case .launchpad: return "square.grid.3x3.fill"
         case .monitorCPU: return "cpu"
         case .monitorGPU: return "rectangle.connected.to.line.below"
@@ -268,6 +270,7 @@ extension AppFeature {
         case .textSnippets: return [DefaultsKey.textSnippetsEnabled, DefaultsKey.snippetLibraryEnabled]
         case .superKey: return [DefaultsKey.superKeyEnabled]
         case .layoutFix: return [DefaultsKey.layoutFixEnabled]
+        case .autoInputSource: return [DefaultsKey.autoInputSourceEnabled]
         case .mouseClickDebounce: return [DefaultsKey.mouseClickDebounceEnabled]
         case .notchGestures: return [DefaultsKey.notchGesturesEnabled]
         case .notchTimer: return [DefaultsKey.notchTimerEnabled]
@@ -400,7 +403,7 @@ extension AppFeature {
              .soundOutputSwitcher, .audioPriority,
              .extraBrightness, .nightWarmth, .bluetoothSleep, .quickLauncher, .colorPicker, .micMute, .mediaTools,
              .scratchpad, .wallpaper, .monitorGPU, .monitorNetwork, .connectedDevices, .fanControl, .killProcess,
-             .portManager, .hostsProfiles, .launchpad,
+             .portManager, .hostsProfiles, .launchpad, .autoInputSource,
              // Each app gets the ordinary quit request it would from its own menu.
              .quitApps:
             return []
@@ -502,7 +505,7 @@ extension AppFeature {
             return true
         case .focusFollowsMouse, .scrollHorizontal, .scrollZoom, .linearScroll, .scrollSpeed, .diskImageInstaller, .audioPriority,
              .wallpaper, .killProcess, .portManager, .hostsProfiles, .fanControl, .notchMascot, .spacesOrder, .quitApps,
-             .layoutFix, .launchpad, .nightWarmth:
+             .layoutFix, .launchpad, .nightWarmth, .autoInputSource:
             return false
         }
     }

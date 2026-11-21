@@ -151,6 +151,7 @@ struct MetricsTests {
                 QuitAppsRuntimeTests.run(suite)
                 PortManagerRefreshTests.run(suite)
                 HostsProfilesTests.run(suite)
+                AutoInputSourceTests.run(suite)
             }),
             ("settings", {
                 SettingsFeatureTests.run(suite)

@@ -144,6 +144,8 @@ enum ReleaseChangeAliases {
         case .killProcess: return ["kill process", "force kill", "process tree"]
         case .portManager: return ["port manager"]
         case .hostsProfiles: return ["hosts profiles", "hosts profile", "hosts file", "hosts entries"]
+        case .autoInputSource: return ["auto input source", "input source", "input sources",
+            "input method", "input methods", "keyboard layout", "language input"]
         case .launchpad: return ["launchpad"]
         case .notch: return ["dynamic island", "island", "islands", "notch", "volume keys", "volume key",
             "mute key", "volume feedback", "volume indicator", "volume notice", "new track indicator",

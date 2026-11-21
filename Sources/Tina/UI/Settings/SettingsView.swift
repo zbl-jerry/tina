@@ -606,6 +606,7 @@ struct SettingsView: View {
         case .killProcess: KillProcessView()
         case .portManager: PortManagerView()
         case .hostsProfiles: HostsProfilesSettings()
+        case .autoInputSource: AutoInputSourceSettings()
         case .launchpad: LaunchpadSettings()
         case .urlCleaner: URLCleanerSettings()
         case .cleaner: CleanerSettings()
