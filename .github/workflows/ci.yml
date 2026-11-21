@@ -9,13 +9,55 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same PR cancels the previous run. Pushes to dev are
+# allowed to finish: their result decides whether dev is green.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/dev' }}
 
 jobs:
+  # Build and tests are separate jobs so a PR waits for the slower one rather
+  # than for their sum. Each job compiles what it needs; the test job builds
+  # its own binary from the same sources, so no artifact is shared.
+  build:
+    name: Build & selftest
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Selftest
+        run: ./build/Tina --selftest
+
+      # Packaging is a release check, not a PR check. Keeping it on dev still
+      # exercises Tools/make-dmg.sh without sitting in every PR's path.
+      - name: Package DMG
+        if: github.event_name != 'pull_request'
+        run: ./Tools/make-dmg.sh
+
+  test:
+    name: Unit tests
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Unit tests
+        run: ./build.sh --test
+
+  # The older toolchain is checked when dev advances and on demand. PRs are
+  # already compiled and tested on the primary toolchain; repeating the whole
+  # suite under this one doubled every PR's runner cost.
   compatibility:
     name: Swift 6.0.3 compatibility
+    if: github.event_name != 'pull_request'
     runs-on: macos-15
     timeout-minutes: 30
     env:
@@ -35,27 +77,6 @@ jobs:
 
       - name: Selftest
         run: ./build/Tina --selftest
-
-      - name: Unit tests
-        run: ./build.sh --test
-
-  build:
-    name: Build & selftest
-    runs-on: macos-26
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-
-      - name: Build
-        run: ./build.sh
-
-      - name: Selftest
-        run: ./build/Tina --selftest
-
-      - name: Package DMG
-        run: ./Tools/make-dmg.sh
 
       - name: Unit tests
         run: ./build.sh --test
