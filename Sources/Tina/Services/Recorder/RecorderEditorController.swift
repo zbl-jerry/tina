@@ -67,6 +67,8 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
     private(set) var audioSources: Set<RecorderAudioSource> = []
     private(set) var pointerTrack = RecorderPointerTrack()
     private(set) var typingTrack = RecorderTypingTrack()
+    /// Present only when the recording was made with the key overlay on.
+    private(set) var keystrokeTrack = RecorderKeystrokeTrack()
     /// True when the recording carries a pointer track at all. Without one the
     /// pointer and zoom controls have nothing to act on and are hidden rather
     /// than shown doing nothing.
@@ -104,6 +106,8 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
         player.isMuted = false
         pointerTrack = RecorderPointerTrack.decoded(try? Data(contentsOf: take.pointerURL))
         typingTrack = RecorderTypingTrack.decoded(try? Data(contentsOf: take.typingURL))
+        keystrokeTrack = RecorderKeystrokeTrack.decoded(
+            try? Data(contentsOf: take.keystrokesURL))
         loadEditPresets()
         loadBackdropPresets()
         observeTime()
@@ -392,6 +396,7 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
             guard !Task.isCancelled, let self, let item = self.player.currentItem else { return }
             guard let plan = RecorderComposer.makePlan(document: document,
                                                        track: track,
+                                                       keystrokes: self.keystrokeTrack,
                                                        sourceSize: sourceSize,
                                                        frameRate: frameRate,
                                                        duration: duration) else {

@@ -8,6 +8,7 @@ You can review or change every grant in System Settings, under Privacy and Secur
 |---|---|---|
 | Accessibility | Yes | Scroll direction, Window Layout, the app and window switcher, Dock Preview, Dock click to minimize, middle click, paste as plain text, Finder cut and paste, quit on close, radial menu key actions, optional notch notification mirroring and keyboard feedback |
 | Screen Recording | Yes | Window previews, screenshots, copy text from screen, magnified color picking and screen recordings |
+| Input Monitoring | Yes | The optional key overlay in screen recordings |
 | System Audio Recording | Yes | Volume mixer, optional live equalizer and system audio capture for recordings |
 | Microphone | Yes | Your voice in a screen recording, only when you turn it on |
 | Camera | Yes | The camera preview mirror, floating or inside the notch |
@@ -56,6 +57,32 @@ The color picker also uses this permission for Tina's magnifier and keyboard con
 **If you say no.** The switcher falls back to app icons. Dock Preview, screenshots, copy text from screen and screen recording stay unavailable. Previews and text recognition remain local. A screenshot or recording is written only when you ask, and leaves your Mac only when you explicitly share it.
 
 **Optional.** Yes.
+
+## Input Monitoring
+
+**Why it comes up.** macOS withholds key events from apps that have not been
+granted Input Monitoring. The recorder's optional key overlay listens to key
+presses while a recording runs, so it needs that grant.
+
+**What uses it.** Only the **Show keys while recording** switch in the screen
+recorder settings, and only while a recording is running. The listener is
+read-only: it cannot change, block or replay what other apps receive. It shows
+the combination as key caps, such as `⌘⇧4`, and never stores the raw event,
+typed text or the app that received it.
+
+Secure Event Input, the state a password field requests, is respected twice:
+macOS hides the keys from the listener, and Tina clears the row and stops
+capturing while the flag is on. The keys that are shown are kept only in the
+recording's private, temporary folder so the editor and export can draw them.
+They are not logged and are not written into the video's metadata; the folder
+is deleted with the recording.
+
+**If you say no.** Screen recording still works. The key switch stays off and
+the settings page offers a request button and a shortcut to System Settings.
+The grant takes effect without relaunching Tina.
+
+**Optional.** Yes. The listener exists only while a recording with the switch
+on is running.
 
 ## System Audio Recording
 

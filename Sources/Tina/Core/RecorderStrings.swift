@@ -141,6 +141,27 @@ struct RecorderFeatureStrings {
     let imageOpacityLabel: String
     let imagePositionLabel: String
     let imageImportFailed: String
+    let keystrokeToggle: String
+    let keystrokeCaption: String
+    let keystrokePermissionName: String
+    let keystrokePermissionExplain: String
+    let keystrokePositionLabel: String
+    let keystrokePositionTopLeading: String
+    let keystrokePositionTopTrailing: String
+    let keystrokePositionBottomLeading: String
+    let keystrokePositionBottomTrailing: String
+    let keystrokePositionCursor: String
+    let keystrokeSizeLabel: String
+    let keystrokeSizeSmall: String
+    let keystrokeSizeMedium: String
+    let keystrokeSizeLarge: String
+    let keystrokeDwellLabel: String
+    let keystrokeDwellFormat: String
+    let keystrokeThemeLabel: String
+    let keystrokeThemeDark: String
+    let keystrokeThemeLight: String
+    let keystrokeSecureInputNote: String
+    let keystrokeUnavailableHUD: String
 }
 
 extension FeatureStrings {
@@ -302,7 +323,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Size",
         imageOpacityLabel: "Opacity",
         imagePositionLabel: "Position",
-        imageImportFailed: "Couldn’t add this image."
+        imageImportFailed: "Couldn’t add this image.",
+        keystrokeToggle: "Show keys while recording",
+        keystrokeCaption: "Shows the keys you press over the recording, in the editor and the saved video. Keys stay in the recording’s private folder, are never logged, and are not written into the file’s metadata.",
+        keystrokePermissionName: "Input Monitoring",
+        keystrokePermissionExplain: "Showing keys needs Input Monitoring. Without it, macOS withholds keystrokes from Tina.",
+        keystrokePositionLabel: "Position",
+        keystrokePositionTopLeading: "Top left",
+        keystrokePositionTopTrailing: "Top right",
+        keystrokePositionBottomLeading: "Bottom left",
+        keystrokePositionBottomTrailing: "Bottom right",
+        keystrokePositionCursor: "Follow pointer",
+        keystrokeSizeLabel: "Size",
+        keystrokeSizeSmall: "Small",
+        keystrokeSizeMedium: "Medium",
+        keystrokeSizeLarge: "Large",
+        keystrokeDwellLabel: "Stays for",
+        keystrokeDwellFormat: "%d s",
+        keystrokeThemeLabel: "Appearance",
+        keystrokeThemeDark: "Dark",
+        keystrokeThemeLight: "Light",
+        keystrokeSecureInputNote: "Hidden while a password field is active.",
+        keystrokeUnavailableHUD: "Keys can’t be shown without Input Monitoring"
     )
 
     static let ptBR = RecorderFeatureStrings(
@@ -441,7 +483,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Tamanho",
         imageOpacityLabel: "Opacidade",
         imagePositionLabel: "Posição",
-        imageImportFailed: "Não foi possível adicionar esta imagem."
+        imageImportFailed: "Não foi possível adicionar esta imagem.",
+        keystrokeToggle: "Mostrar teclas durante a gravação",
+        keystrokeCaption: "Mostra as teclas pressionadas sobre a gravação, no editor e no vídeo salvo. As teclas ficam na pasta privada da gravação, nunca vão para registros e não são gravadas nos metadados do arquivo.",
+        keystrokePermissionName: "Monitoramento de entrada",
+        keystrokePermissionExplain: "Mostrar teclas exige Monitoramento de entrada. Sem ele, o macOS não entrega as teclas ao Tina.",
+        keystrokePositionLabel: "Posição",
+        keystrokePositionTopLeading: "Superior esquerda",
+        keystrokePositionTopTrailing: "Superior direita",
+        keystrokePositionBottomLeading: "Inferior esquerda",
+        keystrokePositionBottomTrailing: "Inferior direita",
+        keystrokePositionCursor: "Seguir o ponteiro",
+        keystrokeSizeLabel: "Tamanho",
+        keystrokeSizeSmall: "Pequeno",
+        keystrokeSizeMedium: "Médio",
+        keystrokeSizeLarge: "Grande",
+        keystrokeDwellLabel: "Permanece por",
+        keystrokeDwellFormat: "%d s",
+        keystrokeThemeLabel: "Aparência",
+        keystrokeThemeDark: "Escuro",
+        keystrokeThemeLight: "Claro",
+        keystrokeSecureInputNote: "Oculto enquanto um campo de senha estiver ativo.",
+        keystrokeUnavailableHUD: "Não é possível mostrar as teclas sem Monitoramento de entrada"
     )
 
     static let tr = RecorderFeatureStrings(
@@ -580,7 +643,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Boyut",
         imageOpacityLabel: "Matlık",
         imagePositionLabel: "Konum",
-        imageImportFailed: "Bu görsel eklenemedi."
+        imageImportFailed: "Bu görsel eklenemedi.",
+        keystrokeToggle: "Kayıt sırasında tuşları göster",
+        keystrokeCaption: "Basılan tuşları kaydın üzerinde, düzenleyicide ve kaydedilen videoda gösterir. Tuşlar kaydın özel klasöründe kalır, günlüğe yazılmaz ve dosyanın üst verisine işlenmez.",
+        keystrokePermissionName: "Girdi İzleme",
+        keystrokePermissionExplain: "Tuşları göstermek için Girdi İzleme gerekir. O olmadan macOS tuşları Tina’dan gizler.",
+        keystrokePositionLabel: "Konum",
+        keystrokePositionTopLeading: "Sol üst",
+        keystrokePositionTopTrailing: "Sağ üst",
+        keystrokePositionBottomLeading: "Sol alt",
+        keystrokePositionBottomTrailing: "Sağ alt",
+        keystrokePositionCursor: "İmleci izle",
+        keystrokeSizeLabel: "Boyut",
+        keystrokeSizeSmall: "Küçük",
+        keystrokeSizeMedium: "Orta",
+        keystrokeSizeLarge: "Büyük",
+        keystrokeDwellLabel: "Kalma süresi",
+        keystrokeDwellFormat: "%d sn",
+        keystrokeThemeLabel: "Görünüm",
+        keystrokeThemeDark: "Koyu",
+        keystrokeThemeLight: "Açık",
+        keystrokeSecureInputNote: "Bir parola alanı etkinken gizlenir.",
+        keystrokeUnavailableHUD: "Girdi İzleme olmadan tuşlar gösterilemez"
     )
 
     static let ru = RecorderFeatureStrings(
@@ -719,7 +803,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Размер",
         imageOpacityLabel: "Непрозрачность",
         imagePositionLabel: "Положение",
-        imageImportFailed: "Не удалось добавить это изображение."
+        imageImportFailed: "Не удалось добавить это изображение.",
+        keystrokeToggle: "Показывать клавиши во время записи",
+        keystrokeCaption: "Показывает нажатые клавиши поверх записи, в редакторе и в сохранённом видео. Клавиши хранятся только в закрытой папке записи, не попадают в журналы и в метаданные файла.",
+        keystrokePermissionName: "Мониторинг ввода",
+        keystrokePermissionExplain: "Для показа клавиш нужен Мониторинг ввода. Без него macOS не передаёт нажатия программе Tina.",
+        keystrokePositionLabel: "Положение",
+        keystrokePositionTopLeading: "Слева сверху",
+        keystrokePositionTopTrailing: "Справа сверху",
+        keystrokePositionBottomLeading: "Слева снизу",
+        keystrokePositionBottomTrailing: "Справа снизу",
+        keystrokePositionCursor: "За указателем",
+        keystrokeSizeLabel: "Размер",
+        keystrokeSizeSmall: "Малый",
+        keystrokeSizeMedium: "Средний",
+        keystrokeSizeLarge: "Большой",
+        keystrokeDwellLabel: "Остаётся на",
+        keystrokeDwellFormat: "%d с",
+        keystrokeThemeLabel: "Оформление",
+        keystrokeThemeDark: "Тёмное",
+        keystrokeThemeLight: "Светлое",
+        keystrokeSecureInputNote: "Скрыто, пока активно поле пароля.",
+        keystrokeUnavailableHUD: "Без Мониторинга ввода показать клавиши нельзя"
     )
 
     static let es = RecorderFeatureStrings(
@@ -858,7 +963,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Tamaño",
         imageOpacityLabel: "Opacidad",
         imagePositionLabel: "Posición",
-        imageImportFailed: "No se pudo añadir esta imagen."
+        imageImportFailed: "No se pudo añadir esta imagen.",
+        keystrokeToggle: "Mostrar las teclas al grabar",
+        keystrokeCaption: "Muestra las teclas pulsadas sobre la grabación, en el editor y en el vídeo guardado. Las teclas permanecen en la carpeta privada de la grabación, nunca se registran y no se escriben en los metadatos del archivo.",
+        keystrokePermissionName: "Monitorización de entrada",
+        keystrokePermissionExplain: "Mostrar las teclas requiere Monitorización de entrada. Sin ella, macOS no entrega las pulsaciones a Tina.",
+        keystrokePositionLabel: "Posición",
+        keystrokePositionTopLeading: "Arriba a la izquierda",
+        keystrokePositionTopTrailing: "Arriba a la derecha",
+        keystrokePositionBottomLeading: "Abajo a la izquierda",
+        keystrokePositionBottomTrailing: "Abajo a la derecha",
+        keystrokePositionCursor: "Seguir al puntero",
+        keystrokeSizeLabel: "Tamaño",
+        keystrokeSizeSmall: "Pequeño",
+        keystrokeSizeMedium: "Mediano",
+        keystrokeSizeLarge: "Grande",
+        keystrokeDwellLabel: "Permanece",
+        keystrokeDwellFormat: "%d s",
+        keystrokeThemeLabel: "Aspecto",
+        keystrokeThemeDark: "Oscuro",
+        keystrokeThemeLight: "Claro",
+        keystrokeSecureInputNote: "Oculto mientras haya un campo de contraseña activo.",
+        keystrokeUnavailableHUD: "No se pueden mostrar las teclas sin Monitorización de entrada"
     )
 
     static let sk = RecorderFeatureStrings(
@@ -997,7 +1123,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Veľkosť",
         imageOpacityLabel: "Nepriehľadnosť",
         imagePositionLabel: "Poloha",
-        imageImportFailed: "Tento obrázok sa nepodarilo pridať."
+        imageImportFailed: "Tento obrázok sa nepodarilo pridať.",
+        keystrokeToggle: "Zobrazovať klávesy počas nahrávania",
+        keystrokeCaption: "Zobrazuje stlačené klávesy nad nahrávkou, v editore a v uloženom videu. Klávesy zostávajú v súkromnom priečinku nahrávky, nikdy sa nezapisujú do protokolov ani do metadát súboru.",
+        keystrokePermissionName: "Monitorovanie vstupu",
+        keystrokePermissionExplain: "Na zobrazenie kláves je potrebné Monitorovanie vstupu. Bez neho macOS klávesy aplikácii Tina neposkytne.",
+        keystrokePositionLabel: "Poloha",
+        keystrokePositionTopLeading: "Vľavo hore",
+        keystrokePositionTopTrailing: "Vpravo hore",
+        keystrokePositionBottomLeading: "Vľavo dole",
+        keystrokePositionBottomTrailing: "Vpravo dole",
+        keystrokePositionCursor: "Sledovať ukazovateľ",
+        keystrokeSizeLabel: "Veľkosť",
+        keystrokeSizeSmall: "Malá",
+        keystrokeSizeMedium: "Stredná",
+        keystrokeSizeLarge: "Veľká",
+        keystrokeDwellLabel: "Zostane",
+        keystrokeDwellFormat: "%d s",
+        keystrokeThemeLabel: "Vzhľad",
+        keystrokeThemeDark: "Tmavý",
+        keystrokeThemeLight: "Svetlý",
+        keystrokeSecureInputNote: "Skryté, kým je aktívne pole hesla.",
+        keystrokeUnavailableHUD: "Bez Monitorovania vstupu nemožno klávesy zobraziť"
     )
 
     static let de = RecorderFeatureStrings(
@@ -1136,7 +1283,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Größe",
         imageOpacityLabel: "Deckkraft",
         imagePositionLabel: "Position",
-        imageImportFailed: "Dieses Bild konnte nicht hinzugefügt werden."
+        imageImportFailed: "Dieses Bild konnte nicht hinzugefügt werden.",
+        keystrokeToggle: "Tasten während der Aufnahme anzeigen",
+        keystrokeCaption: "Zeigt die gedrückten Tasten über der Aufnahme, im Editor und im gesicherten Video. Die Tasten bleiben im privaten Ordner der Aufnahme, landen nie in Protokollen und werden nicht in die Metadaten der Datei geschrieben.",
+        keystrokePermissionName: "Eingabeüberwachung",
+        keystrokePermissionExplain: "Zum Anzeigen der Tasten ist die Eingabeüberwachung nötig. Ohne sie gibt macOS Tina keine Tastendrücke.",
+        keystrokePositionLabel: "Position",
+        keystrokePositionTopLeading: "Oben links",
+        keystrokePositionTopTrailing: "Oben rechts",
+        keystrokePositionBottomLeading: "Unten links",
+        keystrokePositionBottomTrailing: "Unten rechts",
+        keystrokePositionCursor: "Zeiger folgen",
+        keystrokeSizeLabel: "Größe",
+        keystrokeSizeSmall: "Klein",
+        keystrokeSizeMedium: "Mittel",
+        keystrokeSizeLarge: "Groß",
+        keystrokeDwellLabel: "Bleibt",
+        keystrokeDwellFormat: "%d s",
+        keystrokeThemeLabel: "Erscheinungsbild",
+        keystrokeThemeDark: "Dunkel",
+        keystrokeThemeLight: "Hell",
+        keystrokeSecureInputNote: "Ausgeblendet, solange ein Passwortfeld aktiv ist.",
+        keystrokeUnavailableHUD: "Ohne Eingabeüberwachung können Tasten nicht angezeigt werden"
     )
 
     static let fr = RecorderFeatureStrings(
@@ -1275,7 +1443,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Taille",
         imageOpacityLabel: "Opacité",
         imagePositionLabel: "Position",
-        imageImportFailed: "Impossible d’ajouter cette image."
+        imageImportFailed: "Impossible d’ajouter cette image.",
+        keystrokeToggle: "Afficher les touches pendant l’enregistrement",
+        keystrokeCaption: "Affiche les touches pressées sur l’enregistrement, dans l’éditeur et dans la vidéo enregistrée. Les touches restent dans le dossier privé de l’enregistrement, ne sont jamais journalisées et ne sont pas écrites dans les métadonnées du fichier.",
+        keystrokePermissionName: "Surveillance de l’entrée",
+        keystrokePermissionExplain: "L’affichage des touches nécessite la Surveillance de l’entrée. Sans elle, macOS ne transmet pas les frappes à Tina.",
+        keystrokePositionLabel: "Position",
+        keystrokePositionTopLeading: "En haut à gauche",
+        keystrokePositionTopTrailing: "En haut à droite",
+        keystrokePositionBottomLeading: "En bas à gauche",
+        keystrokePositionBottomTrailing: "En bas à droite",
+        keystrokePositionCursor: "Suivre le pointeur",
+        keystrokeSizeLabel: "Taille",
+        keystrokeSizeSmall: "Petite",
+        keystrokeSizeMedium: "Moyenne",
+        keystrokeSizeLarge: "Grande",
+        keystrokeDwellLabel: "Reste",
+        keystrokeDwellFormat: "%d s",
+        keystrokeThemeLabel: "Apparence",
+        keystrokeThemeDark: "Sombre",
+        keystrokeThemeLight: "Clair",
+        keystrokeSecureInputNote: "Masqué tant qu’un champ de mot de passe est actif.",
+        keystrokeUnavailableHUD: "Impossible d’afficher les touches sans Surveillance de l’entrée"
     )
 
     static let it = RecorderFeatureStrings(
@@ -1414,7 +1603,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Dimensione",
         imageOpacityLabel: "Opacità",
         imagePositionLabel: "Posizione",
-        imageImportFailed: "Impossibile aggiungere questa immagine."
+        imageImportFailed: "Impossibile aggiungere questa immagine.",
+        keystrokeToggle: "Mostra i tasti durante la registrazione",
+        keystrokeCaption: "Mostra i tasti premuti sopra la registrazione, nell’editor e nel video salvato. I tasti restano nella cartella privata della registrazione, non finiscono mai nei log e non vengono scritti nei metadati del file.",
+        keystrokePermissionName: "Monitoraggio input",
+        keystrokePermissionExplain: "Per mostrare i tasti serve il Monitoraggio input. Senza, macOS non consegna i tasti a Tina.",
+        keystrokePositionLabel: "Posizione",
+        keystrokePositionTopLeading: "In alto a sinistra",
+        keystrokePositionTopTrailing: "In alto a destra",
+        keystrokePositionBottomLeading: "In basso a sinistra",
+        keystrokePositionBottomTrailing: "In basso a destra",
+        keystrokePositionCursor: "Segui il puntatore",
+        keystrokeSizeLabel: "Dimensione",
+        keystrokeSizeSmall: "Piccola",
+        keystrokeSizeMedium: "Media",
+        keystrokeSizeLarge: "Grande",
+        keystrokeDwellLabel: "Resta per",
+        keystrokeDwellFormat: "%d s",
+        keystrokeThemeLabel: "Aspetto",
+        keystrokeThemeDark: "Scuro",
+        keystrokeThemeLight: "Chiaro",
+        keystrokeSecureInputNote: "Nascosto mentre è attivo un campo password.",
+        keystrokeUnavailableHUD: "Senza Monitoraggio input i tasti non possono essere mostrati"
     )
 
     static let ja = RecorderFeatureStrings(
@@ -1553,7 +1763,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "サイズ",
         imageOpacityLabel: "不透明度",
         imagePositionLabel: "位置",
-        imageImportFailed: "この画像を追加できませんでした。"
+        imageImportFailed: "この画像を追加できませんでした。",
+        keystrokeToggle: "録画中にキーを表示",
+        keystrokeCaption: "押したキーを録画の上、エディタ、保存したビデオに表示します。キーは録画の非公開フォルダにのみ保存され、ログにもファイルのメタデータにも書き込まれません。",
+        keystrokePermissionName: "入力監視",
+        keystrokePermissionExplain: "キーの表示には入力監視が必要です。これがないと macOS は Tina にキー入力を渡しません。",
+        keystrokePositionLabel: "位置",
+        keystrokePositionTopLeading: "左上",
+        keystrokePositionTopTrailing: "右上",
+        keystrokePositionBottomLeading: "左下",
+        keystrokePositionBottomTrailing: "右下",
+        keystrokePositionCursor: "ポインタに追従",
+        keystrokeSizeLabel: "サイズ",
+        keystrokeSizeSmall: "小",
+        keystrokeSizeMedium: "中",
+        keystrokeSizeLarge: "大",
+        keystrokeDwellLabel: "表示時間",
+        keystrokeDwellFormat: "%d 秒",
+        keystrokeThemeLabel: "外観",
+        keystrokeThemeDark: "ダーク",
+        keystrokeThemeLight: "ライト",
+        keystrokeSecureInputNote: "パスワード欄が有効な間は非表示になります。",
+        keystrokeUnavailableHUD: "入力監視がないとキーを表示できません"
     )
 
     static let ko = RecorderFeatureStrings(
@@ -1692,7 +1923,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "크기",
         imageOpacityLabel: "불투명도",
         imagePositionLabel: "위치",
-        imageImportFailed: "이 이미지를 추가할 수 없습니다."
+        imageImportFailed: "이 이미지를 추가할 수 없습니다.",
+        keystrokeToggle: "녹화하는 동안 키 표시",
+        keystrokeCaption: "누른 키를 녹화 화면 위와 편집기, 저장된 비디오에 표시합니다. 키는 녹화의 비공개 폴더에만 남고 로그나 파일 메타데이터에 기록되지 않습니다.",
+        keystrokePermissionName: "입력 모니터링",
+        keystrokePermissionExplain: "키를 표시하려면 입력 모니터링이 필요합니다. 없으면 macOS가 Tina에 키 입력을 전달하지 않습니다.",
+        keystrokePositionLabel: "위치",
+        keystrokePositionTopLeading: "왼쪽 위",
+        keystrokePositionTopTrailing: "오른쪽 위",
+        keystrokePositionBottomLeading: "왼쪽 아래",
+        keystrokePositionBottomTrailing: "오른쪽 아래",
+        keystrokePositionCursor: "포인터 따라가기",
+        keystrokeSizeLabel: "크기",
+        keystrokeSizeSmall: "작게",
+        keystrokeSizeMedium: "보통",
+        keystrokeSizeLarge: "크게",
+        keystrokeDwellLabel: "표시 시간",
+        keystrokeDwellFormat: "%d초",
+        keystrokeThemeLabel: "모양",
+        keystrokeThemeDark: "어둡게",
+        keystrokeThemeLight: "밝게",
+        keystrokeSecureInputNote: "암호 입력란이 활성화된 동안 숨겨집니다.",
+        keystrokeUnavailableHUD: "입력 모니터링 없이는 키를 표시할 수 없습니다"
     )
 
     static let zhHans = RecorderFeatureStrings(
@@ -1831,7 +2083,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "大小",
         imageOpacityLabel: "不透明度",
         imagePositionLabel: "位置",
-        imageImportFailed: "无法添加此图片。"
+        imageImportFailed: "无法添加此图片。",
+        keystrokeToggle: "录制时显示按键",
+        keystrokeCaption: "在录制画面上、编辑器里和保存的视频中显示所按的按键。按键只保存在录制的私有文件夹中，不会写入日志，也不会写进文件元数据。",
+        keystrokePermissionName: "输入监控",
+        keystrokePermissionExplain: "显示按键需要输入监控。没有它，macOS 不会把按键交给 Tina。",
+        keystrokePositionLabel: "位置",
+        keystrokePositionTopLeading: "左上",
+        keystrokePositionTopTrailing: "右上",
+        keystrokePositionBottomLeading: "左下",
+        keystrokePositionBottomTrailing: "右下",
+        keystrokePositionCursor: "跟随指针",
+        keystrokeSizeLabel: "大小",
+        keystrokeSizeSmall: "小",
+        keystrokeSizeMedium: "中",
+        keystrokeSizeLarge: "大",
+        keystrokeDwellLabel: "停留",
+        keystrokeDwellFormat: "%d 秒",
+        keystrokeThemeLabel: "外观",
+        keystrokeThemeDark: "深色",
+        keystrokeThemeLight: "浅色",
+        keystrokeSecureInputNote: "密码输入框启用时隐藏。",
+        keystrokeUnavailableHUD: "没有输入监控时无法显示按键"
     )
 
     static let zhTW = RecorderFeatureStrings(
@@ -1970,7 +2243,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "大小",
         imageOpacityLabel: "不透明度",
         imagePositionLabel: "位置",
-        imageImportFailed: "無法加入這張圖片。"
+        imageImportFailed: "無法加入這張圖片。",
+        keystrokeToggle: "錄製時顯示按鍵",
+        keystrokeCaption: "在錄製畫面上、編輯器裡和儲存的影片中顯示所按的按鍵。按鍵只保存在錄製的私密資料夾中，不會寫入日誌，也不會寫進檔案中繼資料。",
+        keystrokePermissionName: "輸入監控",
+        keystrokePermissionExplain: "顯示按鍵需要輸入監控。沒有它，macOS 不會把按鍵交給 Tina。",
+        keystrokePositionLabel: "位置",
+        keystrokePositionTopLeading: "左上",
+        keystrokePositionTopTrailing: "右上",
+        keystrokePositionBottomLeading: "左下",
+        keystrokePositionBottomTrailing: "右下",
+        keystrokePositionCursor: "跟隨指標",
+        keystrokeSizeLabel: "大小",
+        keystrokeSizeSmall: "小",
+        keystrokeSizeMedium: "中",
+        keystrokeSizeLarge: "大",
+        keystrokeDwellLabel: "停留",
+        keystrokeDwellFormat: "%d 秒",
+        keystrokeThemeLabel: "外觀",
+        keystrokeThemeDark: "深色",
+        keystrokeThemeLight: "淺色",
+        keystrokeSecureInputNote: "密碼輸入框啟用時隱藏。",
+        keystrokeUnavailableHUD: "沒有輸入監控時無法顯示按鍵"
     )
 
     static let zhHK = RecorderFeatureStrings(
@@ -2109,7 +2403,28 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "大小",
         imageOpacityLabel: "不透明度",
         imagePositionLabel: "位置",
-        imageImportFailed: "無法加入這張圖片。"
+        imageImportFailed: "無法加入這張圖片。",
+        keystrokeToggle: "錄製時顯示按鍵",
+        keystrokeCaption: "在錄製畫面上、編輯器裡和儲存的影片中顯示所按的按鍵。按鍵只保存在錄製的私密資料夾中，不會寫入日誌，也不會寫進檔案中繼資料。",
+        keystrokePermissionName: "輸入監控",
+        keystrokePermissionExplain: "顯示按鍵需要輸入監控。沒有它，macOS 不會把按鍵交給 Tina。",
+        keystrokePositionLabel: "位置",
+        keystrokePositionTopLeading: "左上",
+        keystrokePositionTopTrailing: "右上",
+        keystrokePositionBottomLeading: "左下",
+        keystrokePositionBottomTrailing: "右下",
+        keystrokePositionCursor: "跟隨指標",
+        keystrokeSizeLabel: "大小",
+        keystrokeSizeSmall: "小",
+        keystrokeSizeMedium: "中",
+        keystrokeSizeLarge: "大",
+        keystrokeDwellLabel: "停留",
+        keystrokeDwellFormat: "%d 秒",
+        keystrokeThemeLabel: "外觀",
+        keystrokeThemeDark: "深色",
+        keystrokeThemeLight: "淺色",
+        keystrokeSecureInputNote: "密碼輸入框啟用時隱藏。",
+        keystrokeUnavailableHUD: "沒有輸入監控時無法顯示按鍵"
     )
     static let uk = RecorderFeatureStrings(
         pageTitle: "Запис екрана",
@@ -2247,6 +2562,27 @@ extension RecorderFeatureStrings {
         imageSizeLabel: "Розмір",
         imageOpacityLabel: "Непрозорість",
         imagePositionLabel: "Позиція",
-        imageImportFailed: "Не вдалося додати це зображення."
+        imageImportFailed: "Не вдалося додати це зображення.",
+        keystrokeToggle: "Показувати клавіші під час запису",
+        keystrokeCaption: "Показує натиснуті клавіші поверх запису, у редакторі та збереженому відео. Клавіші зберігаються лише в закритій теці запису, не потрапляють у журнали й метадані файлу.",
+        keystrokePermissionName: "Моніторинг введення",
+        keystrokePermissionExplain: "Для показу клавіш потрібен Моніторинг введення. Без нього macOS не передає натискання Tina.",
+        keystrokePositionLabel: "Положення",
+        keystrokePositionTopLeading: "Угорі ліворуч",
+        keystrokePositionTopTrailing: "Угорі праворуч",
+        keystrokePositionBottomLeading: "Унизу ліворуч",
+        keystrokePositionBottomTrailing: "Унизу праворуч",
+        keystrokePositionCursor: "За вказівником",
+        keystrokeSizeLabel: "Розмір",
+        keystrokeSizeSmall: "Малий",
+        keystrokeSizeMedium: "Середній",
+        keystrokeSizeLarge: "Великий",
+        keystrokeDwellLabel: "Тримається",
+        keystrokeDwellFormat: "%d с",
+        keystrokeThemeLabel: "Вигляд",
+        keystrokeThemeDark: "Темний",
+        keystrokeThemeLight: "Світлий",
+        keystrokeSecureInputNote: "Приховано, поки активне поле пароля.",
+        keystrokeUnavailableHUD: "Без Моніторингу введення клавіші показати неможливо"
     )
 }

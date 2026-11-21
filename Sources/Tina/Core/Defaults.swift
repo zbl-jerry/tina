@@ -824,6 +824,13 @@ enum DefaultsKey {
     static let recorderGIFFrameRate = "recorderGIFFrameRate"
     static let recorderEditorPresets = "recorderEditorPresets"
     static let recorderSharingEnabled = "recorderSharingEnabled"
+    // The optional key overlay. Off by default: it is the one recorder
+    // setting that needs Input Monitoring, and it shows what was typed.
+    static let recorderKeystrokesEnabled = "recorderKeystrokesEnabled"
+    static let recorderKeystrokePlacement = "recorderKeystrokePlacement"
+    static let recorderKeystrokeSize = "recorderKeystrokeSize"
+    static let recorderKeystrokeDwell = "recorderKeystrokeDwell"
+    static let recorderKeystrokeTheme = "recorderKeystrokeTheme"
     static let panelUtilityScreenRecorder = "panelUtilityScreenRecorder"
     static let panelUtilityPortManager = "panelUtilityPortManager"
     static let panelUtilityKillProcess = "panelUtilityKillProcess"
@@ -2032,6 +2039,11 @@ enum Defaults {
         DefaultsKey.recorderGIFFrameRate: 12,
         DefaultsKey.recorderEditorPresets: Data(),
         DefaultsKey.recorderSharingEnabled: true,
+        DefaultsKey.recorderKeystrokesEnabled: false,
+        DefaultsKey.recorderKeystrokePlacement: RecorderKeystrokePlacement.bottomTrailing.rawValue,
+        DefaultsKey.recorderKeystrokeSize: RecorderKeystrokeSize.medium.rawValue,
+        DefaultsKey.recorderKeystrokeDwell: 2.0,
+        DefaultsKey.recorderKeystrokeTheme: RecorderKeystrokeTheme.dark.rawValue,
         DefaultsKey.panelUtilityScreenRecorder: true,
         DefaultsKey.panelUtilityPortManager: true,
         DefaultsKey.panelUtilityKillProcess: true,
