@@ -556,7 +556,7 @@ private enum UtilityPanelItem: String, PanelOrderItem, Identifiable {
     // are migrated once without disturbing the rest of the user's layout.
     case screenshot, quickLauncher, appUpdates, cleaner, homebrew, media, clipboard, windowLayout,
          uninstaller, cleanURL, cleaning, screenOCR, colorPicker, cameraPreview, scratchpad,
-         commandBar, screenRecorder, portManager, killProcess
+         commandBar, screenRecorder, portManager, hostsProfiles, killProcess
 
     var id: String { rawValue }
 
@@ -582,6 +582,7 @@ private enum UtilityPanelItem: String, PanelOrderItem, Identifiable {
         case .scratchpad: return .scratchpad
         case .commandBar: return .commandBar
         case .portManager: return .portManager
+        case .hostsProfiles: return .hostsProfiles
         case .killProcess: return .killProcess
         }
     }
@@ -601,6 +602,7 @@ struct UtilitiesSection: View {
     @State private var showRecentCapturesPanel = false
     @State private var showWindowLayoutPanel = false
     @State private var showPortManagerPanel = false
+    @State private var showHostsProfilesPanel = false
     @State private var showKillProcessPanel = false
     @AppStorage(DefaultsKey.panelUtilityCleaning) private var showCleaning = true
     @AppStorage(DefaultsKey.panelUtilityURLCleaner) private var showCleanURL = true
@@ -620,6 +622,7 @@ struct UtilitiesSection: View {
     @AppStorage(DefaultsKey.panelUtilityCommandBar) private var showCommandBar = true
     @AppStorage(DefaultsKey.panelUtilityScreenRecorder) private var showScreenRecorder = true
     @AppStorage(DefaultsKey.panelUtilityPortManager) private var showPortManager = true
+    @AppStorage(DefaultsKey.panelUtilityHostsProfiles) private var showHostsProfiles = true
     @AppStorage(DefaultsKey.panelUtilityKillProcess) private var showKillProcess = true
     @ObservedObject private var recorder = ScreenRecorderService.shared
     @AppStorage(DefaultsKey.clipboardHistoryEnabled) private var clipboardEnabled = false
@@ -679,6 +682,11 @@ struct UtilitiesSection: View {
                     PanelInteractionState.shared.viewKeepsPopoverOpen = false
                     showPortManagerPanel = false
                 }
+            } else if showHostsProfilesPanel {
+                PanelHostsProfilesView {
+                    PanelInteractionState.shared.viewKeepsPopoverOpen = false
+                    showHostsProfilesPanel = false
+                }
             } else if showKillProcessPanel {
                 PanelKillProcessView {
                     PanelInteractionState.shared.viewKeepsPopoverOpen = false
@@ -725,6 +733,7 @@ struct UtilitiesSection: View {
         if showWindowLayoutPanel { return .windowLayout }
         if showAppUpdatesPanel { return .appUpdates }
         if showPortManagerPanel { return .portManager }
+        if showHostsProfilesPanel { return .hostsProfiles }
         if showKillProcessPanel { return .killProcess }
         return nil
     }
@@ -736,7 +745,7 @@ struct UtilitiesSection: View {
         showUninstaller || showCleanerPanel || showURLCleaner || showHomebrewPanel
             || showMediaPanel || showClipboardPanel || showRecentCapturesPanel
             || showWindowLayoutPanel || showAppUpdatesPanel || showPortManagerPanel
-            || showKillProcessPanel
+            || showHostsProfilesPanel || showKillProcessPanel
     }
 
     /// Homebrew browsing behaves like an ordinary popover. Other hosted tools
@@ -792,6 +801,7 @@ struct UtilitiesSection: View {
         case .screenshot: return showScreenshot
         case .screenRecorder: return showScreenRecorder
         case .portManager: return showPortManager
+        case .hostsProfiles: return showHostsProfiles
         case .killProcess: return showKillProcess
         }
     }
@@ -1037,6 +1047,14 @@ struct UtilitiesSection: View {
                                 showsDragHandle: true,
                                 visibility: $showPortManager,
                                 action: { showPortManagerPanel = true })
+        case .hostsProfiles:
+            UtilityActionButton(title: FeatureStrings.hostsProfiles(l10n.language).title,
+                                caption: FeatureStrings.hostsProfiles(l10n.language).panelCaption,
+                                systemImage: AppFeature.hostsProfiles.symbolName,
+                                isEditing: editing,
+                                showsDragHandle: true,
+                                visibility: $showHostsProfiles,
+                                action: { showHostsProfilesPanel = true })
         case .killProcess:
             UtilityActionButton(title: FeatureStrings.killProcess(l10n.language).pageTitle,
                                 caption: FeatureStrings.killProcess(l10n.language).browseSubtitle,
@@ -1122,6 +1140,7 @@ struct UtilitiesSection: View {
         showQuickLauncher = true
         showCommandBar = true
         showPortManager = true
+        showHostsProfiles = true
         showKillProcess = true
     }
 

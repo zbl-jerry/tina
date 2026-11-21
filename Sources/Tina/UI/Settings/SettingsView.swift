@@ -605,6 +605,7 @@ struct SettingsView: View {
         case .uninstaller: UninstallerView()
         case .killProcess: KillProcessView()
         case .portManager: PortManagerView()
+        case .hostsProfiles: HostsProfilesSettings()
         case .launchpad: LaunchpadSettings()
         case .urlCleaner: URLCleanerSettings()
         case .cleaner: CleanerSettings()

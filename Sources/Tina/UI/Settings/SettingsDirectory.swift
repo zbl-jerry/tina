@@ -565,6 +565,12 @@ enum SettingsDirectory {
                                       title: FeatureStrings.portManager(language).title,
                                       icon: "network",
                                       keywords: ["port", "ports", "listening", "socket", "PID", "kill port"]),
+                SettingsDirectoryItem(page: .hostsProfiles,
+                                      title: FeatureStrings.hostsProfiles(language).title,
+                                      icon: "network.badge.shield.half.filled",
+                                      keywords: ["hosts", "hosts file", "hosts profiles", "dns",
+                                                 FeatureStrings.hostsProfiles(language).caption,
+                                                 FeatureStrings.hostsProfiles(language).apply]),
             ]),
             (categories.utilities, [
                 SettingsDirectoryItem(page: .notch,
