@@ -39,6 +39,15 @@ enum LinearScrollTapTests {
         var passes = true
         func passed(_ event: CGEvent) -> Bool { passes }
     }
+    /// The per-app table the shipped direction code reads; the production
+    /// resolver is a lock-guarded dictionary lookup.
+    final class PerApp {
+        static let shared = PerApp()
+        var overrides: [Int32: ScrollPerAppOverride] = [:]
+        func override(forProcessID processID: Int32) -> ScrollPerAppOverride? {
+            overrides[processID]
+        }
+    }
     /// Mouse button shortcuts' side-wheel reader, extracted as shipped.
     final class SideWheel {
         typealias ScrollInverter = Inverter
@@ -56,6 +65,7 @@ enum LinearScrollTapTests {
         typealias SessionActivity = Session
         typealias ScrollWheelHIDStage = HIDStage
         typealias AppSwitcher = Switcher
+        typealias ScrollPerAppOverrides = PerApp
         // Events built here carry this process's id, which the shipped tap
         // skips as its own glide frames.
         static let ownProcessID: Int64 = -1
@@ -95,6 +105,7 @@ enum LinearScrollTapTests {
             Target.shared.isOwn = false
             Target.shared.enabled = false
             Permissions.shared.accessibility = false
+            PerApp.shared.overrides = [:]
         }
         func configure(linear: Bool = true, installed: Bool = true, lines: Int = 3,
                        invert: Bool = false, invertHorizontal: Bool = false, inverterInstalled: Bool = true,
@@ -189,6 +200,24 @@ enum LinearScrollTapTests {
         let directionExcepted = deliver(wheel(line: 4, fixed: 4, point: 40))
         suite.expect(directionExcepted.map(verticalLine) == 3,
                      "an app excepted from the direction change is still capped by linear scrolling")
+
+        // Per-app direction reaches the raw wheel even when the global
+        // direction features are off, because this tap may be up only for
+        // linear scrolling.
+        configure(linear: false)
+        let perAppEvent = wheel(line: 4, fixed: 4, point: 40)
+        perAppEvent.setIntegerValueField(.eventTargetUnixProcessID, value: 77)
+        PerApp.shared.overrides = [77: ScrollPerAppOverride(bundleID: "com.example.flip",
+                                                            invertVertical: true)]
+        suite.expect(deliver(perAppEvent).map(verticalLine) == -4,
+                     "a per-app record flips a raw wheel while Scroll Direction is off")
+        Exceptions.shared.excepted = [.scrollDirection]
+        let perAppExcepted = wheel(line: 4, fixed: 4, point: 40)
+        perAppExcepted.setIntegerValueField(.eventTargetUnixProcessID, value: 77)
+        suite.expect(deliver(perAppExcepted).map(verticalLine) == 4,
+                     "the direction exception list keeps a per-app flip off the raw wheel")
+        Exceptions.shared.excepted = []
+        PerApp.shared.overrides = [:]
 
         configure(linear: false, invert: true)
         defaults.set(true, forKey: AppFeature.scrollZoom.availabilityKey)

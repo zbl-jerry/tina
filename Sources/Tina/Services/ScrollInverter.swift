@@ -45,16 +45,24 @@ final class ScrollInverter: ObservableObject {
             scrollCount: event.getIntegerValueField(.scrollWheelEventScrollCount)
         )
         let direction = ScrollDirectionPreferences(defaults: UserDefaults.standard)
-        guard direction.invertVertical || direction.invertHorizontal,
+        let targetProcessID = pid_t(exactly: event.getIntegerValueField(.eventTargetUnixProcessID)) ?? 0
+        let perApp = targetProcessID > 0
+            ? ScrollPerAppOverrides.shared.override(forProcessID: targetProcessID)
+            : nil
+        guard direction.invertVertical || direction.invertHorizontal
+                || perApp?.invertVertical != nil else { return event }
+        let excepted = MouseAppExceptions.shared.excludesPointerTarget(
+            .scrollDirection, at: event.location,
+            sourceProcessID: event.getIntegerValueField(.eventSourceUnixProcessID))
+        let invertVertical = excepted ? false : (perApp?.invertVertical ?? direction.invertVertical)
+        let invertHorizontal = !excepted && direction.invertHorizontal
+        guard invertVertical || invertHorizontal,
               ScrollWheelSupport.isMouseWheel(traits, secondsSinceLastGesturePhase: nil),
               ScrollWheelHIDStage.shared.passed(event),
-              !MouseAppExceptions.shared.excludesPointerTarget(
-                  .scrollDirection, at: event.location,
-                  sourceProcessID: event.getIntegerValueField(.eventSourceUnixProcessID)),
               let turned = event.copy() else { return event }
         ScrollWheelSupport.applyDirection(to: turned, isContinuous: traits.isContinuous,
-                                          invertVertical: direction.invertVertical,
-                                          invertHorizontal: direction.invertHorizontal,
+                                          invertVertical: invertVertical,
+                                          invertHorizontal: invertHorizontal,
                                           horizontalModifier: nil)
         return turned
     }
@@ -285,9 +293,20 @@ final class ScrollInverter: ObservableObject {
 
         let defaults = UserDefaults.standard
         let direction = ScrollDirectionPreferences(defaults: defaults)
-        let directionApplies = direction.isEnabled
-            && !MouseAppExceptions.shared.excludesPointerTarget(
+        // The record names the app that receives the wheel, not the app under
+        // the pointer, and the lookup is a lock-guarded dictionary read, so it
+        // is safe on this tap's pointer thread.
+        let targetProcessID = pid_t(exactly: event.getIntegerValueField(.eventTargetUnixProcessID)) ?? 0
+        let perAppOverride = targetProcessID > 0
+            ? ScrollPerAppOverrides.shared.override(forProcessID: targetProcessID)
+            : nil
+        // The direction exception list means "hands off this app", so it also
+        // stands down a per-app flip. With no direction work to do at all,
+        // skip the window-server-backed question entirely.
+        let directionExcepted = (direction.isEnabled || perAppOverride?.invertVertical != nil)
+            && MouseAppExceptions.shared.excludesPointerTarget(
                 .scrollDirection, at: event.location, sourceProcessID: sourceProcessID)
+        let directionApplies = direction.isEnabled && !directionExcepted
         if directionApplies, !AppSwitcher.shared.scrollNavigationActive,
            direction.zoom.action(for: event) != nil {
             if consumeZoom(event, direction: direction) { return nil }
@@ -356,11 +375,17 @@ final class ScrollInverter: ObservableObject {
         // plain wheel is scaled together with its direction, preserving both
         // precise fields through the line writes.
         let rawMultiplier = linesPerNotch == nil ? speedMultiplier : 1
-        if directionApplies || rawMultiplier != 1 {
+        // A record's own vertical flip applies even while the direction
+        // features are off or uninstalled; the horizontal side stays global.
+        let invertVertical = directionExcepted
+            ? false
+            : (perAppOverride?.invertVertical ?? (directionApplies && direction.invertVertical))
+        let invertHorizontal = directionApplies && direction.invertHorizontal
+        if directionApplies || rawMultiplier != 1 || invertVertical || invertHorizontal {
             ScrollWheelSupport.applyDirection(
                 to: event, isContinuous: traits.isContinuous,
-                invertVertical: directionApplies && direction.invertVertical,
-                invertHorizontal: directionApplies && direction.invertHorizontal,
+                invertVertical: invertVertical,
+                invertHorizontal: invertHorizontal,
                 horizontalModifier: horizontalModifier, speedMultiplier: rawMultiplier,
                 targetsOwnWindow: ScrollWheelTarget.shared.contains(event.location)
             )

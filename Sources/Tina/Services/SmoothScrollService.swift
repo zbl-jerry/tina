@@ -51,6 +51,10 @@ final class SmoothScrollService: ObservableObject {
     /// the synthetic events so apps can still react to them.
     private var currentFlags: CGEventFlags = []
     private var currentScrollRedirected = false
+    /// The hold key's distance multiplier on the latest tick. Switching it
+    /// mid-glide resets the tail, so the key and its release each take effect
+    /// on the next frame instead of mixing two speeds in one animation.
+    private var currentHoldScale = 1.0
     /// Whether the glide is being fed by continuous wheel events. The two
     /// kinds measure their distance differently, so switching devices
     /// mid-glide drops the tail rather than mixing the two budgets.
@@ -258,6 +262,14 @@ final class SmoothScrollService: ObservableObject {
             stopGlide()
             return Unmanaged.passUnretained(event)
         }
+        // The app that will receive the event, resolved off the event itself
+        // so the answer is the same one the glide will be posted to. The main
+        // run loop owns this tap, so a just-launched app can be looked up once.
+        let targetProcessID = pid_t(exactly: event.getIntegerValueField(.eventTargetUnixProcessID)) ?? 0
+        let perAppOverride = targetProcessID > 0
+            ? ScrollPerAppOverrides.shared.override(forProcessID: targetProcessID,
+                                                    resolvingMissing: true)
+            : nil
 
         let defaults = UserDefaults.standard
         let direction = ScrollDirectionPreferences(defaults: defaults)
@@ -275,13 +287,12 @@ final class SmoothScrollService: ObservableObject {
         // Our panels, including clipboard history (#3780), handle the original
         // notch. The fast capture loupe uses glide frames to zoom. Stepped
         // zoom already took the raw event above.
-        guard let processID = pid_t(exactly: event.getIntegerValueField(.eventTargetUnixProcessID)),
-              processID > 0,
+        guard targetProcessID > 0,
               // AppKit translates Shift-wheel to horizontal on the CGEvent it wraps.
               // Read the window from the replay copy so the modifier sees the original axes.
               let template = event.copy(),
               let windowNumber = NSEvent(cgEvent: template)?.windowNumber, windowNumber > 0,
-              Int64(processID) != Self.ownProcessID || ScreenshotSelectionController.isActiveLoupeWindow(windowNumber) else {
+              Int64(targetProcessID) != Self.ownProcessID || ScreenshotSelectionController.isActiveLoupeWindow(windowNumber) else {
             stopGlide()
             return Unmanaged.passUnretained(event)
         }
@@ -297,10 +308,6 @@ final class SmoothScrollService: ObservableObject {
         let wheelTapRunning = ScrollInverter.shared.isRunning
         let adjustDirectionHere = wheelTapRunning && !scrollTargetExcluded
         let horizontalModifier = adjustDirectionHere ? direction.horizontalModifier : nil
-        let speed = ScrollSpeedPreferences(defaults: defaults)
-        let speedKey = wheelTapRunning ? speed.matchingModifier(for: event, horizontalModifier: horizontalModifier,
-            isExcepted: exceptions.excludesPointerTarget(.scrollSpeed, at: event.location, sourceProcessID: sourceProcessID),
-            targetsOwnWindow: ScrollWheelTarget.shared.contains(event.location)) : nil
         let redirected: Bool
         if let modifier = horizontalModifier {
             redirected = ScrollWheelSupport.redirectVerticalScroll(event, modifier: modifier,
@@ -308,15 +315,50 @@ final class SmoothScrollService: ObservableObject {
         } else {
             redirected = false
         }
+        // A held correction key belongs to smooth scrolling. It is resolved
+        // after sideways scrolling, which is a direction shortcut and wins
+        // when both name the same key. Claiming it keeps modifier-held speed
+        // from scaling the same tick twice.
+        let hold = ScrollHoldPreferences(defaults: defaults)
+        let holdClaimed = !ScrollPerAppSupport.disablesSmoothing(perAppOverride)
+            && !redirected && hold.claims(event)
+        let speed = ScrollSpeedPreferences(defaults: defaults)
+        let speedKey = (wheelTapRunning && !holdClaimed)
+            ? speed.matchingModifier(for: event, horizontalModifier: horizontalModifier,
+                isExcepted: exceptions.excludesPointerTarget(.scrollSpeed, at: event.location, sourceProcessID: sourceProcessID),
+                targetsOwnWindow: ScrollWheelTarget.shared.contains(event.location))
+            : nil
         // A tick with no glide distance still goes through the raw wheel tap.
         // Keep its speed key on the original; only the replay consumes it.
         var glideFlags = event.flags
         if let speedKey { glideFlags.remove(speedKey.flag) }
+        if holdClaimed, let modifier = hold.modifier { glideFlags.remove(modifier.flag) }
+        // An app set to no smoothing, and the hold key asking for precision,
+        // both deliver the original wheel. The flip still has to reach it when
+        // this tap is the only one that would apply a per-app direction.
+        if ScrollPerAppSupport.disablesSmoothing(perAppOverride)
+            || (holdClaimed && hold.action == .precise) {
+            if holdClaimed, let modifier = hold.modifier { event.flags.remove(modifier.flag) }
+            // The tail tap applies the record's flip along with the rest of
+            // its direction work. Only when it is absent does this one have to
+            // do it, so the flip never lands twice.
+            if !ScrollInverter.shared.isRunning, !scrollTargetExcluded,
+               perAppOverride?.invertVertical == true {
+                ScrollPerAppSupport.applyVerticalInversion(to: event,
+                                                           isContinuous: traits.isContinuous)
+            }
+            stopGlide()
+            return Unmanaged.passUnretained(event)
+        }
         guard !glideFlags.contains(.maskControl) else {
             stopGlide()
             return Unmanaged.passUnretained(event)
         }
-        let invertVertical = adjustDirectionHere && direction.invertVertical ? -1.0 : 1.0
+        // A record's vertical flip overrides the global one for its app; the
+        // direction exception list still wins over both.
+        let perAppInvertVertical = scrollTargetExcluded ? nil : perAppOverride?.invertVertical
+        let invertVertical = (perAppInvertVertical
+            ?? (adjustDirectionHere && direction.invertVertical)) ? -1.0 : 1.0
         let invertHorizontal = adjustDirectionHere && direction.invertHorizontal ? -1.0 : 1.0
         // Linear scrolling is applied here for the same reason the flip is:
         // this tap swallows the tick before the wheel tap can see it. The cap
@@ -331,6 +373,11 @@ final class SmoothScrollService: ObservableObject {
                     sourceProcessID: sourceProcessID)
             })
         let shiftPressed = glideFlags.contains(.maskShift)
+        // An app set to Custom may choose its own distance per notch; the
+        // global slider fills in when it did not.
+        let globalStep = SmoothScrollSupport.sanitizedStep(
+            defaults.integer(forKey: DefaultsKey.smoothScrollStep))
+        let userStep = Double(ScrollPerAppSupport.step(for: perAppOverride, globalStep: globalStep))
         let vertical: Double
         let horizontal: Double
         let step: Double
@@ -340,8 +387,6 @@ final class SmoothScrollService: ObservableObject {
             // the step scales it from there. No Shift redirect: the system
             // never translates continuous events, apps react to the replayed
             // Shift flag.
-            let userStep = Double(SmoothScrollSupport.sanitizedStep(
-                defaults.integer(forKey: DefaultsKey.smoothScrollStep)))
             let verticalFixedPoint = event.getDoubleValueField(.scrollWheelEventFixedPtDeltaAxis1)
             let verticalPoint = Double(event.getIntegerValueField(.scrollWheelEventPointDeltaAxis1))
             let horizontalFixedPoint = event.getDoubleValueField(.scrollWheelEventFixedPtDeltaAxis2)
@@ -398,28 +443,35 @@ final class SmoothScrollService: ObservableObject {
             )
             vertical = axes.vertical * invertVertical
             horizontal = axes.horizontal * invertHorizontal
-            step = Double(SmoothScrollSupport.sanitizedStep(
-                defaults.integer(forKey: DefaultsKey.smoothScrollStep)))
+            step = userStep
         }
         guard vertical != 0 || horizontal != 0 else {
             return Unmanaged.passUnretained(event)
         }
 
         let retargeted = targetLatch.update(.init(
-            point: event.location, processID: processID, windowNumber: windowNumber))
+            point: event.location, processID: targetProcessID, windowNumber: windowNumber))
         targetEvent = template
 
+        // The hold key changes the distance of the tick it is held for. A
+        // change between ticks drops the old tail so its frames are not mixed
+        // with a speed they were not queued under.
+        let holdScale = holdClaimed ? hold.action.scale(factor: hold.factor) : 1.0
         // Switching Shift while a glide is active changes the intended axis,
         // and switching between a discrete and a continuous wheel changes the
         // sign handling. Drop the old tail instead of fighting it.
         if currentFlags.contains(.maskShift) != shiftPressed
             || currentScrollRedirected != redirected
-            || glideFromContinuous != traits.isContinuous || retargeted {
+            || glideFromContinuous != traits.isContinuous || retargeted
+            || currentHoldScale != holdScale {
             engine.reset()
             carryVertical = 0
             carryHorizontal = 0
         }
-        let speedScale = speedKey == nil ? 1.0 : Double(speed.multiplier)
+        currentHoldScale = holdScale
+        let speedScale = (speedKey == nil ? 1.0 : Double(speed.multiplier))
+            * ScrollPerAppSupport.speedScale(for: perAppOverride)
+            * holdScale
         let verticalDistance = vertical * step * speedScale
         let horizontalDistance = horizontal * step * speedScale
         carryVertical = SmoothScrollSupport.carry(carryVertical, continuing: verticalDistance)

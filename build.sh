@@ -559,6 +559,7 @@ if (( TEST )); then
         Sources/Tina/Services/ScrollWheelSupport.swift
         Sources/Tina/Services/HorizontalWheelScrolling.swift
         Sources/Tina/Services/SmoothScrollSupport.swift
+        Sources/Tina/Services/ScrollPerApp/ScrollPerAppSupport.swift
         Sources/Tina/Services/MouseAcceleration/MouseAccelerationSupport.swift
         Sources/Tina/Services/FocusFollowsMouse/FocusFollowsMouseSupport.swift
         Sources/Tina/Services/AssistiveKeyboard.swift

@@ -41,6 +41,12 @@ struct MouseSettings: View {
         SmoothScrollSupport.defaultResponse
     @AppStorage(DefaultsKey.smoothScrollCoast) private var smoothScrollCoast =
         SmoothScrollSupport.defaultCoast
+    @AppStorage(DefaultsKey.scrollHoldEnabled) private var scrollHoldEnabled = false
+    @AppStorage(DefaultsKey.scrollHoldModifier) private var scrollHoldModifier =
+        ScrollHorizontalModifier.control
+    @AppStorage(DefaultsKey.scrollHoldAction) private var scrollHoldAction = ScrollHoldAction.precise
+    @AppStorage(DefaultsKey.scrollHoldFactor) private var scrollHoldFactor =
+        ScrollHoldPreferences.defaultFactor
     @AppStorage(DefaultsKey.mouseNavigationEnabled) private var mouseNavigationEnabled = false
     @AppStorage(DefaultsKey.mouseButtonShortcutsEnabled) private var mouseButtonShortcutsEnabled = false
     @AppStorage(DefaultsKey.mouseSpacesGestureEnabled) private var spacesEnabled = false
@@ -258,16 +264,20 @@ struct MouseSettings: View {
     }
 
     /// The key to hold, as keycaps: one glance says which key, no menu.
-    private func modifierKeys(_ selection: Binding<ScrollHorizontalModifier>) -> some View {
+    /// Shift is left out of the hold-key choice: Shift + wheel already means
+    /// sideways scrolling, and that redirect happens before the hold key.
+    private func modifierKeys(_ selection: Binding<ScrollHorizontalModifier>,
+                              allowsShift: Bool = true,
+                              title: String? = nil) -> some View {
         let modifierStrings = FeatureStrings.quitProtection(l10n.language)
         let choices: [(ScrollHorizontalModifier, String, String)] = [
             (.shift, "⇧", modifierStrings.shiftKey),
             (.option, "⌥", modifierStrings.optionKey),
             (.control, "⌃", modifierStrings.controlKey),
             (.command, "⌘", l10n.s.scrollHorizontalCommandKey),
-        ]
+        ].filter { allowsShift || $0.0 != .shift }
         return VStack(alignment: .leading, spacing: 8) {
-            Text(l10n.s.scrollHorizontalModifierLabel)
+            Text(title ?? l10n.s.scrollHorizontalModifierLabel)
                 .font(.subheadline.weight(.medium))
             HStack(spacing: 8) {
                 ForEach(choices, id: \.0) { modifier, glyph, name in
@@ -403,9 +413,42 @@ struct MouseSettings: View {
                         Text(mouseClickDebounceText.moreOptions)
                             .font(.subheadline.weight(.medium))
                     }
+                    ScrollPerAppOverridesList(
+                        globalStep: SmoothScrollSupport.sanitizedStep(smoothScrollStep))
+                    holdKeySection
                     MouseExceptionsList(scope: .smoothScroll)
                 }
                 .padding(.leading, settingsRowTextInset)
+            }
+        }
+    }
+
+    /// A held key that corrects the current glide. It belongs to Smooth
+    /// scrolling, so it only appears while that switch is on.
+    private var holdKeySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(l10n.s.smoothScrollHoldTitle, isOn: $scrollHoldEnabled)
+            if scrollHoldEnabled {
+                Text(l10n.s.smoothScrollHoldCaption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                modifierKeys($scrollHoldModifier, allowsShift: false)
+                Picker(l10n.s.smoothScrollHoldTitle, selection: $scrollHoldAction) {
+                    Text(l10n.s.smoothScrollHoldPrecise).tag(ScrollHoldAction.precise)
+                    Text(l10n.s.smoothScrollHoldSlower).tag(ScrollHoldAction.slower)
+                    Text(l10n.s.smoothScrollHoldFaster).tag(ScrollHoldAction.faster)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                if scrollHoldAction != .precise {
+                    sliderRow(l10n.s.smoothScrollHoldAmount,
+                              value: holdFactorBinding,
+                              range: Double(ScrollHoldPreferences.factorRange.lowerBound)
+                                  ... Double(ScrollHoldPreferences.factorRange.upperBound),
+                              step: 1,
+                              readout: "\(ScrollHoldPreferences.sanitizedFactor(scrollHoldFactor))×")
+                }
             }
         }
     }
@@ -680,6 +723,13 @@ struct MouseSettings: View {
         Binding(
             get: { Double(SmoothScrollSupport.sanitizedCoast(smoothScrollCoast)) },
             set: { smoothScrollCoast = Int($0) }
+        )
+    }
+
+    private var holdFactorBinding: Binding<Double> {
+        Binding(
+            get: { Double(ScrollHoldPreferences.sanitizedFactor(scrollHoldFactor)) },
+            set: { scrollHoldFactor = Int($0) }
         )
     }
 
