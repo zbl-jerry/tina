@@ -1319,6 +1319,21 @@ struct Strings {
     let switcherCurrentDisplayOnlyCaption: String
     let smoothScrollResponseLabel: String
     let smoothScrollCoastLabel: String
+    let smoothScrollPerAppTitle: String
+    let smoothScrollPerAppCaption: String
+    let smoothScrollPerAppFollow: String
+    let smoothScrollPerAppOff: String
+    let smoothScrollPerAppCustom: String
+    let smoothScrollPerAppSpeedLabel: String
+    let smoothScrollPerAppInvertLabel: String
+    let smoothScrollPerAppInvertInverted: String
+    let smoothScrollPerAppInvertNormal: String
+    let smoothScrollHoldTitle: String
+    let smoothScrollHoldCaption: String
+    let smoothScrollHoldPrecise: String
+    let smoothScrollHoldSlower: String
+    let smoothScrollHoldFaster: String
+    let smoothScrollHoldAmount: String
     let mouseAccelerationName: String
     let mouseAccelerationCaption: String
     let linearScrollName: String
@@ -2449,6 +2464,21 @@ extension Strings {
         switcherCurrentDisplayOnlyCaption: "Mostra apenas as janelas da tela sob o cursor. Se essa tela não tiver janelas, o alternador não abre.",
         smoothScrollResponseLabel: "Resposta",
         smoothScrollCoastLabel: "Inércia",
+        smoothScrollPerAppTitle: "Substituições por app",
+        smoothScrollPerAppCaption: "Cada app pode seguir o ajuste global, desativar a suavização ou usar o próprio passo, velocidade e direção vertical.",
+        smoothScrollPerAppFollow: "Seguir o global",
+        smoothScrollPerAppOff: "Desativado",
+        smoothScrollPerAppCustom: "Personalizado",
+        smoothScrollPerAppSpeedLabel: "Velocidade",
+        smoothScrollPerAppInvertLabel: "Inverter direção",
+        smoothScrollPerAppInvertInverted: "Invertida",
+        smoothScrollPerAppInvertNormal: "Normal",
+        smoothScrollHoldTitle: "Segure uma tecla para corrigir a rolagem",
+        smoothScrollHoldCaption: "Enquanto a tecla estiver pressionada, a roda é entregue crua, mais lenta ou mais rápida. Ao soltar, os ajustes acima voltam a valer.",
+        smoothScrollHoldPrecise: "Pausar suavização",
+        smoothScrollHoldSlower: "Mais lento",
+        smoothScrollHoldFaster: "Mais rápido",
+        smoothScrollHoldAmount: "Intensidade",
         mouseAccelerationName: "Desativar aceleração do mouse",
         mouseAccelerationCaption: "Remove a aceleração do cursor para os mouses conectados. A configuração anterior volta ao desligar esta opção ou sair do Tina.",
         linearScrollName: "Rolagem linear",
@@ -3580,6 +3610,21 @@ extension Strings {
         switcherCurrentDisplayOnlyCaption: "Lists only windows on the display under the pointer. If that display has no windows, the switcher does not open.",
         smoothScrollResponseLabel: "Response",
         smoothScrollCoastLabel: "Coast",
+        smoothScrollPerAppTitle: "Per-app overrides",
+        smoothScrollPerAppCaption: "Each app can follow the global setting, turn smoothing off, or use its own step, speed and vertical direction.",
+        smoothScrollPerAppFollow: "Follow global",
+        smoothScrollPerAppOff: "Off",
+        smoothScrollPerAppCustom: "Custom",
+        smoothScrollPerAppSpeedLabel: "Speed",
+        smoothScrollPerAppInvertLabel: "Invert direction",
+        smoothScrollPerAppInvertInverted: "Inverted",
+        smoothScrollPerAppInvertNormal: "Normal",
+        smoothScrollHoldTitle: "Hold a key to correct scrolling",
+        smoothScrollHoldCaption: "While the key is held, the wheel is delivered raw, slower or faster. Releasing it uses the settings above again.",
+        smoothScrollHoldPrecise: "Pause smoothing",
+        smoothScrollHoldSlower: "Slower",
+        smoothScrollHoldFaster: "Faster",
+        smoothScrollHoldAmount: "Amount",
         mouseAccelerationName: "Disable mouse acceleration",
         mouseAccelerationCaption: "Removes pointer acceleration for connected mice. Your previous setting returns when this is turned off or Tina quits.",
         linearScrollName: "Linear scrolling",
