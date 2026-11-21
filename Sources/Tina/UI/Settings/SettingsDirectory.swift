@@ -238,6 +238,7 @@ enum SettingsDirectory {
         let categories = FeatureStrings.settingsCategories(language)
         let quitProtection = FeatureStrings.quitProtection(language)
         let brightness = FeatureStrings.brightness(language)
+        let preset = FeatureStrings.displayPreset(language)
         let bluetooth = FeatureStrings.bluetoothSleep(language)
         let barStyle = FeatureStrings.menuBarAppearance(language)
         let previews = FeatureStrings.windowPreviewExclusions(language)
@@ -351,7 +352,11 @@ enum SettingsDirectory {
                                                         .allowDisplaySleep,
                                                       s.keepAwakeOptions, s.keepAwakeAutoStart,
                                                       s.keepAwakeRightClickToggle, s.keepAwakeMouseJiggle]),
-                                        (.brightness, [brightness.pageTitle, brightness.enable]),
+                                        (.brightness, [brightness.pageTitle, brightness.enable,
+                                                       preset.title, preset.caption, preset.saveCurrent,
+                                                       preset.apply, preset.update, preset.edit,
+                                                       preset.delete, preset.shortcutLabel,
+                                                       preset.autoToggle]),
                                         (.extraBrightness, [s.extraBrightnessName]),
                                         (.nightWarmth, [FeatureStrings.nightWarmth(language).title,
                                                         FeatureStrings.nightWarmth(language).presets]),

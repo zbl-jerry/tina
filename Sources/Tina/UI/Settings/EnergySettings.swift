@@ -419,6 +419,11 @@ struct EnergySettings: View {
                         .font(.subheadline.weight(.medium))
                 }
             }
+            // Presets work without the brightness sliders: resolution and the
+            // main display do not need them, and an apply only touches
+            // brightness or speakers while those controls are on.
+            Divider()
+            DisplayPresetSettings()
         }
     }
 
