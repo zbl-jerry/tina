@@ -644,6 +644,9 @@ enum RecorderSupport {
     static let takeVideoName = "take.mov"
     static let takePointerName = "pointer.bin"
     static let takeTypingName = "typing.json"
+    /// Pressed keys, only present when the key overlay was on. Never part of
+    /// the edit document, a backup or the exported file's metadata.
+    static let takeKeystrokesName = "keystrokes.json"
     static let takeEditName = "edit.json"
     static let takeFolderPrefix = "Take-"
 

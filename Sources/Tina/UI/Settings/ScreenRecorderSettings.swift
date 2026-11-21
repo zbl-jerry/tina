@@ -20,6 +20,14 @@ struct ScreenRecordingCaptureSettings: View {
     @AppStorage(DefaultsKey.recorderSaveFolder) private var saveFolder = ""
     @AppStorage(DefaultsKey.recorderOpenEditor) private var opensEditor = true
     @AppStorage(DefaultsKey.recorderAutomaticZoom) private var automaticZoom = true
+    @AppStorage(DefaultsKey.recorderKeystrokesEnabled) private var keystrokesEnabled = false
+    @AppStorage(DefaultsKey.recorderKeystrokePlacement) private var keystrokePlacement =
+        RecorderKeystrokePlacement.bottomTrailing.rawValue
+    @AppStorage(DefaultsKey.recorderKeystrokeSize) private var keystrokeSize =
+        RecorderKeystrokeSize.medium.rawValue
+    @AppStorage(DefaultsKey.recorderKeystrokeDwell) private var keystrokeDwell = 2.0
+    @AppStorage(DefaultsKey.recorderKeystrokeTheme) private var keystrokeTheme =
+        RecorderKeystrokeTheme.dark.rawValue
     @AppStorage(DefaultsKey.recorderGIFFrameRate) private var gifFrameRate = 12
     @AppStorage(DefaultsKey.recorderSharingEnabled) private var sharingEnabled = true
     @State private var showsMoreOptions = false
@@ -107,6 +115,7 @@ struct ScreenRecordingCaptureSettings: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                keyOverlayOptions
             }
 
             Section {
@@ -185,6 +194,69 @@ struct ScreenRecordingCaptureSettings: View {
         }
         .sheet(isPresented: $showingSharePrivacy) {
             RecorderSharePrivacyView()
+        }
+    }
+
+    /// The optional key row. Off by default; refusing Input Monitoring leaves
+    /// the switch off with a way to grant it, instead of silently recording
+    /// with no keys.
+    private var keyOverlayOptions: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Off cannot be chosen without the grant, but turning an existing
+            // choice off must always remain possible, even if the grant was
+            // revoked later.
+            Toggle(strings.keystrokeToggle, isOn: $keystrokesEnabled)
+                .disabled(!permissions.inputMonitoring && !keystrokesEnabled)
+            Text(strings.keystrokeCaption)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if !permissions.inputMonitoring {
+                Text(strings.keystrokePermissionExplain)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                PermissionRow(kind: .inputMonitoring)
+            } else if keystrokesEnabled {
+                Text(strings.keystrokeSecureInputNote)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Picker(strings.keystrokePositionLabel, selection: $keystrokePlacement) {
+                    Text(strings.keystrokePositionTopLeading)
+                        .tag(RecorderKeystrokePlacement.topLeading.rawValue)
+                    Text(strings.keystrokePositionTopTrailing)
+                        .tag(RecorderKeystrokePlacement.topTrailing.rawValue)
+                    Text(strings.keystrokePositionBottomLeading)
+                        .tag(RecorderKeystrokePlacement.bottomLeading.rawValue)
+                    Text(strings.keystrokePositionBottomTrailing)
+                        .tag(RecorderKeystrokePlacement.bottomTrailing.rawValue)
+                    Text(strings.keystrokePositionCursor)
+                        .tag(RecorderKeystrokePlacement.cursor.rawValue)
+                }
+                Picker(strings.keystrokeSizeLabel, selection: $keystrokeSize) {
+                    Text(strings.keystrokeSizeSmall)
+                        .tag(RecorderKeystrokeSize.small.rawValue)
+                    Text(strings.keystrokeSizeMedium)
+                        .tag(RecorderKeystrokeSize.medium.rawValue)
+                    Text(strings.keystrokeSizeLarge)
+                        .tag(RecorderKeystrokeSize.large.rawValue)
+                }
+                .pickerStyle(.segmented)
+                Picker(strings.keystrokeDwellLabel, selection: $keystrokeDwell) {
+                    ForEach(RecorderKeystrokeStyle.dwellChoices, id: \.self) { seconds in
+                        Text(String(format: strings.keystrokeDwellFormat, Int(seconds)))
+                            .tag(seconds)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Picker(strings.keystrokeThemeLabel, selection: $keystrokeTheme) {
+                    Text(strings.keystrokeThemeDark)
+                        .tag(RecorderKeystrokeTheme.dark.rawValue)
+                    Text(strings.keystrokeThemeLight)
+                        .tag(RecorderKeystrokeTheme.light.rawValue)
+                }
+                .pickerStyle(.segmented)
+            }
         }
     }
 

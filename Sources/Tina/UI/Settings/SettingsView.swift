@@ -1041,6 +1041,7 @@ private struct SettingsCaptionText: View {
 enum PermissionKind {
     case accessibility
     case screenRecording
+    case inputMonitoring
     case microphone
 }
 
@@ -1055,13 +1056,14 @@ struct PermissionRow: View {
         switch kind {
         case .accessibility: return permissions.accessibility
         case .screenRecording: return permissions.screenRecording
+        case .inputMonitoring: return permissions.inputMonitoring
         case .microphone: return permissions.microphone == .granted
         }
     }
 
     private var monitorsActivePermission: Bool {
         switch kind {
-        case .accessibility, .screenRecording: return true
+        case .accessibility, .screenRecording, .inputMonitoring: return true
         case .microphone: return false
         }
     }
@@ -1070,6 +1072,8 @@ struct PermissionRow: View {
         switch kind {
         case .accessibility: return l10n.s.permissionAccessibility
         case .screenRecording: return l10n.s.permissionScreenRecording
+        case .inputMonitoring:
+            return FeatureStrings.recorder(l10n.language).keystrokePermissionName
         case .microphone:
             return FeatureStrings.recorder(l10n.language).microphonePermissionName
         }
@@ -1094,6 +1098,8 @@ struct PermissionRow: View {
                             permissions.requestAccessibility()
                         case .screenRecording:
                             permissions.requestScreenRecording()
+                        case .inputMonitoring:
+                            permissions.requestInputMonitoring()
                         case .microphone:
                             permissions.requestMicrophone()
                         }
@@ -1104,6 +1110,8 @@ struct PermissionRow: View {
                             permissions.openAccessibilitySettings()
                         case .screenRecording:
                             permissions.openScreenRecordingSettings()
+                        case .inputMonitoring:
+                            permissions.openInputMonitoringSettings()
                         case .microphone:
                             permissions.openMicrophoneSettings()
                         }

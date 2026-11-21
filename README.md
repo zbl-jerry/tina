@@ -146,7 +146,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 
 - **Screen capture.** Switch between screenshots, recording, text recognition and color picking in one selector with a pixel magnifier.
 - **Screenshot.** Capture an area, window, screen or scrolling page. Annotate, crop, redact, add backgrounds and watermarks, pin captures or send them through the Share menu.
-- **Screen recording.** Record with separate system-audio and microphone tracks. Trim, cut, add automatic zooms, blur private details and export video or GIFs.
+- **Screen recording.** Record with separate system-audio and microphone tracks. Show the keys you press as an optional overlay, trim, cut, add automatic zooms, blur private details and export video or GIFs.
 - **Camera preview.** Check your camera in a floating mirror or Dynamic Island before a call.
 - **Copy text from screen.** Recognize text offline from any screen area, or read a QR code.
 - **Color picker.** Copy a screen color as HEX, RGB, HSL or SwiftUI code.
@@ -211,6 +211,7 @@ See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions 
 
 - [Night warmth](docs/NIGHT-WARMTH.md), the colour temperature schedule and how it is applied
 - [Charge limit](docs/CHARGE-LIMIT.md), the battery research, product design and SMC implementation
+- [Key overlay](docs/KEYSTROKE-OVERLAY.md), the recorder's optional key caps, permission and privacy boundaries
 - [Privacy](docs/PRIVACY.md), what does and does not leave your Mac
 - [Permissions](docs/PERMISSIONS.md), every macOS permission in plain words
 - [Troubleshooting](docs/TROUBLESHOOTING.md), the common fixes

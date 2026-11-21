@@ -47,6 +47,10 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
     private let streamHeardSinceTap = RecorderAudioFlag()
     private let pointer: RecorderPointerSampler
     private let typing: RecorderTypingSampler
+    private let keystrokes: RecorderKeystrokeSampler?
+    /// Read by the service so it knows whether the live row belongs on screen.
+    let capturesKeystrokes: Bool
+    let keystrokeStyle: RecorderKeystrokeStyle
     private let writerQueue = DispatchQueue(label: "com.tina.recorder.writer",
                                             qos: .userInitiated)
     private let startGate = RecorderStartGate()
@@ -56,25 +60,44 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
 
     var onUnexpectedStop: ((RecorderFailure) -> Void)?
     var onMicrophoneUnavailable: (() -> Void)?
+    /// A press to show in the live overlay, already in recording time.
+    var onKeystroke: (([String]) -> Void)?
+    /// Secure Event Input turning on or off while recording.
+    var onSecureInputChange: ((Bool) -> Void)?
+    /// The key overlay was asked for but macOS withheld the keys.
+    var onKeystrokeUnavailable: (() -> Void)?
 
     init(take: RecorderTakeStore.Take,
           region: RecorderSupport.Region,
           writer: RecorderWriter,
           pauseClock: RecorderPauseClock,
           capturesSystemAudio: Bool,
-          capturesMicrophone: Bool) {
+          capturesMicrophone: Bool,
+          capturesKeystrokes: Bool,
+          keystrokeStyle: RecorderKeystrokeStyle) {
         self.take = take
         self.region = region
         self.writer = writer
         self.pauseClock = pauseClock
         self.capturesSystemAudio = capturesSystemAudio
+        self.capturesKeystrokes = capturesKeystrokes
+        self.keystrokeStyle = keystrokeStyle
         microphone = capturesMicrophone ? RecorderMicrophoneCapture() : nil
         pointer = RecorderPointerSampler(region: region, pauseClock: pauseClock)
         typing = RecorderTypingSampler(pauseClock: pauseClock)
+        keystrokes = capturesKeystrokes
+            ? RecorderKeystrokeSampler(pauseClock: pauseClock, style: keystrokeStyle)
+            : nil
         super.init()
         engine.delegate = self
         microphone?.onSample = { [weak self] sampleBuffer in
             self?.append(sampleBuffer, kind: .microphone)
+        }
+        keystrokes?.onKeys = { [weak self] keys in
+            self?.onKeystroke?(keys)
+        }
+        keystrokes?.onSecureInput = { [weak self] secure in
+            self?.onSecureInputChange?(secure)
         }
     }
 
@@ -153,6 +176,12 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
             pointer.start()
             typing.start()
         }
+        // The key tap's run loop source, like the event monitors above, must
+        // be installed on the main thread. Recording carries on when macOS
+        // refuses it; only the overlay is lost.
+        await MainActor.run {
+            if let keystrokes, !keystrokes.start() { onKeystrokeUnavailable?() }
+        }
         return nil
     }
 
@@ -207,6 +236,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
                 forKey: DefaultsKey.recorderSystemAudioTapVerified)
         }
         let (track, typingTrack) = await MainActor.run { (pointer.stop(), typing.stop()) }
+        let keystrokeTrack = await MainActor.run { keystrokes?.stop() }
         writerQueue.sync {}
         let written = await writer.finish(at: end)
         if written, !track.isEmpty {
@@ -214,6 +244,15 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         }
         if written, !typingTrack.isEmpty, let data = typingTrack.encoded() {
             try? data.write(to: take.typingURL, options: .atomic)
+        }
+        if written, let keystrokeTrack, !keystrokeTrack.isEmpty,
+           let data = keystrokeTrack.encoded() {
+            // Key content lives only here: inside the private take folder,
+            // readable by this user alone, and gone when the take is gone.
+            try? data.write(to: take.keystrokesURL, options: .atomic)
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o600],
+                ofItemAtPath: take.keystrokesURL.path)
         }
         return written
     }
@@ -278,6 +317,9 @@ final class ScreenRecorderService: ObservableObject {
     @Published private(set) var elapsedSeconds = 0
     private var session: RecorderSession?
     private var indicator: RecorderIndicator?
+    /// The live key row, present only while a recording made with the
+    /// overlay on runs.
+    private var keyOverlay: RecorderKeystrokeOverlay?
     private var editors: [RecorderEditorController] = []
     private var mediaOwnedEditorIDs: Set<ObjectIdentifier> = []
     private var elapsedTimer: Timer?
@@ -491,6 +533,11 @@ final class ScreenRecorderService: ObservableObject {
         let capturesSystemAudio = defaults.bool(forKey: DefaultsKey.recorderSystemAudio)
         let capturesMicrophone = defaults.bool(forKey: DefaultsKey.recorderMicrophone)
             && Permissions.shared.microphone == .granted
+        // The overlay is asked for in settings and granted by macOS, and both
+        // have to hold at the moment the recording starts.
+        let capturesKeystrokes = defaults.bool(forKey: DefaultsKey.recorderKeystrokesEnabled)
+            && Permissions.shared.inputMonitoring
+        let keystrokeStyle = RecorderKeystrokeStyle.fromPreferences()
         let pauseClock = RecorderPauseClock()
         isPreparingRecording = true
         RecorderWriter.prepare(url: take.videoURL, pixelSize: region.pixelSize, frameRate: frameRate,
@@ -511,8 +558,11 @@ final class ScreenRecorderService: ObservableObject {
                 return
             }
             let session = RecorderSession(take: take, region: region, writer: writer,
-                                          pauseClock: pauseClock, capturesSystemAudio: capturesSystemAudio,
-                                          capturesMicrophone: capturesMicrophone)
+                                          pauseClock: pauseClock,
+                                          capturesSystemAudio: capturesSystemAudio,
+                                          capturesMicrophone: capturesMicrophone,
+                                          capturesKeystrokes: capturesKeystrokes,
+                                          keystrokeStyle: keystrokeStyle)
             self.startPreparedRecording(session, frameRate: frameRate,
                                         capturesSystemAudio: capturesSystemAudio, generation: generation)
         }
@@ -533,6 +583,29 @@ final class ScreenRecorderService: ObservableObject {
             QuickToolHUD.show(icon: "mic.slash", message: self.strings.microphoneUnavailableHUD)
         }
         self.session = session
+
+        if session.capturesKeystrokes {
+            // Created with the capture chrome rather than on the first press:
+            // the filter can only leave out windows that already exist, and a
+            // row that appeared later would land in the video twice.
+            let overlay = RecorderKeystrokeOverlay()
+            overlay.prepare(on: NSScreen.screens.first { $0.displayID == region.displayID },
+                            style: session.keystrokeStyle)
+            keyOverlay = overlay
+            session.onKeystroke = { [weak self] keys in
+                self?.keyOverlay?.present(keys: keys)
+            }
+            session.onSecureInputChange = { [weak self] secure in
+                self?.keyOverlay?.setSecureInput(secure)
+            }
+            session.onKeystrokeUnavailable = { [weak self] in
+                guard let self else { return }
+                self.keyOverlay?.hide()
+                self.keyOverlay = nil
+                QuickToolHUD.show(icon: "keyboard",
+                                  message: self.strings.keystrokeUnavailableHUD)
+            }
+        }
 
         // The indicator goes up BEFORE the stream is asked to start, because
         // the capture filter names the windows it leaves out and can only name
@@ -563,6 +636,9 @@ final class ScreenRecorderService: ObservableObject {
                 .protectedWindowIDsForCapture(honoursVisibilityPreference: false)
                 .map(Int.init))
             chrome.formUnion(indicator.excludedWindowNumbers)
+            if let overlay = self.keyOverlay {
+                chrome.formUnion(overlay.excludedWindowNumbers)
+            }
             if let number = QuickToolHUD.currentWindowNumber { chrome.insert(number) }
             let failure = await session.start(frameRate: frameRate,
                                               capturesSystemAudio: capturesSystemAudio,
@@ -573,6 +649,8 @@ final class ScreenRecorderService: ObservableObject {
                 self.session = nil
                 self.indicator?.hide()
                 self.indicator = nil
+                self.keyOverlay?.hide()
+                self.keyOverlay = nil
                 RecorderTakeStore.shared.delete(take)
                 self.report(failure)
                 return
@@ -596,6 +674,8 @@ final class ScreenRecorderService: ObservableObject {
         countdown = nil
         indicator?.hide()
         indicator = nil
+        keyOverlay?.hide()
+        keyOverlay = nil
     }
 
     private func recordingDidStart() {
@@ -634,6 +714,9 @@ final class ScreenRecorderService: ObservableObject {
         elapsedSeconds = Int(session.elapsed(at: now))
         indicator?.update(elapsed: RecorderSupport.elapsedLabel(seconds: elapsedSeconds))
         indicator?.update(paused: isPaused)
+        // A pause hides what was on screen and stops the row from returning
+        // until the recording does.
+        keyOverlay?.setPaused(isPaused)
     }
 
     /// A recording that fills the disk is a much worse failure than one that
@@ -691,6 +774,8 @@ final class ScreenRecorderService: ObservableObject {
     private func endRecordingSurfaces() {
         isRecording = false
         isPaused = false
+        keyOverlay?.hide()
+        keyOverlay = nil
         elapsedTimer?.invalidate()
         elapsedTimer = nil
         if let sleepActivity {

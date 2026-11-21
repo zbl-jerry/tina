@@ -21,6 +21,9 @@ final class RecorderTakeStore: @unchecked Sendable {
         var videoURL: URL { folder.appendingPathComponent(RecorderSupport.takeVideoName) }
         var pointerURL: URL { folder.appendingPathComponent(RecorderSupport.takePointerName) }
         var typingURL: URL { folder.appendingPathComponent(RecorderSupport.takeTypingName) }
+        /// Key content, written only when the overlay was on. It lives in the
+        /// private take folder and is deleted with the take.
+        var keystrokesURL: URL { folder.appendingPathComponent(RecorderSupport.takeKeystrokesName) }
         var editURL: URL { folder.appendingPathComponent(RecorderSupport.takeEditName) }
     }
 

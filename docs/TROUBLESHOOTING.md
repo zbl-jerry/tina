@@ -123,6 +123,7 @@ To wipe Tina's granted permissions and let macOS ask again from scratch, pick on
   ```sh
   tccutil reset Accessibility com.tina.utils
   tccutil reset ScreenCapture com.tina.utils
+  tccutil reset ListenEvent com.tina.utils
   ```
 
   A self-built Developer variant has its own grants under
