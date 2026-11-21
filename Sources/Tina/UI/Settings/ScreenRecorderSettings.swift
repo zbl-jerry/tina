@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Vorssaint
 
+import AVFoundation
 import SwiftUI
 
 /// Settings for the screen recorder: how a recording starts, what it captures
@@ -17,6 +18,13 @@ struct ScreenRecordingCaptureSettings: View {
     @AppStorage(DefaultsKey.recorderFrameRate) private var frameRate = 60
     @AppStorage(DefaultsKey.recorderSystemAudio) private var systemAudio = true
     @AppStorage(DefaultsKey.recorderMicrophone) private var microphone = false
+    @AppStorage(DefaultsKey.recorderCameraOverlay) private var cameraOverlay = false
+    @AppStorage(DefaultsKey.recorderCameraDevice) private var cameraDevice = ""
+    @AppStorage(DefaultsKey.recorderCameraShape) private var cameraShape =
+        RecorderCameraShape.circle.rawValue
+    @AppStorage(DefaultsKey.recorderCameraMirror) private var cameraMirror = true
+    @AppStorage(DefaultsKey.recorderCameraShadow) private var cameraShadow = true
+    @State private var cameras: [AVCaptureDevice] = []
     @AppStorage(DefaultsKey.recorderSaveFolder) private var saveFolder = ""
     @AppStorage(DefaultsKey.recorderOpenEditor) private var opensEditor = true
     @AppStorage(DefaultsKey.recorderAutomaticZoom) private var automaticZoom = true
@@ -104,6 +112,41 @@ struct ScreenRecordingCaptureSettings: View {
                     }
                 }
                 VStack(alignment: .leading, spacing: 4) {
+                    Toggle(strings.cameraToggle, isOn: $cameraOverlay)
+                        .onChange(of: cameraOverlay) { _, enabled in
+                            guard enabled else { return }
+                            cameras = RecorderCameraCapture.devices()
+                            if permissions.camera == .undetermined {
+                                permissions.requestCamera()
+                            }
+                        }
+                    Text(strings.cameraCaption)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if cameraOverlay {
+                        Picker(strings.cameraPickerLabel, selection: $cameraDevice) {
+                            ForEach(cameras, id: \.uniqueID) { camera in
+                                Text(camera.localizedName).tag(camera.uniqueID)
+                            }
+                            if cameras.isEmpty {
+                                Text(strings.cameraNone).tag("")
+                            }
+                        }
+                        Picker(strings.cameraShapeLabel, selection: $cameraShape) {
+                            Text(strings.cameraShapeCircle)
+                                .tag(RecorderCameraShape.circle.rawValue)
+                            Text(strings.cameraShapeRounded)
+                                .tag(RecorderCameraShape.rounded.rawValue)
+                        }
+                        .pickerStyle(.segmented)
+                        Toggle(strings.cameraMirrorToggle, isOn: $cameraMirror)
+                        Toggle(strings.cameraShadowToggle, isOn: $cameraShadow)
+                        if permissions.camera != .granted {
+                            PermissionRow(kind: .camera)
+                        }
+                    }
+                }
+                VStack(alignment: .leading, spacing: 4) {
                     Toggle(strings.openEditorToggle, isOn: $opensEditor)
                     Text(strings.openEditorCaption)
                         .font(.caption)
@@ -188,7 +231,16 @@ struct ScreenRecordingCaptureSettings: View {
                 Text(screenshotStrings.shareSectionTitle)
             }
         }
-        .onAppear { sharing.refresh() }
+        .onAppear {
+            sharing.refresh()
+            cameras = RecorderCameraCapture.devices()
+            // A camera remembered on another Mac is not a tag this picker
+            // has, so the menu falls back to the first available one.
+            if !cameraDevice.isEmpty,
+               !cameras.contains(where: { $0.uniqueID == cameraDevice }) {
+                cameraDevice = ""
+            }
+        }
         .sheet(isPresented: $showingSharedLinks) {
             RecorderSharedLinksView()
         }

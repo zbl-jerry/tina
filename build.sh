@@ -400,6 +400,9 @@ if (( TEST )); then
         Sources/Tina/Core/RecorderExportFormatStrings.swift
         Sources/Tina/Services/Recorder/RecorderComposer.swift
         Sources/Tina/Services/Recorder/RecorderComposerPlan.swift
+        Sources/Tina/Services/Recorder/RecorderCameraLayout.swift
+        Sources/Tina/Services/Recorder/RecorderCameraPreference.swift
+        Sources/Tina/Services/Recorder/RecorderCameraCompositor.swift
         Sources/Tina/Services/Recorder/RecorderCursorSprite.swift
         Sources/Tina/Services/Recorder/RecorderTextRenderer.swift
         Sources/Tina/Services/Recorder/RecorderImageRenderer.swift

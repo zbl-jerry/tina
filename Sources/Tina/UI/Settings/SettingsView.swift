@@ -1043,6 +1043,7 @@ enum PermissionKind {
     case screenRecording
     case inputMonitoring
     case microphone
+    case camera
 }
 
 /// Status + actions for one TCC permission; shared by Settings and onboarding.
@@ -1058,13 +1059,14 @@ struct PermissionRow: View {
         case .screenRecording: return permissions.screenRecording
         case .inputMonitoring: return permissions.inputMonitoring
         case .microphone: return permissions.microphone == .granted
+        case .camera: return permissions.camera == .granted
         }
     }
 
     private var monitorsActivePermission: Bool {
         switch kind {
         case .accessibility, .screenRecording, .inputMonitoring: return true
-        case .microphone: return false
+        case .microphone, .camera: return false
         }
     }
 
@@ -1076,6 +1078,8 @@ struct PermissionRow: View {
             return FeatureStrings.recorder(l10n.language).keystrokePermissionName
         case .microphone:
             return FeatureStrings.recorder(l10n.language).microphonePermissionName
+        case .camera:
+            return FeatureStrings.recorder(l10n.language).cameraPermissionName
         }
     }
 
@@ -1102,6 +1106,8 @@ struct PermissionRow: View {
                             permissions.requestInputMonitoring()
                         case .microphone:
                             permissions.requestMicrophone()
+                        case .camera:
+                            permissions.requestCamera()
                         }
                     }
                     Button(l10n.s.permissionOpenSettings) {
@@ -1114,6 +1120,8 @@ struct PermissionRow: View {
                             permissions.openInputMonitoringSettings()
                         case .microphone:
                             permissions.openMicrophoneSettings()
+                        case .camera:
+                            permissions.openCameraSettings()
                         }
                     }
                 }
