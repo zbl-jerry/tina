@@ -19,12 +19,35 @@ enum RecorderPreparationTests {
     struct Permissions {
         static let shared = Self()
         enum Grant { case granted }
+        enum Camera { case granted, undetermined }
         let microphone = Grant.granted
         let screenRecording = true
         let accessibility = true
         let inputMonitoring = false
+        let camera = Camera.granted
         func requestScreenRecording() {}
         func requestAccessibility() {}
+        func requestCamera() {}
+    }
+    /// The camera bubble is switched off in these tests. The stubs keep the
+    /// extracted preparation methods compiling without a capture device or a
+    /// panel.
+    enum RecorderCameraPreference {
+        static func isEnabled() -> Bool { false }
+        static func deviceID() -> String { "" }
+        static func layout() -> RecorderCameraLayout { RecorderCameraLayout() }
+    }
+    final class RecorderCameraCapture {}
+    final class RecorderCameraLayoutBox {
+        init(_ layout: RecorderCameraLayout) {}
+    }
+    final class RecorderCameraBubble {
+        var windowNumber: Int? { nil }
+        init(capture: RecorderCameraCapture,
+             layoutBox: RecorderCameraLayoutBox,
+             region: RecorderSupport.Region) {}
+        func show() {}
+        func hide() {}
     }
     enum QuickToolHUD {
         static var messages = 0
@@ -65,7 +88,10 @@ enum RecorderPreparationTests {
         init(take: RecorderTakeStore.Take, region: RecorderSupport.Region,
              writer: RecorderWriter, pauseClock: RecorderPauseClock,
              capturesSystemAudio: Bool, capturesMicrophone: Bool,
-             capturesKeystrokes: Bool, keystrokeStyle: RecorderKeystrokeStyle) {
+             capturesKeystrokes: Bool, keystrokeStyle: RecorderKeystrokeStyle,
+             camera: RecorderCameraCapture? = nil,
+             cameraDeviceID: String = "",
+             cameraLayout: RecorderCameraLayoutBox? = nil) {
             self.writer = writer
         }
     }
@@ -73,6 +99,7 @@ enum RecorderPreparationTests {
         var session: RecorderSession?
         var indicator: Indicator? = Indicator()
         var keyOverlay: Indicator?
+        var cameraBubble: RecorderCameraBubble?
         var isRecording = false
         var isFinishing = false
         var isAwaitingMicrophone = false
@@ -80,7 +107,10 @@ enum RecorderPreparationTests {
         var countdown: DispatchWorkItem?
         var pendingStartGeneration = 1
         var starts = 0
-        struct Strings { let recordFailed = "failed" }
+        struct Strings {
+            let recordFailed = "failed"
+            let cameraUnavailableHUD = "camera unavailable"
+        }
         let strings = Strings()
         func startPreparedRecording(_ session: RecorderSession, frameRate: Int,
                                     capturesSystemAudio: Bool, generation: Int) {

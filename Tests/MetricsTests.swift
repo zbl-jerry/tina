@@ -122,6 +122,7 @@ struct MetricsTests {
                 RecorderExportControlsTests.run(suite)
                 RecorderExportRenderingTests.run(suite)
                 RecorderFastGIFExportTests.run(suite)
+                RecorderCameraOverlayTests.run(suite)
             }),
             ("command-bar", {
                 CommandBarFeatureTests.run(suite)

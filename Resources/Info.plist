@@ -72,7 +72,7 @@
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Show your upcoming appointments in the notch. Calendar events stay on this Mac.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Tina shows your camera only in the preview window you open, so you can check how you look before a call. Nothing is recorded or leaves your Mac.</string>
+	<string>Tina shows your camera in the preview mirror and, when you turn on the camera bubble, in your screen recordings. Nothing leaves your Mac.</string>
 	<key>NSCameraUseContinuityCameraDeviceType</key>
 	<true/>
 	<key>NSDesktopFolderUsageDescription</key>

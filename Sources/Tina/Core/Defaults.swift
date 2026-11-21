@@ -834,6 +834,16 @@ enum DefaultsKey {
     static let recorderKeystrokeSize = "recorderKeystrokeSize"
     static let recorderKeystrokeDwell = "recorderKeystrokeDwell"
     static let recorderKeystrokeTheme = "recorderKeystrokeTheme"
+    // Camera bubble burned into a recording. The layout fields are the same
+    // normalized geometry the floating bubble and the compositor share.
+    static let recorderCameraOverlay = "recorderCameraOverlay"
+    static let recorderCameraDevice = "recorderCameraDevice"
+    static let recorderCameraCenterX = "recorderCameraCenterX"
+    static let recorderCameraCenterY = "recorderCameraCenterY"
+    static let recorderCameraSize = "recorderCameraSize"
+    static let recorderCameraShape = "recorderCameraShape"
+    static let recorderCameraMirror = "recorderCameraMirror"
+    static let recorderCameraShadow = "recorderCameraShadow"
     static let panelUtilityScreenRecorder = "panelUtilityScreenRecorder"
     static let panelUtilityPortManager = "panelUtilityPortManager"
     static let panelUtilityKillProcess = "panelUtilityKillProcess"
@@ -2048,6 +2058,14 @@ enum Defaults {
         DefaultsKey.recorderKeystrokeSize: RecorderKeystrokeSize.medium.rawValue,
         DefaultsKey.recorderKeystrokeDwell: 2.0,
         DefaultsKey.recorderKeystrokeTheme: RecorderKeystrokeTheme.dark.rawValue,
+        DefaultsKey.recorderCameraOverlay: false,
+        DefaultsKey.recorderCameraDevice: "",
+        DefaultsKey.recorderCameraCenterX: RecorderCameraLayout.defaultCenterX,
+        DefaultsKey.recorderCameraCenterY: RecorderCameraLayout.defaultCenterY,
+        DefaultsKey.recorderCameraSize: RecorderCameraLayout.defaultSize,
+        DefaultsKey.recorderCameraShape: RecorderCameraShape.circle.rawValue,
+        DefaultsKey.recorderCameraMirror: true,
+        DefaultsKey.recorderCameraShadow: true,
         DefaultsKey.panelUtilityScreenRecorder: true,
         DefaultsKey.panelUtilityPortManager: true,
         DefaultsKey.panelUtilityKillProcess: true,

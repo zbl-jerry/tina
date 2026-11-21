@@ -57,6 +57,12 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
     /// Immutable for the whole session, which is what makes it safe to touch
     /// from the capture queue while the main thread watches the clock.
     private let writer: RecorderWriter
+    /// The camera bubble is optional and lives only as long as the recording.
+    /// The writer reads its latest frame and its live layout on its own queue.
+    private let camera: RecorderCameraCapture?
+    private let cameraDeviceID: String
+    private let cameraLayout: RecorderCameraLayoutBox?
+    private let cameraCompositor = RecorderCameraCompositor()
 
     var onUnexpectedStop: ((RecorderFailure) -> Void)?
     var onMicrophoneUnavailable: (() -> Void)?
@@ -66,6 +72,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
     var onSecureInputChange: ((Bool) -> Void)?
     /// The key overlay was asked for but macOS withheld the keys.
     var onKeystrokeUnavailable: (() -> Void)?
+    var onCameraUnavailable: (() -> Void)?
 
     init(take: RecorderTakeStore.Take,
           region: RecorderSupport.Region,
@@ -74,7 +81,10 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
           capturesSystemAudio: Bool,
           capturesMicrophone: Bool,
           capturesKeystrokes: Bool,
-          keystrokeStyle: RecorderKeystrokeStyle) {
+          keystrokeStyle: RecorderKeystrokeStyle,
+          camera: RecorderCameraCapture? = nil,
+          cameraDeviceID: String = "",
+          cameraLayout: RecorderCameraLayoutBox? = nil) {
         self.take = take
         self.region = region
         self.writer = writer
@@ -82,6 +92,9 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         self.capturesSystemAudio = capturesSystemAudio
         self.capturesKeystrokes = capturesKeystrokes
         self.keystrokeStyle = keystrokeStyle
+        self.camera = camera
+        self.cameraDeviceID = cameraDeviceID
+        self.cameraLayout = cameraLayout
         microphone = capturesMicrophone ? RecorderMicrophoneCapture() : nil
         pointer = RecorderPointerSampler(region: region, pauseClock: pauseClock)
         typing = RecorderTypingSampler(pauseClock: pauseClock)
@@ -99,6 +112,9 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         keystrokes?.onSecureInput = { [weak self] secure in
             self?.onSecureInputChange?(secure)
         }
+        camera?.onInterruption = { [weak self] in
+            self?.onCameraUnavailable?()
+        }
     }
 
     func start(frameRate: Int,
@@ -109,6 +125,12 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         guard writer.start() else {
             _ = startGate.claimStartFailure()
             return .writerFailed
+        }
+        // The camera comes up before the stream so the very first frame
+        // already carries the bubble. A missing, busy or denied camera only
+        // costs the bubble; the screen recording starts either way.
+        if let camera, await camera.start(deviceID: cameraDeviceID) == false {
+            onCameraUnavailable?()
         }
         if capturesSystemAudio {
             systemAudioTap = await RecorderSystemAudioTap.make(hearing: Self.windowOwner(of: region))
@@ -135,10 +157,12 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
                                             }) {
             if startGate.claimStartFailure() { writer.cancel() }
             await tap?.stop()
+            await camera?.stop()
             return failure
         }
         guard startGate.isAuthorized else {
             await tap?.stop()
+            await camera?.stop()
             await engine.stop()
             return .streamFailed
         }
@@ -154,6 +178,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         }
         guard startGate.isAuthorized else {
             await tap?.stop()
+            await camera?.stop()
             await engine.stop()
             return .streamFailed
         }
@@ -164,6 +189,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
             guard startGate.isAuthorized else {
                 await tap?.stop()
                 await microphone.stop()
+                await camera?.stop()
                 await engine.stop()
                 return .streamFailed
             }
@@ -217,6 +243,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         guard ownsFinalization else { return false }
         let tap = systemAudioTap
         async let tapStop: Void = { if let tap { await tap.stop() } }()
+        async let cameraStop: Void = { if let camera { await camera.stop() } }()
         if let microphone {
             async let microphoneStop: Void = microphone.stop()
             await engine.stop()
@@ -225,6 +252,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
             await engine.stop()
         }
         await tapStop
+        await cameraStop
         // A tap that lost its reader was cut short by a device or process
         // change, not by a missing permission, so this recording proves
         // nothing either way.
@@ -297,8 +325,27 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
     }
 
     private func append(_ sampleBuffer: CMSampleBuffer, kind: RecorderCaptureEngine.Kind) {
-        writerQueue.async { [writer] in
-            writer.append(sampleBuffer, kind: kind)
+        writerQueue.async { [writer, camera, cameraLayout, cameraCompositor, pauseClock] in
+            var buffer = sampleBuffer
+            // The bubble is drawn into the frame the encoder receives, so
+            // everything downstream (editor preview, GIF, sharing save) shows
+            // it without knowing the camera exists. A paused recording drops
+            // every video sample anyway, so it is not worth compositing.
+            if kind == .video,
+               !pauseClock.isPaused,
+               writer.isReadyForVideo,
+               let camera,
+               let layout = cameraLayout?.layout,
+               let screen = CMSampleBufferGetImageBuffer(sampleBuffer),
+               let frame = camera.latestFrame(),
+               let composed = cameraCompositor.compose(screen: screen,
+                                                       camera: frame,
+                                                       layout: layout),
+               let rebuilt = RecorderCameraSample.composited(sampleBuffer,
+                                                             imageBuffer: composed) {
+                buffer = rebuilt
+            }
+            writer.append(buffer, kind: kind)
         }
     }
 }
@@ -320,6 +367,8 @@ final class ScreenRecorderService: ObservableObject {
     /// The live key row, present only while a recording made with the
     /// overlay on runs.
     private var keyOverlay: RecorderKeystrokeOverlay?
+    /// The floating camera bubble, shown only while a recording asks for it.
+    private var cameraBubble: RecorderCameraBubble?
     private var editors: [RecorderEditorController] = []
     private var mediaOwnedEditorIDs: Set<ObjectIdentifier> = []
     private var elapsedTimer: Timer?
@@ -557,12 +606,35 @@ final class ScreenRecorderService: ObservableObject {
                 QuickToolHUD.show(icon: "record.circle", message: self.strings.recordFailed)
                 return
             }
+            var camera: RecorderCameraCapture?
+            var cameraLayout: RecorderCameraLayoutBox?
+            var bubble: RecorderCameraBubble?
+            if RecorderCameraPreference.isEnabled() {
+                if Permissions.shared.camera == .granted {
+                    let capture = RecorderCameraCapture()
+                    let box = RecorderCameraLayoutBox(RecorderCameraPreference.layout())
+                    camera = capture
+                    cameraLayout = box
+                    let view = RecorderCameraBubble(capture: capture, layoutBox: box, region: region)
+                    view.show()
+                    bubble = view
+                } else {
+                    if Permissions.shared.camera == .undetermined {
+                        Permissions.shared.requestCamera()
+                    }
+                    QuickToolHUD.show(icon: "video.slash", message: self.strings.cameraUnavailableHUD)
+                }
+            }
             let session = RecorderSession(take: take, region: region, writer: writer,
                                           pauseClock: pauseClock,
                                           capturesSystemAudio: capturesSystemAudio,
                                           capturesMicrophone: capturesMicrophone,
                                           capturesKeystrokes: capturesKeystrokes,
-                                          keystrokeStyle: keystrokeStyle)
+                                          keystrokeStyle: keystrokeStyle,
+                                          camera: camera,
+                                          cameraDeviceID: RecorderCameraPreference.deviceID(),
+                                          cameraLayout: cameraLayout)
+            self.cameraBubble = bubble
             self.startPreparedRecording(session, frameRate: frameRate,
                                         capturesSystemAudio: capturesSystemAudio, generation: generation)
         }
@@ -581,6 +653,16 @@ final class ScreenRecorderService: ObservableObject {
         session.onMicrophoneUnavailable = { [weak self] in
             guard let self else { return }
             QuickToolHUD.show(icon: "mic.slash", message: self.strings.microphoneUnavailableHUD)
+        }
+        session.onCameraUnavailable = { [weak self] in
+            // A failed start reports from the session's executor; the panel
+            // and the HUD belong to the main thread.
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.cameraBubble?.hide()
+                self.cameraBubble = nil
+                QuickToolHUD.show(icon: "video.slash", message: self.strings.cameraUnavailableHUD)
+            }
         }
         self.session = session
 
@@ -639,6 +721,7 @@ final class ScreenRecorderService: ObservableObject {
             if let overlay = self.keyOverlay {
                 chrome.formUnion(overlay.excludedWindowNumbers)
             }
+            if let number = cameraBubble?.windowNumber { chrome.insert(number) }
             if let number = QuickToolHUD.currentWindowNumber { chrome.insert(number) }
             let failure = await session.start(frameRate: frameRate,
                                               capturesSystemAudio: capturesSystemAudio,
@@ -651,6 +734,8 @@ final class ScreenRecorderService: ObservableObject {
                 self.indicator = nil
                 self.keyOverlay?.hide()
                 self.keyOverlay = nil
+                self.cameraBubble?.hide()
+                self.cameraBubble = nil
                 RecorderTakeStore.shared.delete(take)
                 self.report(failure)
                 return
@@ -676,6 +761,8 @@ final class ScreenRecorderService: ObservableObject {
         indicator = nil
         keyOverlay?.hide()
         keyOverlay = nil
+        cameraBubble?.hide()
+        cameraBubble = nil
     }
 
     private func recordingDidStart() {
@@ -776,6 +863,8 @@ final class ScreenRecorderService: ObservableObject {
         isPaused = false
         keyOverlay?.hide()
         keyOverlay = nil
+        cameraBubble?.hide()
+        cameraBubble = nil
         elapsedTimer?.invalidate()
         elapsedTimer = nil
         if let sleepActivity {
