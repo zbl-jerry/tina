@@ -158,6 +158,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **Uninstaller.** Remove apps and review their related caches, preferences and helpers before moving them to the Trash.
 - **Homebrew manager.** Search, install and remove formulae and casks without opening a terminal.
 - **Port manager.** Find processes listening on network ports and stop them with Kill Process when installed.
+- **Hosts profiles.** Keep several named hosts configurations, enable a set and apply them to `/etc/hosts` with one administrator approval. Each apply backs up the current file first, only Tina's marked block is replaced, and any backup can be restored. See [hosts profiles](docs/HOSTS-PROFILES.md).
 
 ### Energy and display
 

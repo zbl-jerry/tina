@@ -17,6 +17,7 @@ You can review or change every grant in System Settings, under Privacy and Secur
 | Notifications | Yes | Keep awake, battery, Monitor and update alerts |
 | Full Disk Access | Yes | A deeper uninstaller scan and the optional cleanup offer for apps moved to the Trash |
 | Administrator (one time) | Yes | Password free closed lid toggling |
+| Administrator (per apply) | Only when you apply hosts profiles | Writing the managed block in `/etc/hosts` |
 | Automation | Yes | Finder actions and supported music playback controls |
 | App Management | Yes | App installs, updates and removal |
 
@@ -143,6 +144,16 @@ Download monitoring watches only the folder you choose in the system picker. Fol
 **If you say no.** Closed lid mode still works. macOS just asks for your administrator password each time you turn it on or off.
 
 **Optional.** Yes, and it is a one time choice. The rule is limited to `pmset disablesleep` and nothing else, and it goes away on its own when you uninstall Tina or reset things from Settings under Advanced.
+
+## Administrator, per hosts apply
+
+**Why it comes up.** `/etc/hosts` is owned by root, so writing the hosts profiles requires administrator rights. Tina asks macOS for the password at the moment you press Apply or Restore, not while you edit.
+
+**What uses it.** Hosts profiles only.
+
+**What it changes.** One block between Tina's markers in `/etc/hosts`. Other lines are preserved. A backup of the whole file is written before the prompt; if the backup fails, nothing is written. No helper, launch agent or `sudoers` rule is installed, and no privileged process stays running afterwards. An apply that would change nothing does not ask.
+
+**If you say no.** The file is left as it was, the temporary content is deleted, and the page reports that the apply did not land.
 
 ## Automation
 

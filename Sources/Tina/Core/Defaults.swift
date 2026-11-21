@@ -817,6 +817,11 @@ enum DefaultsKey {
     static let panelUtilityScreenRecorder = "panelUtilityScreenRecorder"
     static let panelUtilityPortManager = "panelUtilityPortManager"
     static let panelUtilityKillProcess = "panelUtilityKillProcess"
+    static let panelUtilityHostsProfiles = "panelUtilityHostsProfiles"
+
+    // Hosts profiles: named fragments applied to /etc/hosts inside one managed
+    // block. The list is JSON so it travels in settings backups.
+    static let hostsProfilesData = "hostsProfilesData"
 
     // Window Layout — snapping, global shortcuts and optional pointer gestures.
     static let windowLayoutShortcutsEnabled = "windowLayoutShortcutsEnabled"
@@ -1993,6 +1998,8 @@ enum Defaults {
         DefaultsKey.panelUtilityScreenRecorder: true,
         DefaultsKey.panelUtilityPortManager: true,
         DefaultsKey.panelUtilityKillProcess: true,
+        DefaultsKey.panelUtilityHostsProfiles: true,
+        DefaultsKey.hostsProfilesData: "",
         DefaultsKey.screenshotShowCaptureMenuOnShortcut: true,
         DefaultsKey.recorderShowCaptureMenuOnShortcut: true,
         DefaultsKey.screenOCRShowCaptureMenuOnShortcut: true,
