@@ -72,6 +72,10 @@ struct EnergySettings: View {
                     bluetoothCard
                         .settingsSectionAnchor(.bluetoothSleep, cornerRadius: 16)
                 }
+                if (focus == nil || focus == .chargeLimit), AppFeature.chargeLimit.isAvailable {
+                    ChargeLimitSettingsCard()
+                        .settingsSectionAnchor(.chargeLimit, cornerRadius: 16)
+                }
             }
             .frame(maxWidth: 760)
             .frame(maxWidth: .infinity)
@@ -101,6 +105,9 @@ struct EnergySettings: View {
         if focus == nil || focus == .nightWarmth {
             NightWarmthService.shared.syncWithPreferences()
         }
+        if focus == nil || focus == .chargeLimit {
+            ChargeLimitService.shared.syncWithPreferences()
+        }
         if focus == nil || focus == .brightness {
             // Displays may have changed since launch (docked, clamshell).
             BrightnessService.shared.refresh()
@@ -114,6 +121,7 @@ struct EnergySettings: View {
         case .extraBrightness: return l10n.s.extraBrightnessName
         case .nightWarmth: return FeatureStrings.nightWarmth(l10n.language).title
         case .bluetoothSleep: return FeatureStrings.bluetoothSleep(l10n.language).pageTitle
+        case .chargeLimit: return FeatureStrings.chargeLimit(l10n.language).title
         default: return l10n.s.tabEnergy
         }
     }
@@ -125,6 +133,7 @@ struct EnergySettings: View {
         case .extraBrightness: return FeatureStrings.hub(l10n.language).descExtraBrightness
         case .nightWarmth: return FeatureStrings.nightWarmth(l10n.language).hubDescription
         case .bluetoothSleep: return FeatureStrings.bluetoothSleep(l10n.language).hubDescription
+        case .chargeLimit: return FeatureStrings.chargeLimit(l10n.language).hubDescription
         default: return FeatureStrings.settingsPages(l10n.language).energyDescription
         }
     }

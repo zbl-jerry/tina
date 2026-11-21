@@ -131,7 +131,7 @@ extension AppFeature {
         // Log changes arrive as file events; a timer keeps countdowns and
         // limits current while the section is on.
         case .notch, .notchCalendar, .notchLyrics, .notchLiveEqualizer, .notchAgents: return .periodic
-        case .clipboardHistory, .urlCleaner, .extraBrightness, .nightWarmth,
+        case .clipboardHistory, .urlCleaner, .extraBrightness, .nightWarmth, .chargeLimit,
              .monitorCPU, .monitorGPU, .monitorMemory,
              .monitorNetwork, .monitorDisk, .monitorPower, .connectedDevices:
             return .periodic

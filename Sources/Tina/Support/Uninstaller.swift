@@ -17,6 +17,13 @@ enum Uninstaller {
         // The fan helper is a daemon service of its own, so unregistering the
         // main app as a login item never reaches it. Without this its root
         // registration outlives the bundle that carried its executable.
+        //
+        // Charging goes back first: after the daemon is gone, nothing on this
+        // Mac could undo an inhibit Tina left behind.
+        let chargingRestored = ChargeLimitService.restoreForRemoval()
+        print(chargingRestored
+              ? "UNINSTALL: normal charging restored"
+              : "UNINSTALL: charging is still limited")
         let detached = FanControlService.restoreAndUnregisterForRemoval()
         print(detached
               ? "UNINSTALL: fan helper daemon unregistered"
@@ -48,10 +55,10 @@ enum Uninstaller {
         } catch {
             print("UNINSTALL: login item was not registered")
         }
-        // Only the daemon decides the status. A login item that was never
-        // registered is not a failure, and sleep and Space rearranging are
-        // settings the caller can read back for itself; a daemon left behind
-        // is the one thing it cannot.
-        exit(detached ? EXIT_SUCCESS : EXIT_FAILURE)
+        // Only the daemon and charging decide the status. A login item that was
+        // never registered is not a failure, and sleep and Space rearranging
+        // are settings the caller can read back for itself; a daemon or an
+        // inhibit left behind is the one thing it cannot.
+        exit(detached && chargingRestored ? EXIT_SUCCESS : EXIT_FAILURE)
     }
 }

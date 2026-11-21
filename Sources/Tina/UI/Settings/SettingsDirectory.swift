@@ -356,6 +356,10 @@ enum SettingsDirectory {
                                         (.nightWarmth, [FeatureStrings.nightWarmth(language).title,
                                                         FeatureStrings.nightWarmth(language).presets]),
                                         (.bluetoothSleep, [bluetooth.pageTitle]),
+                                        (.chargeLimit, [FeatureStrings.chargeLimit(language).title,
+                                                        FeatureStrings.chargeLimit(language).toggle,
+                                                        FeatureStrings.chargeLimit(language).upperLimit,
+                                                        FeatureStrings.chargeLimit(language).chargeToFull]),
                                        ], terms: [
                                         .init([s.dimScreenOnLidCloseTitle], feature: .keepAwake,
                                               when: state.on(DefaultsKey.clamshellPreferred)),

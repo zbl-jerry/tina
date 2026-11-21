@@ -197,7 +197,11 @@ enum SelfUninstall {
     }
 
     private static func detachFanControl() -> Bool {
-        FanControlService.restoreAndUnregisterForRemoval()
+        // Charging first: the helper is the only process that can put it back,
+        // and this function removes that process.
+        let chargingRestored = ChargeLimitService.restoreForRemoval()
+        let fansRestored = FanControlService.restoreAndUnregisterForRemoval()
+        return chargingRestored && fansRestored
     }
 
     private static func detachLoginItem() {

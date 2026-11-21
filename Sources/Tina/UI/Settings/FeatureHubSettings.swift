@@ -1180,6 +1180,7 @@ extension AppFeature {
         case .extraBrightness: return s.extraBrightnessName
         case .nightWarmth: return FeatureStrings.nightWarmth(language).title
         case .bluetoothSleep: return FeatureStrings.bluetoothSleep(language).pageTitle
+        case .chargeLimit: return FeatureStrings.chargeLimit(language).title
         case .quickLauncher: return s.launcherName
         case .quickToggles: return FeatureStrings.quickToggles(language).pageTitle
         case .quitApps: return s.quitAppsName
@@ -1272,6 +1273,7 @@ extension AppFeature {
         case .extraBrightness: return hub.descExtraBrightness
         case .nightWarmth: return FeatureStrings.nightWarmth(L10n.shared.language).hubDescription
         case .bluetoothSleep: return FeatureStrings.bluetoothSleep(L10n.shared.language).hubDescription
+        case .chargeLimit: return FeatureStrings.chargeLimit(L10n.shared.language).hubDescription
         case .quickLauncher: return hub.descQuickLauncher
         case .quickToggles: return FeatureStrings.quickToggles(L10n.shared.language).hubDescription
         case .quitApps: return L10n.shared.s.quitAppsCaption

@@ -73,12 +73,19 @@ enum FanControlIdentifiers {
     #endif
 }
 
+/// The protocol of Tina's one privileged helper. The service identity keeps
+/// its `fan-control` name because macOS has already registered it on existing
+/// installs; the charge limit is a second, separately owned capability of the
+/// same root process, with its own lock, marker and teardown.
 @objc protocol FanControlXPCProtocol {
     func status(withReply reply: @escaping (Data) -> Void)
     func startMaximumCooling(withReply reply: @escaping (Data) -> Void)
     func applyConfiguration(_ configuration: Data, withReply reply: @escaping (Data) -> Void)
     func heartbeat(withReply reply: @escaping (Data) -> Void)
     func restoreAutomatic(withReply reply: @escaping (Data) -> Void)
+    func chargeLimitStatus(withReply reply: @escaping (Data) -> Void)
+    func applyChargeLimit(_ configuration: Data, withReply reply: @escaping (Data) -> Void)
+    func restoreCharging(withReply reply: @escaping (Data) -> Void)
 }
 
 enum FanControlIPC {

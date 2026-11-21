@@ -116,6 +116,8 @@ enum ReleaseChangeAliases {
         case .nightWarmth: return ["night warmth", "night colour", "night color", "color temperature",
             "colour temperature", "warm screen", "night shift"]
         case .bluetoothSleep: return ["bluetooth on sleep", "bluetooth power", "bluetooth off during sleep"]
+        case .chargeLimit: return ["charge limit", "charge limit battery", "battery limit",
+            "stop charging", "charging limit", "battery charge"]
         case .quickLauncher: return ["quick panel", "quick launcher"]
         case .quickToggles: return ["quick toggles"]
         case .quitApps: return ["quit apps", "quit all apps"]

@@ -168,6 +168,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **Extra brightness.** Use a MacBook Pro XDR display's HDR headroom to go beyond its normal maximum brightness.
 - **Night warmth.** Warm every display after sunset and return to daytime colours in the morning, with an optional bedtime temperature, presets, pause until sunrise and Warmer or Cooler nudges. Uses gamma tables only, asks for no permission, and restores the original colours when turned off.
 - **Bluetooth on sleep.** Disconnect Bluetooth during sleep and restore it on wake only if Tina turned it off.
+- **Charge limit (beta).** Hold a plugged-in MacBook at a chosen charge level, resuming a few points lower so it does not toggle, and charge to full once when needed. Uses Tina's existing privileged helper and restores normal charging when switched off or when Tina quits. See [charge limit](docs/CHARGE-LIMIT.md).
 
 ## Private by default
 
@@ -208,6 +209,7 @@ See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions 
 ## Documentation
 
 - [Night warmth](docs/NIGHT-WARMTH.md), the colour temperature schedule and how it is applied
+- [Charge limit](docs/CHARGE-LIMIT.md), the battery research, product design and SMC implementation
 - [Privacy](docs/PRIVACY.md), what does and does not leave your Mac
 - [Permissions](docs/PERMISSIONS.md), every macOS permission in plain words
 - [Troubleshooting](docs/TROUBLESHOOTING.md), the common fixes
