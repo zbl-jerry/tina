@@ -43,6 +43,7 @@ struct MetricsTests {
                 ScrollZoomFocusTests.run(suite)
             }),
             ("scroll-speed", { ScrollSpeedTests.run(suite) }),
+            ("per-app-scroll", { PerAppScrollTests.run(suite) }),
             ("linear-scroll", { LinearScrollTapTests.run(suite) }),
             ("preferences", { PreferencesFeatureTests.run(suite) }),
             ("app-management", {

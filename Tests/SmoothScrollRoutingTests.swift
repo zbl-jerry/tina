@@ -53,6 +53,19 @@ enum SmoothScrollRoutingTests {
         var passes = true
         func passed(_ event: CGEvent) -> Bool { passes }
     }
+    /// The per-app table the shipped handler reads. The production resolver
+    /// only wraps a dictionary lookup, so the fixture answers the same way.
+    final class PerApp {
+        static let shared = PerApp()
+        var overrides: [Int32: ScrollPerAppOverride] = [:]
+        func override(forProcessID processID: Int32) -> ScrollPerAppOverride? {
+            overrides[processID]
+        }
+        func override(forProcessID processID: Int32,
+                      resolvingMissing: Bool) -> ScrollPerAppOverride? {
+            overrides[processID]
+        }
+    }
     final class Service {
         typealias UserDefaults = DefaultsStore
         typealias MouseAppExceptions = Exceptions
@@ -62,6 +75,7 @@ enum SmoothScrollRoutingTests {
         typealias SessionActivity = Session
         typealias ScreenshotSelectionController = Capture
         typealias ScrollWheelHIDStage = HIDStage
+        typealias ScrollPerAppOverrides = PerApp
         static let ownProcessID = Int64(getpid())
         var tap: CFMachPort?
         var engine = SmoothScrollSupport.Engine()
@@ -73,6 +87,7 @@ enum SmoothScrollRoutingTests {
         var carryVertical: Double = 0, carryHorizontal: Double = 0
         var currentFlags: CGEventFlags = []
         var currentScrollRedirected = false, glideFromContinuous = false
+        var currentHoldScale = 1.0
         var lastGesturePhaseTimestamp: UInt64?
         var scheduled = false
         func startGlideIfNeeded() { scheduled = true }
@@ -105,6 +120,7 @@ enum SmoothScrollRoutingTests {
             Inverter.shared.isRunning = true
             Target.shared.isOwn = false
             Inverter.shared.zoomRequests = 0
+            PerApp.shared.overrides = [:]
             posted = []
         }
         let a = CGPoint(x: 120, y: 240), b = CGPoint(x: 900, y: 600)
@@ -467,6 +483,87 @@ enum SmoothScrollRoutingTests {
         let unprotected = wheel(flags: .maskControl)
         suite.expect(tick(Service(), unprotected) === unprotected && unprotected.flags == .maskControl,
                      "a glide cannot claim Control speed while the shared target protection is down")
+        // Per-app records resolve from the event's target process, so the
+        // fixture's default receiver id is the key here.
+        defaults.set(false, forKey: DefaultsKey.scrollSpeedEnabled)
+        defaults.set(false, forKey: DefaultsKey.linearScrollEnabled)
+        defaults.set(false, forKey: DefaultsKey.scrollInverterEnabled)
+        defaults.set(false, forKey: DefaultsKey.scrollInverterHorizontalEnabled)
+        defaults.set(false, forKey: DefaultsKey.scrollHorizontalEnabled)
+        defaults.set(true, forKey: AppFeature.smoothScroll.availabilityKey)
+
+        PerApp.shared.overrides = [41: ScrollPerAppOverride(bundleID: "com.example.raw",
+                                                            smoothing: .off)]
+        let rawOff = wheel()
+        let offService = Service()
+        suite.expect(tick(offService, rawOff) === rawOff && !offService.scheduled
+                && !offService.engine.isActive,
+                     "an app set to no smoothing gets its wheel raw and queues no glide")
+
+        PerApp.shared.overrides = [41: ScrollPerAppOverride(bundleID: "com.example.custom",
+                                                            smoothing: .custom,
+                                                            step: 60, speedPercent: 200)]
+        let customService = Service()
+        _ = tick(customService, wheel())
+        suite.expect(customService.engine.remainingVertical == 120,
+                     "a custom app multiplies its own step by its own speed")
+
+        PerApp.shared.overrides = [41: ScrollPerAppOverride(bundleID: "com.example.flip",
+                                                            invertVertical: true)]
+        let flipped = Service()
+        _ = tick(flipped, wheel())
+        suite.expect(flipped.engine.remainingVertical == -40,
+                     "a per-app flip turns the glide even while Scroll Direction is off")
+
+        PerApp.shared.overrides = [41: ScrollPerAppOverride(bundleID: "com.example.raw-flip",
+                                                            smoothing: .off,
+                                                            invertVertical: true)]
+        Inverter.shared.isRunning = false
+        let rawFlip = wheel()
+        suite.expect(tick(Service(), rawFlip) === rawFlip
+                && rawFlip.getIntegerValueField(.scrollWheelEventDeltaAxis1) == -1,
+                     "with the direction tap off, the raw wheel still receives a per-app flip")
+
+        defaults.set(true, forKey: DefaultsKey.scrollHoldEnabled)
+        defaults.set(ScrollHorizontalModifier.control.rawValue, forKey: DefaultsKey.scrollHoldModifier)
+        defaults.set(ScrollHoldAction.precise.rawValue, forKey: DefaultsKey.scrollHoldAction)
+        defaults.set(4, forKey: DefaultsKey.scrollHoldFactor)
+        PerApp.shared.overrides = [:]
+        let precise = wheel(flags: .maskControl)
+        let preciseService = Service()
+        suite.expect(tick(preciseService, precise) === precise && precise.flags.isEmpty
+                && !preciseService.scheduled,
+                     "Pause smoothing delivers the raw wheel and consumes its key")
+
+        defaults.set(ScrollHoldAction.faster.rawValue, forKey: DefaultsKey.scrollHoldAction)
+        let fasterService = Service()
+        _ = tick(fasterService, wheel(flags: .maskControl))
+        suite.expect(fasterService.engine.remainingVertical == 160,
+                     "Faster multiplies the distance while the key is held")
+        _ = tick(fasterService, wheel())
+        suite.expect(fasterService.engine.remainingVertical == 40,
+                     "releasing the key returns the next tick to the ordinary distance")
+
+        defaults.set(ScrollHoldAction.slower.rawValue, forKey: DefaultsKey.scrollHoldAction)
+        let slowerService = Service()
+        _ = tick(slowerService, wheel(flags: .maskControl))
+        suite.expect(slowerService.engine.remainingVertical == 10,
+                     "Slower divides the distance while the key is held")
+
+        // The hold key is resolved before modifier-held speed, so one key
+        // cannot scale the same tick twice.
+        defaults.set(true, forKey: AppFeature.scrollSpeed.availabilityKey)
+        defaults.set(true, forKey: DefaultsKey.scrollSpeedEnabled)
+        defaults.set(ScrollHorizontalModifier.control.rawValue, forKey: DefaultsKey.scrollSpeedModifier)
+        defaults.set(3, forKey: DefaultsKey.scrollSpeedMultiplier)
+        defaults.set(ScrollHoldAction.faster.rawValue, forKey: DefaultsKey.scrollHoldAction)
+        let both = Service()
+        _ = tick(both, wheel(flags: .maskControl))
+        suite.expect(both.engine.remainingVertical == 160,
+                     "the hold key wins over the speed shortcut on the same modifier")
+        defaults.set(false, forKey: DefaultsKey.scrollSpeedEnabled)
+        defaults.set(false, forKey: DefaultsKey.scrollHoldEnabled)
+
         for path in ["Sources/Tina/Services/SmoothScrollService.swift", "Sources/Tina/Services/ScrollInverter.swift"] {
             let source = (try? String(contentsOfFile: path, encoding: .utf8)) ?? ""
             suite.expect(source.contains("tap: ScrollWheelSupport.tapLocation"),
