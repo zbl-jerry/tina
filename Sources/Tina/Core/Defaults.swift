@@ -570,6 +570,8 @@ enum DefaultsKey {
     static let windowLayoutMarginPercent = "windowLayoutMarginPercent" // per-edge percentage for margin maximize
     static let windowLayoutSideRepeatCyclesThirds = "windowLayoutSideRepeatCyclesThirds" // repeated Left/Right cycles half, 2/3, 1/3 on the same display
     static let windowLayoutIgnoredApps = "windowLayoutIgnoredApps" // apps that temporarily disable window layout while focused
+    static let windowTilingMaxWindowsPerRow = "windowTilingMaxWindowsPerRow" // row band population cap for Tile in rows
+    static let windowTilingMaxWindowsPerColumn = "windowTilingMaxWindowsPerColumn" // column band population cap for Tile in columns
     static let panelCollapsedSections = "panelCollapsedSections"
     static let panelCollapsedResetVersion = "panelCollapsedResetVersion"
 
@@ -905,6 +907,9 @@ enum DefaultsKey {
     static let windowLayoutShortcutBottomRightSixth = "windowLayoutShortcutBottomRightSixth"
     static let windowLayoutShortcutMakeLarger = "windowLayoutShortcutMakeLarger"
     static let windowLayoutShortcutMakeSmaller = "windowLayoutShortcutMakeSmaller"
+    static let windowLayoutShortcutTileAll = "windowLayoutShortcutTileAll"
+    static let windowLayoutShortcutTileRows = "windowLayoutShortcutTileRows"
+    static let windowLayoutShortcutTileColumns = "windowLayoutShortcutTileColumns"
 
     // Text snippets: type a trigger, get the expansion.
     static let textSnippetsEnabled = "textSnippetsEnabled"
@@ -1810,6 +1815,8 @@ enum Defaults {
         DefaultsKey.windowLayoutHiddenActions: "",
         DefaultsKey.windowLayoutWindowGap: 0,
         DefaultsKey.windowLayoutScreenGap: 0,
+        DefaultsKey.windowTilingMaxWindowsPerRow: WindowTilingLayout.defaultLimit,
+        DefaultsKey.windowTilingMaxWindowsPerColumn: WindowTilingLayout.defaultLimit,
         DefaultsKey.windowReserveStageManagerSpace: false,
         DefaultsKey.windowLayoutMarginPercent: 5.0,
         DefaultsKey.windowLayoutSideRepeatCyclesThirds: false,
@@ -2162,6 +2169,9 @@ enum Defaults {
         DefaultsKey.windowLayoutShortcutMakeLarger: WindowLayoutAction.clearedShortcutStorageValue,
         DefaultsKey.windowLayoutShortcutMakeSmaller: WindowLayoutAction.clearedShortcutStorageValue,
         DefaultsKey.windowLayoutShortcutMinimize: WindowLayoutAction.clearedShortcutStorageValue,
+        DefaultsKey.windowLayoutShortcutTileAll: WindowLayoutAction.clearedShortcutStorageValue,
+        DefaultsKey.windowLayoutShortcutTileRows: WindowLayoutAction.clearedShortcutStorageValue,
+        DefaultsKey.windowLayoutShortcutTileColumns: WindowLayoutAction.clearedShortcutStorageValue,
     ]
 
     static func register() {

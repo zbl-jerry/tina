@@ -30,6 +30,8 @@ struct WindowLayoutSettings: View {
     @AppStorage(DefaultsKey.windowReserveStageManagerSpace) private var reserveStageManagerSpace = false
     @AppStorage(DefaultsKey.windowLayoutMarginPercent) private var marginPercent = WindowLayoutMargin.defaultPercent
     @AppStorage(DefaultsKey.windowLayoutSideRepeatCyclesThirds) private var sideRepeatCyclesThirds = false
+    @AppStorage(DefaultsKey.windowTilingMaxWindowsPerRow) private var tilingMaxPerRow = WindowTilingLayout.defaultLimit
+    @AppStorage(DefaultsKey.windowTilingMaxWindowsPerColumn) private var tilingMaxPerColumn = WindowTilingLayout.defaultLimit
     @State private var directionalError: String?
     @State private var systemTilingEnabled = WindowEdgeSnapSupport.isSystemTilingEnabled
     // Same preference the Switcher page exposes next to Dock Preview; it is
@@ -249,6 +251,20 @@ struct WindowLayoutSettings: View {
 
                 placementSections
 
+                Section(tilingText.title) {
+                    Text(tilingText.caption)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ForEach(Self.tilingActions) { action in
+                        actionRow(action)
+                    }
+                    tilingLimitPicker(tilingText.maxPerRow, selection: $tilingMaxPerRow)
+                    tilingLimitPicker(tilingText.maxPerColumn, selection: $tilingMaxPerColumn)
+                    Text(tilingText.limitsCaption)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Section(text.other) {
                     actionRow(.maximize)
                     actionRow(.marginMaximize)
@@ -319,6 +335,19 @@ struct WindowLayoutSettings: View {
         service.syncWithPreferences()
     }
 
+    private var tilingText: WindowTilingStrings {
+        WindowTilingStrings.localized(l10n.language)
+    }
+
+    private func tilingLimitPicker(_ title: String, selection: Binding<Int>) -> some View {
+        Picker(title, selection: selection) {
+            ForEach(WindowTilingLayout.limitRange, id: \.self) { value in
+                Text("\(value)").tag(value)
+            }
+        }
+        .pickerStyle(.menu)
+    }
+
     /// The gaps take effect on the next placement — the engine reads them
     /// per apply — so the pickers need no service sync.
     private func gapPicker(_ title: String, selection: Binding<Int>) -> some View {
@@ -384,6 +413,9 @@ struct WindowLayoutSettings: View {
     ]
     private static let cornerActions: [WindowLayoutAction] = [
         .topLeft, .topRight, .bottomLeft, .bottomRight,
+    ]
+    private static let tilingActions: [WindowLayoutAction] = [
+        .tileAll, .tileRows, .tileColumns,
     ]
 
     /// The placement families, grouped so the form body stays within the

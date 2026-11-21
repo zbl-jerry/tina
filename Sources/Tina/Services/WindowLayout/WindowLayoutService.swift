@@ -95,6 +95,9 @@ final class WindowLayoutService: ObservableObject {
     private var customZoneDisplayObserver: NSObjectProtocol?
     private var assistiveModeSuspensions: [CGWindowID: EnhancedUserInterfaceSuspension] = [:]
     private var settleTimers: [CGWindowID: Timer] = [:]
+    // Last multi-window grid per display and action, held only in memory. It
+    // lets a repeated press advance instead of re-applying the same layout.
+    private var tilingCycles: [WindowTilingCycleKey: WindowTilingCycleRecord] = [:]
     private var gestureAssistiveMode: EnhancedUserInterfaceSuspension?
     private var ignoredAppsActivationObserver: NSObjectProtocol?
     /// Stamped on the press this service gives back to the system so none of
@@ -241,6 +244,9 @@ final class WindowLayoutService: ObservableObject {
     func apply(_ action: WindowLayoutAction) -> WindowLayoutResult {
         guard AXIsProcessTrusted() else {
             return finish(.failure(.missingAccessibility))
+        }
+        if let mode = action.tilingMode {
+            return applyTiling(mode: mode, action: action)
         }
         guard let target = focusedTarget(for: action) else {
             return finish(.failure(.noWindow))
@@ -890,6 +896,243 @@ final class WindowLayoutService: ObservableObject {
                                             targetRect: targetRect,
                                             action: action,
                                             anchorTolerance: anchorTolerance)
+    }
+
+    // MARK: - Multi-window tiling
+
+    /// Arranges every ordinary window on one display. The display is the one
+    /// holding the focused window; when nothing ordinary is focused, the one
+    /// under the pointer, matching Rectangle and Tina's own pointer actions.
+    private func applyTiling(mode: WindowTilingMode,
+                             action: WindowLayoutAction) -> WindowLayoutResult {
+        guard let screen = tilingScreen() else { return finish(.failure(.noWindow)) }
+        let targets = tilingTargets(on: screen)
+        guard !targets.isEmpty else { return finish(.failure(.noWindow)) }
+
+        let bounds = WindowLayoutGeometry.screenGapFrame(screen.windowLayoutVisibleFrame,
+                                                         screenGap: WindowLayoutGaps.screenGap)
+        let populations = WindowTilingLayout.layouts(
+            mode: mode,
+            windowCount: targets.count,
+            maxPerRow: WindowTilingLayout.maxPerRow,
+            maxPerColumn: WindowTilingLayout.maxPerColumn)
+        let layouts = populations.map {
+            WindowTilingGeometry.frames(in: bounds,
+                                        populations: $0,
+                                        direction: mode.bandDirection,
+                                        windowGap: WindowLayoutGaps.windowGap)
+        }
+        guard !layouts.isEmpty, layouts.allSatisfy({ $0.count == targets.count }) else {
+            return finish(.failure(.failed))
+        }
+
+        let current = targets.map { appKitFrame(fromAX: $0.frame) }
+        let order = targets.map(\.key)
+        let key = WindowTilingCycleKey(displayID: displayID(of: screen), mode: mode)
+        let index = tilingIndex(key: key, bounds: bounds, order: order,
+                                current: current, frames: layouts)
+        let destinations = layouts[index]
+
+        var tracked = Set<WindowLayoutWindowKey>()
+        var actualFrames: [WindowLayoutWindowKey: CGRect] = [:]
+        var arranged = 0
+        for (position, target) in targets.enumerated() {
+            let destination = destinations[position]
+            let original = self.frame(of: target.window).map(appKitFrame(fromAX:))
+                ?? appKitFrame(fromAX: target.frame)
+            if WindowTilingGeometry.isClose(original, destination, tolerance: frameTolerance) {
+                arranged += 1
+                tracked.insert(target.key)
+                actualFrames[target.key] = original
+                continue
+            }
+
+            applyTilingFrame(destination, to: target)
+            let actual = self.frame(of: target.window).map(appKitFrame(fromAX:)) ?? original
+            actualFrames[target.key] = actual
+            guard !WindowTilingGeometry.isClose(actual, original, tolerance: 1) else { continue }
+            // The app accepted at least part of the placement, so it belongs
+            // to this grid even when a minimum size keeps it from matching.
+            arranged += 1
+            tracked.insert(target.key)
+            frameHistory.record(axFrame(fromAppKit: original), for: target.key)
+            lastActions.removeValue(forKey: target.key)
+            settledFrames.removeValue(forKey: target.key)
+        }
+
+        tilingCycles[key] = WindowTilingCycleRecord(bounds: bounds,
+                                                    order: order,
+                                                    frames: actualFrames,
+                                                    tracked: tracked,
+                                                    index: index)
+        showTilingFeedback(action: action,
+                           arranged: arranged,
+                           total: targets.count,
+                           failed: targets.count - arranged,
+                           on: screen)
+        return arranged == 0 ? finish(.failure(.failed)) : finish(.success(restored: false))
+    }
+
+    /// The next grid for this display and action. An intact previous grid (its
+    /// recorded windows still where the last press left them) advances, as
+    /// does a grid recognisable from the current frames. Anything else starts
+    /// over at the first layout, and a layout that would change nothing is
+    /// skipped so every press visibly does something.
+    private func tilingIndex(key: WindowTilingCycleKey,
+                             bounds: CGRect,
+                             order: [WindowLayoutWindowKey],
+                             current: [CGRect],
+                             frames: [[CGRect]]) -> Int {
+        var chosen: Int?
+        if let previous = tilingCycles[key],
+           previous.order == order,
+           WindowTilingGeometry.isClose(previous.bounds, bounds, tolerance: 1),
+           previous.tracked.allSatisfy({ windowKey in
+               guard let position = order.firstIndex(of: windowKey),
+                     let recorded = previous.frames[windowKey] else { return false }
+               return WindowTilingGeometry.isClose(current[position], recorded,
+                                                   tolerance: frameTolerance)
+           }) {
+            chosen = WindowTilingCycle.advancedIndex(from: previous.index, frames: frames)
+        } else if let matching = WindowTilingCycle.matchingIndex(for: current, in: frames,
+                                                                 tolerance: frameTolerance) {
+            chosen = WindowTilingCycle.advancedIndex(from: matching, frames: frames)
+        }
+
+        var index = chosen ?? 0
+        var guardCount = 0
+        while guardCount < frames.count,
+              WindowTilingGeometry.framesMatch(frames[index], current, tolerance: frameTolerance) {
+            index = WindowTilingCycle.advancedIndex(from: index, frames: frames)
+            guardCount += 1
+        }
+        return index
+    }
+
+    private func applyTilingFrame(_ rect: NSRect, to target: WindowLayoutTarget) {
+        let windowID = target.key.windowID
+        cancelSettle(for: windowID)
+        assistiveModeSuspensions.removeValue(forKey: windowID)?.resume()
+        assistiveModeSuspensions[windowID] = EnhancedUserInterfaceSuspension.suspend(forAppOf: target.window)
+        defer { assistiveModeSuspensions.removeValue(forKey: windowID)?.resume() }
+
+        let frame = axFrame(fromAppKit: rect)
+        // One size/position pair and a read-back, then a second pair only for
+        // apps that need another write to commit. Keeping the first pass short
+        // bounds what an unresponsive app can cost before the next window is
+        // tried, while the retry covers the apps the settle path already knows.
+        for pass in 0..<2 {
+            _ = setSize(frame.size, on: target.window)
+            _ = setPosition(frame.origin, on: target.window)
+            if pass > 0 {
+                _ = setSize(frame.size, on: target.window)
+                _ = setPosition(frame.origin, on: target.window)
+            }
+            if let actual = self.frame(of: target.window),
+               actual.isClose(to: frame, tolerance: frameTolerance) {
+                return
+            }
+        }
+    }
+
+    /// The display holding the focused window. Tina's own windows are ignored
+    /// here so a settings window does not decide where other apps go.
+    private func tilingScreen() -> NSScreen? {
+        if let frame = focusedWindowFrame() {
+            return bestScreen(for: frame)
+        }
+        let pointer = NSEvent.mouseLocation
+        return NSScreen.screens.first { $0.frame.contains(pointer) } ?? NSScreen.main
+    }
+
+    private func focusedWindowFrame() -> WindowLayoutFrame? {
+        guard let app = NSWorkspace.shared.frontmostApplication,
+              app.activationPolicy == .regular,
+              !app.isTerminated,
+              app.processIdentifier != ProcessInfo.processInfo.processIdentifier
+        else { return nil }
+        let axApp = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(axApp, 0.35)
+        for attribute in [kAXFocusedWindowAttribute, kAXMainWindowAttribute] {
+            guard let window = windowAttribute(axApp, attribute as String),
+                  role(of: window) == (kAXWindowRole as String),
+                  !boolAttribute(window, kAXMinimizedAttribute as String),
+                  !boolAttribute(window, "AXFullScreen"),
+                  let frame = frame(of: window)
+            else { continue }
+            return frame
+        }
+        return nil
+    }
+
+    /// Every ordinary window on that display, in reading order from the
+    /// upper-left corner. Apps on the Window Layout ignore list are left
+    /// alone, exactly as they are for every single-window action.
+    private func tilingTargets(on screen: NSScreen) -> [WindowLayoutTarget] {
+        guard let onScreenIDs = onScreenWindowIDs() else { return [] }
+        let ownBundleID = Bundle.main.bundleIdentifier
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        let screenID = displayID(of: screen)
+        var targets: [WindowLayoutTarget] = []
+        var seen = Set<WindowLayoutWindowKey>()
+
+        for app in NSWorkspace.shared.runningApplications {
+            guard app.activationPolicy == .regular,
+                  !app.isTerminated,
+                  !app.isHidden,
+                  app.processIdentifier != ownPID,
+                  app.bundleIdentifier != ownBundleID,
+                  !WindowLayoutIgnoredApps.shared.contains(
+                    bundleID: app.bundleIdentifier,
+                    executablePath: app.executableURL?.path)
+            else { continue }
+
+            let axApp = AXUIElementCreateApplication(app.processIdentifier)
+            AXUIElementSetMessagingTimeout(axApp, 0.35)
+            guard let windows = windowsAttribute(axApp) else { continue }
+            for window in windows {
+                guard role(of: window) == (kAXWindowRole as String),
+                      stringAttribute(window, kAXSubroleAttribute as String) != "AXFloatingWindow",
+                      !boolAttribute(window, kAXMinimizedAttribute as String),
+                      !boolAttribute(window, "AXFullScreen"),
+                      let windowID = AXWindowResolver.windowID(for: window),
+                      onScreenIDs.contains(windowID),
+                      let frame = frame(of: window),
+                      frame.size.width > 80,
+                      frame.size.height > 80,
+                      canSetFrame(on: window),
+                      let owner = bestScreen(for: frame),
+                      displayID(of: owner) == screenID
+                else { continue }
+                let key = WindowLayoutWindowKey(
+                    processID: app.processIdentifier,
+                    processLaunchTime: app.launchDate?.timeIntervalSinceReferenceDate ?? 0,
+                    windowID: windowID)
+                guard seen.insert(key).inserted else { continue }
+                targets.append(WindowLayoutTarget(window: window, key: key, frame: frame))
+            }
+        }
+        return WindowTilingLayout.sortedForTiling(targets) { target in
+            CGRect(origin: target.frame.origin, size: target.frame.size)
+        }
+    }
+
+    private func displayID(of screen: NSScreen) -> CGDirectDisplayID {
+        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
+    }
+
+    private func showTilingFeedback(action: WindowLayoutAction,
+                                    arranged: Int,
+                                    total: Int,
+                                    failed: Int,
+                                    on screen: NSScreen?) {
+        let strings = WindowTilingStrings.localized(L10n.shared.language)
+        let title = action.title(FeatureStrings.windowLayout(L10n.shared.language),
+                                 language: L10n.shared.language)
+        let detail = failed == 0
+            ? String(format: strings.arrangedFormat, arranged)
+            : String(format: strings.partialFormat, arranged, total, failed)
+        WindowTilingHUD.shared.show(title: title, detail: detail, on: screen)
     }
 
     // MARK: - Shortcuts

@@ -48,6 +48,8 @@ struct PanelWindowLayoutView: View {
                 .bottomLeftSixth, .bottomCenterSixth, .bottomRightSixth,
             ])
             actionGroup(title: text.corners, actions: [.topLeft, .topRight, .bottomLeft, .bottomRight])
+            actionGroup(title: WindowTilingStrings.localized(l10n.language).title,
+                        actions: [.tileAll, .tileRows, .tileColumns])
             actionGroup(title: text.other, actions: [
                 .maximize, .marginMaximize, .fullScreen, .center, .makeLarger, .makeSmaller,
                 .previousDisplay, .nextDisplay, .restore, .minimize,
