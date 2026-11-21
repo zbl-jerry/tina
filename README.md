@@ -84,6 +84,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **App switcher.** Switch between apps and windows with live previews, search and display filters. A simpler mode works without screen capture.
 - **Launchpad.** A full-screen app grid with folders, search, pages and drag reordering, opened from a shortcut, the Dynamic Island or an optional Dock icon.
 - **Window layout.** Snap windows into layouts, move them between displays and restore earlier positions using shortcuts, screen edges or modifier-drag gestures. Custom tiles (opt-in) show when holding Option; drag a window into a tile and release to resize it, with separate editable zones for each connected display in Window Layout settings.
+- **Tile windows.** Arrange every window on a display into a grid, rows or columns with one shortcut, and press again to cycle distinct layouts. Gaps, the menu bar and Dock reservations, and ignored apps are respected. See [multi-window tiling](docs/TILE-WINDOWS.md).
 - **Dock Preview.** Hover over Dock icons to preview windows across desktops. Switch, close, move or snap them from the preview.
 - **Dock clicks.** Click an active app's Dock icon to minimize, hide or cycle through its windows.
 - **Maximize windows.** Use the green button to fill the screen without creating another Space.
@@ -211,6 +212,7 @@ See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions 
 
 - [Night warmth](docs/NIGHT-WARMTH.md), the colour temperature schedule and how it is applied
 - [Charge limit](docs/CHARGE-LIMIT.md), the battery research, product design and SMC implementation
+- [Multi-window tiling](docs/TILE-WINDOWS.md), the Rectangle research, layout cycle and verification
 - [Key overlay](docs/KEYSTROKE-OVERLAY.md), the recorder's optional key caps, permission and privacy boundaries
 - [Privacy](docs/PRIVACY.md), what does and does not leave your Mac
 - [Permissions](docs/PERMISSIONS.md), every macOS permission in plain words

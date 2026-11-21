@@ -599,6 +599,8 @@ if (( TEST )); then
         Sources/Tina/Services/Metrics/TemperatureSensorSelector.swift
         Sources/Tina/Services/Metrics/SustainedAlertGate.swift
         Sources/Tina/Services/WindowLayout/WindowLayoutSupport.swift
+        Sources/Tina/Services/WindowLayout/WindowTilingSupport.swift
+        Sources/Tina/Core/WindowTilingStrings.swift
         Sources/Tina/Services/WindowLayout/WindowStageManagerSupport.swift
         Sources/Tina/Core/WindowStageManagerStrings.swift
         Sources/Tina/Core/WindowEdgeSnapRestoreStrings.swift

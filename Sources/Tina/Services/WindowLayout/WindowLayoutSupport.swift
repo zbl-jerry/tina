@@ -40,6 +40,7 @@ enum WindowLayoutAction: String, CaseIterable, Identifiable {
     case maximize, marginMaximize, fullScreen, center
     case makeLarger, makeSmaller
     case previousDisplay, nextDisplay, restore, minimize
+    case tileAll, tileRows, tileColumns
 
     var id: String { rawValue }
 
@@ -55,6 +56,7 @@ enum WindowLayoutAction: String, CaseIterable, Identifiable {
         .maximize, .marginMaximize, .fullScreen, .center, .restore,
         .makeLarger, .makeSmaller,
         .previousDisplay, .nextDisplay, .minimize,
+        .tileAll, .tileRows, .tileColumns,
     ]
 
     var supportsShortcut: Bool {
@@ -130,6 +132,9 @@ enum WindowLayoutAction: String, CaseIterable, Identifiable {
         // 71 and 72 belong to the step resizes, so Minimize takes the next
         // free identifier rather than renumbering them.
         case .minimize: return 73
+        case .tileAll: return 74
+        case .tileRows: return 75
+        case .tileColumns: return 76
         }
     }
 
@@ -184,6 +189,9 @@ enum WindowLayoutAction: String, CaseIterable, Identifiable {
         case .makeLarger: return DefaultsKey.windowLayoutShortcutMakeLarger
         case .makeSmaller: return DefaultsKey.windowLayoutShortcutMakeSmaller
         case .minimize: return DefaultsKey.windowLayoutShortcutMinimize
+        case .tileAll: return DefaultsKey.windowLayoutShortcutTileAll
+        case .tileRows: return DefaultsKey.windowLayoutShortcutTileRows
+        case .tileColumns: return DefaultsKey.windowLayoutShortcutTileColumns
         }
     }
 
@@ -215,7 +223,8 @@ enum WindowLayoutAction: String, CaseIterable, Identifiable {
                 .topQuarter, .upperMiddleQuarter, .lowerMiddleQuarter, .bottomQuarter,
                 .leftQuarter, .leftMiddleQuarter, .rightMiddleQuarter, .rightQuarter,
                 .marginMaximize, .fullScreen, .previousDisplay, .centerHalf, .centerTwoThirds,
-                .makeLarger, .makeSmaller, .minimize:
+                .makeLarger, .makeSmaller, .minimize,
+                .tileAll, .tileRows, .tileColumns:
             // New actions must never claim a system-wide combination unasked.
             return nil
         }
@@ -257,7 +266,9 @@ enum WindowLayoutAction: String, CaseIterable, Identifiable {
         actions.map(\.rawValue).sorted().joined(separator: ",")
     }
 
-    func title(_ text: WindowLayoutFeatureStrings) -> String {
+    func title(_ text: WindowLayoutFeatureStrings,
+               language: AppLanguage = L10n.shared.language) -> String {
+        let tiling = WindowTilingStrings.localized(language)
         switch self {
         case .leftHalf: return text.leftHalf
         case .rightHalf: return text.rightHalf
@@ -303,6 +314,9 @@ enum WindowLayoutAction: String, CaseIterable, Identifiable {
         case .makeLarger: return text.makeLarger
         case .makeSmaller: return text.makeSmaller
         case .minimize: return text.minimize
+        case .tileAll: return tiling.tileAll
+        case .tileRows: return tiling.tileRows
+        case .tileColumns: return tiling.tileColumns
         }
     }
 
@@ -348,6 +362,9 @@ enum WindowLayoutAction: String, CaseIterable, Identifiable {
         case .makeLarger: return "plus.rectangle"
         case .makeSmaller: return "minus.rectangle"
         case .minimize: return "minus.rectangle"
+        case .tileAll: return "rectangle.grid.2x2"
+        case .tileRows: return "rectangle.split.3x1"
+        case .tileColumns: return "rectangle.split.1x2"
         }
     }
 }
@@ -772,6 +789,9 @@ enum WindowLayoutGeometry {
         case .fullScreen, .minimize:
             // Handled by the system, not by a frame.
             return current.integral
+        case .tileAll, .tileRows, .tileColumns:
+            // Multi-window layouts compute their own frames per window.
+            return current.integral
         }
     }
 
@@ -879,7 +899,8 @@ enum WindowLayoutGeometry {
         case .marginMaximize, .center, .makeLarger, .makeSmaller:
             origin.x = targetRect.midX - size.width / 2
             origin.y = targetRect.midY - size.height / 2
-        case .maximize, .previousDisplay, .nextDisplay, .restore, .fullScreen, .minimize:
+        case .maximize, .previousDisplay, .nextDisplay, .restore, .fullScreen, .minimize,
+                .tileAll, .tileRows, .tileColumns:
             break
         }
 
@@ -1009,6 +1030,10 @@ enum WindowLayoutGeometry {
         case .restore:
             return false
         case .fullScreen, .minimize:
+            return false
+        case .tileAll, .tileRows, .tileColumns:
+            // Multi-window placements are read back per window and do not
+            // pass through the single-window acceptance rule.
             return false
         }
     }
