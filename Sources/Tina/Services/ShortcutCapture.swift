@@ -16,6 +16,9 @@ import Foundation
 /// the view going away and the app losing front.
 enum ShortcutCapture {
     private(set) static var isCapturing = false
+    /// Posted when a shortcut field takes the keyboard. Owners of per-item
+    /// global keys, such as display presets, release them on this signal.
+    static let captureDidBeginNotification = Notification.Name("tina.shortcutCaptureDidBegin")
 
     /// Releases every global key the app holds. Main thread only, like the
     /// services it drives.
@@ -31,6 +34,9 @@ enum ShortcutCapture {
         SoundOutputSwitcher.shared.suspendShortcut()
         WindowLayoutService.shared.suspendShortcuts()
         QuickToolHotkey.unregisterAll()
+        // Services that keep their own per-item keys (display presets) hear
+        // this without ShortcutCapture having to know them.
+        NotificationCenter.default.post(name: captureDidBeginNotification, object: nil)
     }
 
     /// Gives every key back. Safe to call when nothing was suspended, and safe

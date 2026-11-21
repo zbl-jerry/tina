@@ -618,6 +618,8 @@ if (( TEST )); then
         Sources/Tina/Services/ChargeLimit/ChargeLimitSupport.swift
         Sources/Tina/Services/ChargeLimit/ChargeLimitXPC.swift
         Sources/Tina/Services/Display/BrightnessSupport.swift
+        Sources/Tina/Core/DisplayPresetSupport.swift
+        Sources/Tina/Core/DisplayPresetStrings.swift
         Sources/Tina/Services/Display/MonitorVolumeKeySettings.swift
         Sources/Tina/Services/Display/LidDimmingSupport.swift
         Sources/Tina/Services/Cleaner/CleanerSupport.swift

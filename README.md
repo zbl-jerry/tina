@@ -166,7 +166,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 ### Energy and display
 
 - **Keep awake.** Keep your Mac working on a timer, with the lid closed, or while selected apps, power or external displays are present.
-- **Displays.** Control individual displays and brightness, with hardware control where supported, half or quarter steps for the brightness keys, optional extra dimming below a monitor's minimum, software dimming as a fallback, and the volume and mute of a monitor's built-in speakers.
+- **Displays.** Control individual displays and brightness, with hardware control where supported, half or quarter steps for the brightness keys, optional extra dimming below a monitor's minimum, software dimming as a fallback, and the volume and mute of a monitor's built-in speakers. Display presets save each display's resolution, brightness, speaker volume and the main display, then restore the arrangement from the panel, a global shortcut, or when a chosen display connects or disconnects.
 - **Extra brightness.** Use a MacBook Pro XDR display's HDR headroom to go beyond its normal maximum brightness.
 - **Night warmth.** Warm every display after sunset and return to daytime colours in the morning, with an optional bedtime temperature, presets, pause until sunrise and Warmer or Cooler nudges. Uses gamma tables only, asks for no permission, and restores the original colours when turned off.
 - **Bluetooth on sleep.** Disconnect Bluetooth during sleep and restore it on wake only if Tina turned it off.

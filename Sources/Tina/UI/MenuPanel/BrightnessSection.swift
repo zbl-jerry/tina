@@ -38,6 +38,10 @@ struct BrightnessSection: View {
                         .font(.system(size: 10.5))
                         .foregroundStyle(.red)
                 }
+                if AppFeature.brightness.isAvailable, !DisplayPresetService.shared.presets.isEmpty {
+                    Divider()
+                    DisplayPresetPanelStrip()
+                }
                 if service.keyboardLightEnabled != nil {
                     Divider()
                     keyboardLightRow
@@ -371,6 +375,70 @@ struct DisplayPowerButton: View {
                 .disabled(!enabled)
                 .help(label)
                 .accessibilityLabel(label)
+            }
+        }
+    }
+}
+
+/// One chip per display preset, as the panel's one-click entry point. The
+/// chips only exist once a preset does, so the card does not grow for people
+/// who never save one. Failures from the last apply stay until dismissed or
+/// until the next apply.
+struct DisplayPresetPanelStrip: View {
+    @ObservedObject private var l10n = L10n.shared
+    @ObservedObject private var service = DisplayPresetService.shared
+
+    private var strings: DisplayPresetStrings { FeatureStrings.displayPreset(l10n.language) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(strings.title)
+                .font(.system(size: 11.5, weight: .semibold))
+                .foregroundStyle(.secondary)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 6)], spacing: 6) {
+                ForEach(service.presets) { preset in
+                    Button {
+                        service.apply(id: preset.id)
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: preset.symbol)
+                                .font(.system(size: 10, weight: .semibold))
+                            Text(preset.name)
+                                .font(.system(size: 10.5, weight: .medium))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                        .foregroundStyle(Color.primary)
+                        .padding(.horizontal, 8)
+                        .frame(height: 26)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.secondary.opacity(0.09),
+                                    in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                        .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(service.isApplying)
+                    .help(preset.name)
+                    .accessibilityLabel("\(strings.apply) \(preset.name)")
+                }
+            }
+            if let report = service.lastReport, report.failed {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(strings.failuresTitle)
+                        .font(.system(size: 9.5, weight: .semibold))
+                        .foregroundStyle(.red)
+                    Spacer(minLength: 4)
+                    Button(l10n.s.actionClear) { service.dismissReport() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(Array(report.failures.enumerated()), id: \.offset) { _, failure in
+                    Text(displayPresetFailureText(failure, strings: strings))
+                        .font(.system(size: 9.5))
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
