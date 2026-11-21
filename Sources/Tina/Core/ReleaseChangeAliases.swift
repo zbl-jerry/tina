@@ -148,6 +148,8 @@ enum ReleaseChangeAliases {
         case .hostsProfiles: return ["hosts profiles", "hosts profile", "hosts file", "hosts entries"]
         case .autoInputSource: return ["auto input source", "input source", "input sources",
             "input method", "input methods", "keyboard layout", "language input"]
+        case .totpAuthenticator: return ["totp", "authenticator", "verification code",
+            "verification codes", "two-factor", "two factor", "2fa", "one-time password"]
         case .launchpad: return ["launchpad"]
         case .notch: return ["dynamic island", "island", "islands", "notch", "volume keys", "volume key",
             "mute key", "volume feedback", "volume indicator", "volume notice", "new track indicator",

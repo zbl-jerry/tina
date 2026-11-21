@@ -154,8 +154,8 @@ extension AppFeature {
              .bluetoothSleep, .keepAwake, .quickLauncher, .quickToggles, .quitApps, .colorPicker,
              .screenOCR, .cleaningMode, .mediaTools, .cleaner, .uninstaller, .homebrew, .screenshot,
              .cameraPreview, .scratchpad, .commandBar, .screenRecorder, .wallpaper, .fanControl,
-             .diskImageInstaller, .killProcess, .portManager, .hostsProfiles, .launchpad,
-             .autoInputSource:
+             .diskImageInstaller, .killProcess, .portManager, .hostsProfiles, .totpAuthenticator,
+             .launchpad, .autoInputSource:
             return .idle
         case .appUpdates:
             // The list is on demand; only a background schedule keeps a timer.

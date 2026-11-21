@@ -153,6 +153,7 @@ struct MetricsTests {
                 PortManagerRefreshTests.run(suite)
                 HostsProfilesTests.run(suite)
                 AutoInputSourceTests.run(suite)
+                TOTPAuthenticatorTests.run(suite)
             }),
             ("settings", {
                 SettingsFeatureTests.run(suite)

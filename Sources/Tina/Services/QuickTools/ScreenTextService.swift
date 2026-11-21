@@ -17,6 +17,10 @@ final class ScreenTextService: ObservableObject {
     static let shared = ScreenTextService()
 
     private var recognitionGeneration = 0
+    /// A one-shot QR read requested by another feature, such as an
+    /// authenticator's setup flow. The payload is delivered instead of being
+    /// copied, and the request is dropped on the next cancel or capture.
+    private var pendingQRPayload: ((String) -> Void)?
 
     private init() {}
 
@@ -33,16 +37,53 @@ final class ScreenTextService: ObservableObject {
 
     private func cancelSession() {
         recognitionGeneration += 1
+        pendingQRPayload = nil
     }
 
     func capture() {
+        // A plain OCR capture takes over from an import request the person
+        // started and then abandoned, so the next selection is recognized
+        // normally instead of disappearing into the old callback.
+        pendingQRPayload = nil
         ScreenCaptureService.shared.capture(initial: .text)
     }
 
+    /// Reads the next selected area for QR payloads and hands the text back
+    /// instead of putting it on the pasteboard. One shot: a cancelled or
+    /// repeated capture does not keep an old request alive.
+    func captureQRPayload(_ completion: @escaping (String) -> Void) {
+        guard AppFeature.screenOCR.isAvailable else { return }
+        pendingQRPayload = completion
+        ScreenCaptureService.shared.capture(initial: .text)
+    }
+
+    /// Drops a QR import request whose form went away, without disturbing an
+    /// ordinary OCR recognition already in flight.
+    func cancelQRPayload() {
+        pendingQRPayload = nil
+    }
+
     func receiveUnifiedCapture(_ capture: ScreenshotSelectionController.Capture) {
+        if let completion = pendingQRPayload {
+            pendingQRPayload = nil
+            recognizeQRPayload(capture.image, completion: completion)
+            return
+        }
         recognize(capture.image,
                   detectQRCodes: UserDefaults.standard.bool(
                     forKey: DefaultsKey.screenOCRDetectQRCodes))
+    }
+
+    /// Delivers every payload in the selection, one per line, so the caller
+    /// can choose the link it understands. An empty result means no code was
+    /// found.
+    private func recognizeQRPayload(_ image: CGImage, completion: @escaping (String) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let payload = BarcodeDetector.decode(ScreenTextService.recognitionImage(image))
+                .map(\.payload)
+                .joined(separator: "\n")
+            DispatchQueue.main.async { completion(payload) }
+        }
     }
 
     /// Copies text from an image that has already been captured. Screenshot
