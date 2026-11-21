@@ -13,6 +13,7 @@ import VMStatisticsCompat
 
 enum RecorderFeatureTests {
     static func run(_ suite: TestSuite) {
+        RecorderKeystrokeTests.run(suite)
         RecorderSystemAudioTapLifecycleTests.run(suite)
         RecorderSystemAudioTrustTests.run(suite)
         func pageVisible(_ page: SettingsPage, available: Set<AppFeature>) -> Bool {
@@ -923,6 +924,12 @@ enum RecorderFeatureTests {
         suite.expect(recorderSessionShape.contains(
             "await MainActor.run { (pointer.stop(), typing.stop()) }"
         ), "the recorder removes its event monitors on the main thread")
+        suite.expect(recorderSessionShape.contains(
+            "await MainActor.run { if let keystrokes, !keystrokes.start() { onKeystrokeUnavailable?() } }"
+        ), "the key tap installs its run loop source on the main thread")
+        suite.expect(recorderSessionShape.contains(
+            "let keystrokeTrack = await MainActor.run { keystrokes?.stop() }"
+        ), "the key tap is removed on the main thread")
 
         let uniform = RecorderMotion.resampled(
             [RecorderMotion.Sample(time: 0, point: CGPoint(x: 0, y: 0)),

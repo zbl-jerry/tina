@@ -22,6 +22,7 @@ enum RecorderPreparationTests {
         let microphone = Grant.granted
         let screenRecording = true
         let accessibility = true
+        let inputMonitoring = false
         func requestScreenRecording() {}
         func requestAccessibility() {}
     }
@@ -63,13 +64,15 @@ enum RecorderPreparationTests {
         let writer: RecorderWriter
         init(take: RecorderTakeStore.Take, region: RecorderSupport.Region,
              writer: RecorderWriter, pauseClock: RecorderPauseClock,
-             capturesSystemAudio: Bool, capturesMicrophone: Bool) {
+             capturesSystemAudio: Bool, capturesMicrophone: Bool,
+             capturesKeystrokes: Bool, keystrokeStyle: RecorderKeystrokeStyle) {
             self.writer = writer
         }
     }
     class Fixture {
         var session: RecorderSession?
         var indicator: Indicator? = Indicator()
+        var keyOverlay: Indicator?
         var isRecording = false
         var isFinishing = false
         var isAwaitingMicrophone = false
