@@ -27,7 +27,7 @@
 
 ### 草图 / 参考
 
-<!-- 上游仓库、README、release、截图、相关 issue；注明只借鉴产品行为，代码按 Tina 架构重写。 -->
+<!-- 上游仓库、README、release、相关 issue；注明只借鉴产品行为，代码按 Tina 架构重写。 -->
 
 - 上游：<repo URL>（<commit/tag>）
 - 关键参考：<README 章节 / release notes / issue>
