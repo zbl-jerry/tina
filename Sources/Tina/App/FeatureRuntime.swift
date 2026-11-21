@@ -323,6 +323,7 @@ final class FeatureRuntime: ObservableObject {
         .extraBrightness: { ExtraBrightnessService.shared.syncWithPreferences() },
         .nightWarmth: { NightWarmthService.shared.syncWithPreferences() },
         .bluetoothSleep: { BluetoothSleepService.shared.syncWithPreferences() },
+        .chargeLimit: { ChargeLimitService.shared.syncWithPreferences() },
         .quickLauncher: { QuickLauncherService.shared.syncWithPreferences() },
         .colorPicker: {
             ScreenCaptureService.shared.syncWithPreferences()
@@ -435,6 +436,11 @@ extension AppFeature {
         case .fanControl:
             return FanControlHardware.hasControllableFan
                 ? nil : FeatureStrings.fanControl(L10n.shared.language).noFans
+        case .chargeLimit:
+            // The charge keys exist only on Apple Silicon MacBooks with a
+            // battery; a desktop or an unlisted firmware gets no entry point.
+            return ChargeLimitHardware.hasChargeControl
+                ? nil : FeatureStrings.chargeLimit(L10n.shared.language).unsupported
         default:
             return nil
         }

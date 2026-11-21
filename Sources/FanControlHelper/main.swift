@@ -526,12 +526,289 @@ private final class FanControlController {
     }
 }
 
+/// The charge limit's half of the same root process. It has its own owner,
+/// its own lock-file marker and its own teardown; a fan session that ends can
+/// never leave charging inhibited, and this session can never touch fan speeds.
+///
+/// The marker in `/var/run` records that *Tina* inhibited charging. Charging is
+/// only put back when that marker exists, so another tool holding the same key
+/// is left alone.
+private final class ChargeLimitMarker {
+    private let path = "/var/run/tina-charge-limit.active"
+
+    func exists() -> Bool {
+        var info = stat()
+        guard lstat(path, &info) == 0 else { return false }
+        return info.st_uid == 0 && (info.st_mode & S_IFMT) == S_IFREG
+            && (info.st_mode & mode_t(0o077)) == 0 && info.st_nlink == 1
+    }
+
+    func create() -> Bool {
+        guard !exists() else { return false }
+        let descriptor = Darwin.open(path,
+                                     O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
+                                     mode_t(0o600))
+        guard descriptor >= 0 else { return false }
+        var info = stat()
+        guard fstat(descriptor, &info) == 0, info.st_uid == 0,
+              (info.st_mode & S_IFMT) == S_IFREG, (info.st_mode & mode_t(0o077)) == 0,
+              info.st_nlink == 1 else {
+            Darwin.close(descriptor)
+            _ = unlink(path)
+            return false
+        }
+        let bytes = Array("v1\n".utf8)
+        let written = bytes.withUnsafeBytes { Darwin.write(descriptor, $0.baseAddress, $0.count) }
+        let synced = fsync(descriptor) == 0
+        Darwin.close(descriptor)
+        if written != bytes.count || !synced {
+            _ = unlink(path)
+            return false
+        }
+        return true
+    }
+
+    func remove() -> Bool {
+        !exists() || unlink(path) == 0
+    }
+}
+
+private final class ChargeLimitController {
+    private let log = Logger(subsystem: FanControlIdentifiers.helperID, category: "ChargeLimit")
+    private let queue = DispatchQueue(label: "com.tina.charge-limit.helper")
+    private let marker = ChargeLimitMarker()
+    private var hardware: ChargeLimitHardware?
+    private var owner: UUID?
+    private var configuration: ChargeLimitConfiguration?
+    private var chargeToFull = false
+    private var timer: DispatchSourceTimer?
+
+    /// Resolves a state a crashed helper may have left behind: if our marker is
+    /// there, charging was inhibited by Tina and must be put back.
+    init() {
+        queue.async { [weak self] in self?.recoverIfNeeded() }
+    }
+
+    func status(reply: @escaping (Data) -> Void) {
+        queue.async {
+            reply(ChargeLimitIPC.encode(self.statusResponse()))
+        }
+    }
+
+    func apply(session id: UUID, encodedConfiguration: Data,
+               reply: @escaping (Data) -> Void) {
+        queue.async {
+            guard let configuration = ChargeLimitIPC.decodeConfiguration(encodedConfiguration)
+            else {
+                reply(ChargeLimitIPC.encode(.failure(.controlFailed,
+                                                     status: self.snapshot())))
+                return
+            }
+            if let owner = self.owner, owner != id {
+                reply(ChargeLimitIPC.encode(.failure(.alreadyControlled,
+                                                     status: self.snapshot())))
+                return
+            }
+            self.owner = id
+            self.configuration = configuration
+            if configuration.chargeToFull { self.chargeToFull = true }
+            let response = self.enforce(configuration)
+            if response.succeeded { self.startTimer() }
+            reply(ChargeLimitIPC.encode(response))
+        }
+    }
+
+    func restore(session id: UUID, reply: @escaping (Data) -> Void) {
+        queue.async {
+            if let owner = self.owner, owner != id {
+                reply(ChargeLimitIPC.encode(.failure(.alreadyControlled,
+                                                     status: self.snapshot())))
+                return
+            }
+            let restored = self.restoreCharging()
+            self.clearSession()
+            reply(ChargeLimitIPC.encode(restored
+                ? .success(self.snapshot())
+                : .failure(.controlFailed, status: self.snapshot())))
+        }
+    }
+
+    func connectionClosed(_ id: UUID) {
+        queue.async {
+            // Only the session that asked for the limit may release it. The
+            // app also opens connections that only read status.
+            guard self.owner == id else { return }
+            _ = self.restoreCharging()
+            self.clearSession()
+        }
+    }
+
+    func shutdown(completion: @escaping (Bool) -> Void) {
+        queue.async {
+            completion(self.restoreCharging())
+        }
+    }
+
+    // MARK: - Enforcement
+
+    private func recoverIfNeeded() {
+        guard marker.exists() else { return }
+        log.notice("Restoring charging held by an earlier helper process")
+        if restoreCharging() {
+            log.notice("Charging restored")
+        } else {
+            log.error("Charging could not be restored; the next launch retries")
+        }
+    }
+
+    /// Puts charging back only when Tina's own marker says Tina stopped it.
+    /// `true` also covers "nothing to undo", which is the successful case for
+    /// teardown.
+    private func restoreCharging() -> Bool {
+        guard marker.exists() else { return true }
+        guard let hardware = resolvedHardware() else { return false }
+        do {
+            // Never write when the key already allows charging: another tool
+            // may own the inhibit state.
+            if try hardware.read().isInhibited {
+                try hardware.setInhibited(false)
+            }
+            _ = marker.remove()
+            return true
+        } catch {
+            log.error("Restoring charging failed: \(String(describing: error), privacy: .public)")
+            return false
+        }
+    }
+
+    private func enforce(_ configuration: ChargeLimitConfiguration) -> ChargeLimitResponse {
+        guard let hardware = resolvedHardware() else {
+            return .failure(.unsupportedHardware)
+        }
+        do {
+            var reading = try hardware.read()
+            if chargeToFull,
+               ChargeLimitPolicy.fullChargeRequestIsDone(percent: reading.battery.percent,
+                                                        isFullyCharged: reading.battery.isFullyCharged) {
+                // The one-shot ends when the battery reports full; the next
+                // tick puts the limit back if the Mac stays plugged in.
+                chargeToFull = false
+            }
+            let decision = ChargeLimitPolicy.decision(percent: reading.battery.percent,
+                                                      upperPercent: configuration.upperPercent,
+                                                      isInhibited: reading.isInhibited,
+                                                      chargeToFull: chargeToFull)
+            switch decision {
+            case .inhibitCharging:
+                try hardware.setInhibited(true)
+                // A marker left by an earlier session already records the same
+                // fact; only a failed *creation* means the record is missing.
+                if !marker.exists(), !marker.create() {
+                    // Without the marker a later crash could not tell it was
+                    // Tina who stopped charging, so never leave it inhibited.
+                    try? hardware.setInhibited(false)
+                    return .failure(.controlFailed, status: snapshot())
+                }
+            case .allowCharging:
+                try hardware.setInhibited(false)
+                _ = marker.remove()
+            case .hold:
+                break
+            }
+            reading = try hardware.read()
+            return .success(status(from: reading, configuration: configuration))
+        } catch ChargeLimitHardware.HardwareError.verificationFailed {
+            try? hardware.setInhibited(false)
+            _ = marker.remove()
+            return .failure(.verificationFailed, status: snapshot())
+        } catch {
+            // An inhibit that was not confirmed must not survive. When the
+            // marker is already there, the next tick and a helper restart can
+            // both finish the restore; without it, undo immediately.
+            if !marker.exists() {
+                try? hardware.setInhibited(false)
+            }
+            log.error("Charge limit failed: \(String(describing: error), privacy: .public)")
+            return .failure(.controlFailed, status: snapshot())
+        }
+    }
+
+    private func resolvedHardware() -> ChargeLimitHardware? {
+        if let hardware { return hardware }
+        hardware = ChargeLimitHardware()
+        return hardware
+    }
+
+    private func startTimer() {
+        guard timer == nil else { return }
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        timer.schedule(deadline: .now() + 30, repeating: 30, leeway: .seconds(2))
+        timer.setEventHandler { [weak self] in self?.tick() }
+        self.timer = timer
+        timer.resume()
+    }
+
+    /// Re-evaluates on the helper's own cadence. This is what keeps the limit
+    /// after the app has gone idle or the display is asleep; the app's requests
+    /// only change the policy.
+    private func tick() {
+        guard owner != nil, let configuration else {
+            stopTimer()
+            return
+        }
+        _ = enforce(configuration)
+    }
+
+    private func stopTimer() {
+        timer?.cancel()
+        timer = nil
+    }
+
+    private func clearSession() {
+        owner = nil
+        configuration = nil
+        chargeToFull = false
+        stopTimer()
+    }
+
+    // MARK: - Status
+
+    private func statusResponse() -> ChargeLimitResponse {
+        guard let hardware = resolvedHardware(), let reading = try? hardware.read() else {
+            return .failure(.unsupportedHardware)
+        }
+        return .success(status(from: reading, configuration: configuration))
+    }
+
+    private func snapshot() -> ChargeLimitStatus {
+        guard let hardware = resolvedHardware(), let reading = try? hardware.read() else {
+            return .empty
+        }
+        return status(from: reading, configuration: configuration)
+    }
+
+    private func status(from reading: ChargeLimitHardware.Reading,
+                        configuration: ChargeLimitConfiguration?) -> ChargeLimitStatus {
+        ChargeLimitStatus(variant: hardware?.keySet,
+                          percent: reading.battery.percent,
+                          isCharging: reading.battery.isCharging,
+                          isPluggedIn: reading.battery.isPluggedIn,
+                          isFullyCharged: reading.battery.isFullyCharged,
+                          isInhibited: reading.isInhibited,
+                          upperPercent: configuration?.upperPercent,
+                          chargeToFull: chargeToFull,
+                          error: nil)
+    }
+}
+
 private final class FanControlSession: NSObject, FanControlXPCProtocol {
     let id = UUID()
     private let controller: FanControlController
+    private let chargeController: ChargeLimitController
 
-    init(controller: FanControlController) {
+    init(controller: FanControlController, chargeController: ChargeLimitController) {
         self.controller = controller
+        self.chargeController = chargeController
     }
 
     func status(withReply reply: @escaping (Data) -> Void) {
@@ -553,21 +830,39 @@ private final class FanControlSession: NSObject, FanControlXPCProtocol {
     func restoreAutomatic(withReply reply: @escaping (Data) -> Void) {
         controller.restore(reply: reply)
     }
+
+    func chargeLimitStatus(withReply reply: @escaping (Data) -> Void) {
+        chargeController.status(reply: reply)
+    }
+
+    func applyChargeLimit(_ configuration: Data, withReply reply: @escaping (Data) -> Void) {
+        chargeController.apply(session: id, encodedConfiguration: configuration, reply: reply)
+    }
+
+    func restoreCharging(withReply reply: @escaping (Data) -> Void) {
+        chargeController.restore(session: id, reply: reply)
+    }
 }
 
 private final class FanControlListenerDelegate: NSObject, NSXPCListenerDelegate {
     private let controller: FanControlController
+    private let chargeController: ChargeLimitController
 
-    init(controller: FanControlController) {
+    init(controller: FanControlController, chargeController: ChargeLimitController) {
         self.controller = controller
+        self.chargeController = chargeController
     }
 
     func listener(_ listener: NSXPCListener,
                   shouldAcceptNewConnection connection: NSXPCConnection) -> Bool {
-        let session = FanControlSession(controller: controller)
+        let session = FanControlSession(controller: controller,
+                                        chargeController: chargeController)
         connection.exportedInterface = NSXPCInterface(with: FanControlXPCProtocol.self)
         connection.exportedObject = session
-        connection.invalidationHandler = { [weak controller] in
+        // Charging is released first: a session that owned both capabilities
+        // must never leave the battery inhibited when the app goes away.
+        connection.invalidationHandler = { [weak controller, weak chargeController] in
+            chargeController?.connectionClosed(session.id)
             controller?.connectionClosed(session.id)
         }
         controller.connectionOpened()
@@ -582,7 +877,15 @@ private func runSelfTest() -> Bool {
           FanControlPolicy.validCoolingLevel(FanControlPolicy.defaultCoolingLevel),
           FanControlPolicy.validConfiguration(.curve([FanControlConfiguration.defaultCurve])),
           let encoded = SMCValueCodec.encode(4_800, type: "flt ", size: 4),
-          SMCValueCodec.decode(encoded, type: "flt ") == 4_800 else { return false }
+          SMCValueCodec.decode(encoded, type: "flt ") == 4_800,
+          ChargeLimitPolicy.decision(percent: 80, upperPercent: 80, isInhibited: false,
+                                     chargeToFull: false) == .inhibitCharging,
+          ChargeLimitPolicy.decision(percent: 77, upperPercent: 80, isInhibited: true,
+                                     chargeToFull: false) == .hold,
+          ChargeLimitPolicy.decision(percent: 75, upperPercent: 80, isInhibited: true,
+                                     chargeToFull: false) == .allowCharging,
+          ChargeControlKeySet.chargingState.isInhibited([0x01, 0x00, 0x00, 0x00]) == true,
+          ChargeControlKeySet.chargingFlags.isInhibited([0x02]) == true else { return false }
     print("fan-control-helper: ok")
     return true
 }
@@ -597,27 +900,32 @@ guard geteuid() == 0 else {
 }
 
 private let controller = FanControlController()
-private let delegate = FanControlListenerDelegate(controller: controller)
+private let chargeController = ChargeLimitController()
+private let delegate = FanControlListenerDelegate(controller: controller,
+                                                  chargeController: chargeController)
 private let listener = NSXPCListener(machServiceName: FanControlIdentifiers.helperID)
 listener.setConnectionCodeSigningRequirement(FanControlIdentifiers.appCodeRequirement)
 listener.delegate = delegate
 listener.activate()
 
+/// Both capabilities must be back to their safe states before the process
+/// leaves; charging is restored first for the same reason it is released first
+/// when a connection drops.
+private func shutdownAndExit() {
+    chargeController.shutdown { chargeRestored in
+        controller.shutdown { fansRestored in
+            if chargeRestored, fansRestored { exit(EXIT_SUCCESS) }
+        }
+    }
+}
+
 signal(SIGTERM, SIG_IGN)
 signal(SIGINT, SIG_IGN)
 let termination = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
-termination.setEventHandler {
-    controller.shutdown { restored in
-        if restored { exit(EXIT_SUCCESS) }
-    }
-}
+termination.setEventHandler { shutdownAndExit() }
 termination.resume()
 let interruption = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
-interruption.setEventHandler {
-    controller.shutdown { restored in
-        if restored { exit(EXIT_SUCCESS) }
-    }
-}
+interruption.setEventHandler { shutdownAndExit() }
 interruption.resume()
 
 RunLoop.main.run()

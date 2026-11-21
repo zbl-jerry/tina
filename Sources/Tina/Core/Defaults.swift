@@ -244,6 +244,9 @@ enum DefaultsKey {
     // a crash that left a tint behind can be repaired on the next start.
     static let nightWarmthPausedUntil = "nightWarmthPausedUntil"
     static let nightWarmthApplied = "nightWarmthApplied"
+    // Charge limit: stop charging at an upper percentage while plugged in.
+    static let chargeLimitEnabled = "chargeLimitEnabled"
+    static let chargeLimitPercent = "chargeLimitUpperPercent" // Int percent 60-100
     static let brightnessControlEnabled = "brightnessControlEnabled" // sliders for every display
     static let brightnessKeysEnabled = "brightnessKeysEnabled" // brightness keys act on the display under the pointer
     static let brightnessOSDEnabled = "brightnessOSDEnabled" // brightness adjustment overlay
@@ -1478,6 +1481,8 @@ enum Defaults {
         DefaultsKey.nightWarmthHasLocation: false,
         DefaultsKey.nightWarmthPausedUntil: 0.0,
         DefaultsKey.nightWarmthApplied: false,
+        DefaultsKey.chargeLimitEnabled: false,
+        DefaultsKey.chargeLimitPercent: ChargeLimitPolicy.defaultPercent,
         DefaultsKey.brightnessControlEnabled: false,
         DefaultsKey.brightnessKeysEnabled: false,
         DefaultsKey.brightnessOSDEnabled: false,
@@ -2629,6 +2634,10 @@ enum Defaults {
 
     static func sanitizedBatteryLimit(_ percent: Int) -> Int {
         allowedBatteryLimits.contains(percent) ? percent : 10
+    }
+
+    static func sanitizedChargeLimitPercent(_ percent: Int) -> Int {
+        ChargeLimitPolicy.sanitizedPercent(percent)
     }
 
     static func sanitizedKeepAwakeMouseJiggleInterval(_ minutes: Int) -> Int {

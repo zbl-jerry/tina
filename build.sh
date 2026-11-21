@@ -346,6 +346,7 @@ if (( TEST )); then
         Sources/Tina/Core/FeaturePresets.swift
         Sources/Tina/Core/FeatureHubStrings.swift
         Sources/Tina/Core/NightWarmthStrings.swift
+        Sources/Tina/Core/ChargeLimitStrings.swift
         Sources/Tina/Core/MixerScreenSharingStrings.swift
         Sources/Tina/Core/ShortcutSettingsStrings.swift
         Sources/Tina/Core/SwitcherShortcutStrings.swift
@@ -605,6 +606,8 @@ if (( TEST )); then
         Sources/Tina/Services/CleaningMode/CleaningMouseReleaseGate.swift
         Sources/Tina/Services/Display/ExtraBrightnessSupport.swift
         Sources/Tina/Services/Display/NightWarmthSupport.swift
+        Sources/Tina/Services/ChargeLimit/ChargeLimitSupport.swift
+        Sources/Tina/Services/ChargeLimit/ChargeLimitXPC.swift
         Sources/Tina/Services/Display/BrightnessSupport.swift
         Sources/Tina/Services/Display/MonitorVolumeKeySettings.swift
         Sources/Tina/Services/Display/LidDimmingSupport.swift
@@ -661,13 +664,18 @@ swiftc "${APP_OPTIMIZATION_FLAGS[@]}" -incremental -enable-batch-mode -j "$(sysc
     "${APP_SOURCES[@]}" "${GIF_CODEC_OBJECTS[@]}" -o "build/$EXECUTABLE"
 xcrun dyld_info -imports "build/$EXECUTABLE" | awk -f Tests/AudioTapImports.awk
 
-echo "▸ Compiling protected fan helper…"
+echo "▸ Compiling protected helper…"
+# One privileged daemon serves both Fan Control and the charge limit; each
+# capability owns its own controller, marker and teardown inside it.
 swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" "${BUILD_VARIANT_FLAGS[@]}" \
     Sources/Tina/Services/FanControl/FanControlSupport.swift \
     Sources/Tina/Services/FanControl/FanControlXPC.swift \
     Sources/Tina/Services/SystemMonitor/SMCClient.swift \
     Sources/Tina/Services/Metrics/TemperatureSensorSelector.swift \
     Sources/Tina/Services/FanControl/FanControlHardware.swift \
+    Sources/Tina/Services/ChargeLimit/ChargeLimitSupport.swift \
+    Sources/Tina/Services/ChargeLimit/ChargeLimitXPC.swift \
+    Sources/Tina/Services/ChargeLimit/ChargeLimitHardware.swift \
     Sources/FanControlHelper/main.swift \
     -o "build/$FAN_HELPER_ID"
 "build/$FAN_HELPER_ID" --selftest

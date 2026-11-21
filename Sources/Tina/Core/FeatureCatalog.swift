@@ -24,7 +24,7 @@ enum AppFeature: String, CaseIterable {
     // Sound
     case mixer, soundOutputSwitcher, audioPriority, micMute, musicBlock
     // Energy and display
-    case keepAwake, brightness, extraBrightness, nightWarmth, bluetoothSleep
+    case keepAwake, brightness, extraBrightness, nightWarmth, bluetoothSleep, chargeLimit
     // Tools
     case quickLauncher, quickToggles, quitApps, colorPicker, screenOCR, cleaningMode, mediaTools,
          cleaner, uninstaller, homebrew, appUpdates, screenshot, cameraPreview, radialMenu, scratchpad,
@@ -113,7 +113,7 @@ extension AppFeature {
             return .clipboardFiles
         case .mixer, .soundOutputSwitcher, .audioPriority, .micMute, .musicBlock:
             return .sound
-        case .keepAwake, .brightness, .extraBrightness, .nightWarmth, .bluetoothSleep:
+        case .keepAwake, .brightness, .extraBrightness, .nightWarmth, .bluetoothSleep, .chargeLimit:
             return .energyDisplay
         case .quickLauncher, .quickToggles, .quitApps, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .radialMenu,
@@ -176,6 +176,7 @@ extension AppFeature {
         case .extraBrightness: return "sun.max.fill"
         case .nightWarmth: return "moon.stars.fill"
         case .bluetoothSleep: return "wave.3.right.circle"
+        case .chargeLimit: return "battery.75percent"
         case .quickLauncher: return "wand.and.rays"
         case .quickToggles: return "togglepower"
         case .quitApps: return "xmark.app"
@@ -225,7 +226,7 @@ extension AppFeature {
 
     var availabilityKey: String { DefaultsKey.featureAvailable(rawValue) }
 
-    var isBeta: Bool { self == .fanControl || self == .killProcess }
+    var isBeta: Bool { self == .fanControl || self == .killProcess || self == .chargeLimit }
 
     /// Availability read straight from defaults. Existing features stay
     /// available on update; explicit beta opt-ins may start unavailable.
@@ -301,6 +302,7 @@ extension AppFeature {
         case .extraBrightness: return [DefaultsKey.extraBrightnessEnabled]
         case .nightWarmth: return [DefaultsKey.nightWarmthEnabled]
         case .bluetoothSleep: return [DefaultsKey.bluetoothSleepEnabled]
+        case .chargeLimit: return [DefaultsKey.chargeLimitEnabled]
         case .windowLayout, .diskImageInstaller, .mixer, .micMute, .keepAwake,
              .quickLauncher, .quickToggles, .quitApps, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .scratchpad,
@@ -322,6 +324,9 @@ extension AppFeature {
         case .windowLayout: return [DefaultsKey.windowLayoutShortcutsEnabled]
         case .audioPriority: return enabledKeys
         case .notchLiveEqualizer: return []
+        // Installing the feature shows the card; stopping a charge is the
+        // user's own switch, never a side effect of an install.
+        case .chargeLimit: return []
         default: return enabledKeys.first.map { [$0] } ?? []
         }
     }
@@ -402,7 +407,8 @@ extension AppFeature {
         case .clipboardHistory, .shelf, .urlCleaner,
              .soundOutputSwitcher, .audioPriority,
              .extraBrightness, .nightWarmth, .bluetoothSleep, .quickLauncher, .colorPicker, .micMute, .mediaTools,
-             .scratchpad, .wallpaper, .monitorGPU, .monitorNetwork, .connectedDevices, .fanControl, .killProcess,
+             .scratchpad, .wallpaper, .monitorGPU, .monitorNetwork, .connectedDevices, .fanControl,
+             .chargeLimit, .killProcess,
              .portManager, .hostsProfiles, .launchpad, .autoInputSource,
              // Each app gets the ordinary quit request it would from its own menu.
              .quitApps:
@@ -505,7 +511,7 @@ extension AppFeature {
             return true
         case .focusFollowsMouse, .scrollHorizontal, .scrollZoom, .linearScroll, .scrollSpeed, .diskImageInstaller, .audioPriority,
              .wallpaper, .killProcess, .portManager, .hostsProfiles, .fanControl, .notchMascot, .spacesOrder, .quitApps,
-             .layoutFix, .launchpad, .nightWarmth, .autoInputSource:
+             .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource:
             return false
         }
     }

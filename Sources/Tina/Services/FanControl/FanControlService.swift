@@ -44,6 +44,13 @@ final class FanControlService: ObservableObject {
         SMAppService.daemon(plistName: FanControlIdentifiers.plistName)
     }
 
+    /// The daemon also holds the charge limit. Uninstalling Fan Control must
+    /// not unregister a helper another installed, switched-on feature uses.
+    private static var sharedWithChargeLimit: Bool {
+        AppFeature.chargeLimit.isAvailable
+            && UserDefaults.standard.bool(forKey: DefaultsKey.chargeLimitEnabled)
+    }
+
     private static var helperVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "TinaFanControlHelperVersion") as? String
             ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
@@ -691,6 +698,7 @@ final class FanControlService: ObservableObject {
                 error = .authorizationRequired
                 return
             }
+            guard !Self.sharedWithChargeLimit else { return }
             do {
                 try Self.appService.unregister()
                 UserDefaults.standard.removeObject(forKey: DefaultsKey.fanControlHelperVersion)
@@ -707,7 +715,8 @@ final class FanControlService: ObservableObject {
             self.isWorking = false
             guard let response, response.succeeded, !response.snapshot.isCooling else { return }
             UserDefaults.standard.removeObject(forKey: DefaultsKey.fanControlRecoveryNeeded)
-            guard !AppFeature.fanControl.isAvailable else {
+            guard !AppFeature.fanControl.isAvailable,
+                  !Self.sharedWithChargeLimit else {
                 self.stopIdleWorkIfPossible()
                 return
             }

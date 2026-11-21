@@ -386,7 +386,7 @@ enum FeatureCatalogTests {
 
         // MARK: Features hub catalog
 
-        suite.expect(AppFeature.allCases.count == 85, "feature catalog has 85 features")
+        suite.expect(AppFeature.allCases.count == 86, "feature catalog has 86 features")
         suite.expect(Set(AppFeature.allCases.map(\.rawValue)).count == AppFeature.allCases.count,
                "feature ids are unique")
         suite.expect(AppFeature.allCases.map(\.rawValue) == [
@@ -396,7 +396,7 @@ enum FeatureCatalogTests {
             "clipboardHistory", "pastePlain", "finderCutPaste", "finderRename", "shelf", "urlCleaner",
             "diskImageInstaller",
             "mixer", "soundOutputSwitcher", "audioPriority", "micMute", "musicBlock",
-            "keepAwake", "brightness", "extraBrightness", "nightWarmth", "bluetoothSleep",
+            "keepAwake", "brightness", "extraBrightness", "nightWarmth", "bluetoothSleep", "chargeLimit",
             "quickLauncher", "quickToggles", "quitApps", "colorPicker", "screenOCR", "cleaningMode", "mediaTools",
             "cleaner", "uninstaller", "homebrew", "appUpdates", "screenshot", "cameraPreview",
             "radialMenu", "scratchpad", "commandBar", "screenRecorder", "wallpaper", "killProcess", "portManager", "hostsProfiles", "launchpad", "notch", "notchCalendar", "notchNotifications", "notchGestures", "notchTimer", "notchAccessories", "notchLyrics", "notchQueue", "notchLiveEqualizer", "notchDownloads", "notchAgents", "notchWatch", "notchMascot",
@@ -526,7 +526,8 @@ enum FeatureCatalogTests {
                 installDefaults.persistentDomain(forName: installSuiteName) ?? [:]
             }
             for feature in AppFeature.allCases
-            where !feature.enabledKeys.isEmpty && feature != .notchLiveEqualizer {
+            where !feature.enabledKeys.isEmpty && feature != .notchLiveEqualizer
+                && feature != .chargeLimit {
                 feature.enableOnFirstInstall(in: installDefaults, savedValues: savedValues())
                 suite.expect(feature.enabledKeys.contains {
                     savedValues()[$0] as? Bool == true
@@ -537,6 +538,10 @@ enum FeatureCatalogTests {
                                                                 savedValues: savedValues())
             suite.expect(savedValues()[DefaultsKey.notchLiveEqualizer] == nil,
                    "installing the live equalizer leaves its audio recording switch off")
+            AppFeature.chargeLimit.enableOnFirstInstall(in: installDefaults,
+                                                        savedValues: savedValues())
+            suite.expect(savedValues()[DefaultsKey.chargeLimitEnabled] == nil,
+                   "installing the charge limit leaves its battery switch off")
             AppFeature.windowLayout.enableOnFirstInstall(in: installDefaults,
                                                           savedValues: savedValues())
             suite.expect(installDefaults.bool(forKey: DefaultsKey.windowLayoutShortcutsEnabled),
@@ -2288,8 +2293,8 @@ enum FeatureCatalogTests {
                "the mouse page hides only with all eight mouse features off")
         suite.expect(!pageVisible(.energy, available: allFeatures.subtracting([.keepAwake, .brightness,
                                                                          .extraBrightness, .nightWarmth,
-                                                                         .bluetoothSleep])),
-               "energy hides when all five of its features are off")
+                                                                         .bluetoothSleep, .chargeLimit])),
+               "energy hides when all six of its features are off")
         suite.expect(pageVisible(.energy, available: [.extraBrightness]), "XDR alone keeps the energy page")
         suite.expect(pageVisible(.energy, available: [.brightness]),
                "brightness control alone keeps the energy page")
