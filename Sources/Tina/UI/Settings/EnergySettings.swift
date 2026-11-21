@@ -15,6 +15,7 @@ struct EnergySettings: View {
     @ObservedObject private var permissions = Permissions.shared
     @ObservedObject private var extraBrightness = ExtraBrightnessService.shared
     @ObservedObject private var brightness = BrightnessService.shared
+    @ObservedObject private var nightWarmth = NightWarmthService.shared
     @AppStorage(DefaultsKey.brightnessControlEnabled) private var brightnessEnabled = false
     @AppStorage(DefaultsKey.brightnessKeysEnabled) private var brightnessKeysEnabled = false
     @AppStorage(DefaultsKey.brightnessOSDEnabled) private var brightnessOSDEnabled = false
@@ -63,6 +64,10 @@ struct EnergySettings: View {
                     extraBrightnessCard
                         .settingsSectionAnchor(.extraBrightness, cornerRadius: 16)
                 }
+                if (focus == nil || focus == .nightWarmth), AppFeature.nightWarmth.isAvailable {
+                    NightWarmthSettingsCard()
+                        .settingsSectionAnchor(.nightWarmth, cornerRadius: 16)
+                }
                 if (focus == nil || focus == .bluetoothSleep), AppFeature.bluetoothSleep.isAvailable {
                     bluetoothCard
                         .settingsSectionAnchor(.bluetoothSleep, cornerRadius: 16)
@@ -93,6 +98,9 @@ struct EnergySettings: View {
         if focus == nil || focus == .extraBrightness {
             ExtraBrightnessService.shared.syncWithPreferences()
         }
+        if focus == nil || focus == .nightWarmth {
+            NightWarmthService.shared.syncWithPreferences()
+        }
         if focus == nil || focus == .brightness {
             // Displays may have changed since launch (docked, clamshell).
             BrightnessService.shared.refresh()
@@ -104,6 +112,7 @@ struct EnergySettings: View {
         case .keepAwake: return l10n.s.keepAwakeTitle
         case .brightness: return FeatureStrings.brightness(l10n.language).pageTitle
         case .extraBrightness: return l10n.s.extraBrightnessName
+        case .nightWarmth: return FeatureStrings.nightWarmth(l10n.language).title
         case .bluetoothSleep: return FeatureStrings.bluetoothSleep(l10n.language).pageTitle
         default: return l10n.s.tabEnergy
         }
@@ -114,6 +123,7 @@ struct EnergySettings: View {
         case .keepAwake: return FeatureStrings.hub(l10n.language).descKeepAwake
         case .brightness: return FeatureStrings.brightness(l10n.language).hubDescription
         case .extraBrightness: return FeatureStrings.hub(l10n.language).descExtraBrightness
+        case .nightWarmth: return FeatureStrings.nightWarmth(l10n.language).hubDescription
         case .bluetoothSleep: return FeatureStrings.bluetoothSleep(l10n.language).hubDescription
         default: return FeatureStrings.settingsPages(l10n.language).energyDescription
         }

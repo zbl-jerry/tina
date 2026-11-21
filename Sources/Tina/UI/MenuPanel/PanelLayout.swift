@@ -80,7 +80,7 @@ enum PanelSectionID: String, CaseIterable, Identifiable, Hashable {
     var featureGate: [AppFeature] {
         switch self {
         case .keepAwake: return [.keepAwake]
-        case .brightness: return [.brightness]
+        case .brightness: return [.brightness, .nightWarmth]
         case .mixer: return [.mixer, .audioPriority]
         case .system: return [.monitorCPU, .monitorGPU, .monitorMemory, .connectedDevices]
         case .network: return [.monitorNetwork]
@@ -169,7 +169,11 @@ enum PanelLayout {
     /// live panel and its preview in Settings both read.
     static func isVisibleInPanel(_ id: PanelSectionID) -> Bool {
         guard id.isAvailable, isShown(id) else { return false }
-        return id != .brightness || defaults.bool(forKey: DefaultsKey.brightnessControlEnabled)
+        guard id == .brightness else { return true }
+        // The display sliders need brightness control switched on; night
+        // warmth shares the card and must not be hidden behind that switch.
+        return defaults.bool(forKey: DefaultsKey.brightnessControlEnabled)
+            || AppFeature.nightWarmth.isAvailable
     }
 
     static func isCollapsed(_ id: PanelSectionID) -> Bool {

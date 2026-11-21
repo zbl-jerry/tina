@@ -147,6 +147,10 @@ enum SettingsBackupSupport {
         DefaultsKey.bluetoothSleepRestorePending,
         DefaultsKey.micMuteActive,
         DefaultsKey.micMuteSavedVolume,
+        // A pause ends on this Mac, and the applied marker only exists to
+        // repair a tint left behind by a crash here.
+        DefaultsKey.nightWarmthPausedUntil,
+        DefaultsKey.nightWarmthApplied,
         // Levels and device ids belong to the microphones of one Mac.
         DefaultsKey.micMuteSavedVolumes,
         DefaultsKey.micMuteSavedChannelVolumes,

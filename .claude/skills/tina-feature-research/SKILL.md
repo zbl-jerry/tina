@@ -39,7 +39,7 @@ description: 调研开源项目并提取适合 Tina 的产品需求，评估 mac
    - 用 `scripts/probe_macos_project.sh <repo>` 做静态探测：项目类型、部署目标、依赖、构建产物大小。
 
 2. **还原产品而不是罗列代码**
-   - 读 README、文档、release notes、菜单/设置截图、关键 issue。
+   - 读 README、文档、release notes、关键 issue。
    - 按“用户任务 → 入口 → 行为 → 结果”拆成 3–8 个功能块。
    - 标出哪些是核心、哪些是边缘/平台特定/历史包袱。
 
@@ -97,6 +97,7 @@ description: 调研开源项目并提取适合 Tina 的产品需求，评估 mac
 - 为了一个功能引入新的特权 helper 或系统扩展而不给安全/维护分析。
 - 编造用户量、性能提升、付费意愿等无法核实的指标。
 - 直接复制上游代码或界面；本 skill 只提取产品行为，代码按 Tina 架构重写。
+- 派 agent 打开或截图目标 App 获取调研证据；截图可能让宿主系统卡死，只使用 README、文档、release notes、issue 等文本来源。
 
 ## 参考文件
 

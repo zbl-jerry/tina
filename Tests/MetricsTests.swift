@@ -165,6 +165,7 @@ struct MetricsTests {
                 BrightnessStepTests.run(suite)
                 BrightnessKeyRoutingTests.run(suite)
             }),
+            ("night-warmth", { NightWarmthTests.run(suite) }),
             ("speaker-volume", {
                 DisplaySpeakerVolumeTests.run(suite)
                 MonitorVolumeKeySettingsTests.run(suite)
