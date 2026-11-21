@@ -102,7 +102,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 ### Keyboard and mouse
 
 - **Text snippets.** Expand short triggers into text with clipboard, date and time variables, or insert snippets from a searchable menu.
-- **Smooth scrolling.** Give your mouse wheel a fluid glide with adjustable speed and response.
+- **Smooth scrolling.** Give your mouse wheel a fluid glide with adjustable speed and response. Per-app overrides and a held key let precision apps keep the raw wheel without changing the global setting. See [per-app scrolling](docs/PER-APP-SCROLL.md).
 - **Pointer acceleration.** Disable mouse acceleration and restore your previous setting when turned off.
 - **Linear scrolling.** Make every mouse wheel notch scroll the same number of lines, however fast the wheel spins.
 - **Focus follows mouse.** Bring the window under the pointer forward after an adjustable pause.
