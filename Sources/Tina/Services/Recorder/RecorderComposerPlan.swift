@@ -20,6 +20,7 @@ extension RecorderComposer {
     /// drawn sharp.
     static func makePlan(document: RecorderEditDocument,
                          track: RecorderPointerTrack,
+                         keystrokes: RecorderKeystrokeTrack = RecorderKeystrokeTrack(),
                          sourceSize: CGSize,
                          frameRate: Int,
                          duration: Double,
@@ -61,8 +62,9 @@ extension RecorderComposer {
         let texts = RecorderTextOverlay.normalized(document.texts, duration: duration)
         let images = RecorderImageOverlay.normalized(document.images, duration: duration)
         let blurs = RecorderBlurRegion.normalized(document.blurs, duration: duration)
+        let pressed = keystrokes.normalized(duration: duration)
         let hasEdits = showsPointer || !segments.isEmpty || changesCanvas || hasCuts
-            || !texts.isEmpty || !images.isEmpty || !blurs.isEmpty
+            || !texts.isEmpty || !images.isEmpty || !blurs.isEmpty || !pressed.isEmpty
         guard hasEdits || scale != 1 else { return nil }
 
         // Everything the pointer track knows is in the RECORDING's own time,
@@ -198,6 +200,64 @@ extension RecorderComposer {
             }
         }
 
+        // Key caps: which combination is on screen, how solid it is, and where
+        // it sits. Solved over the whole recording like everything else, so a
+        // frame only reads three arrays.
+        var keystrokeSprites: [CGImage?] = []
+        var keystrokeActive = [Int](repeating: -1, count: frames)
+        var keystrokeOpacity = [Double](repeating: 0, count: frames)
+        var keystrokeOrigins = [CGPoint](repeating: .zero, count: frames)
+        if !pressed.isEmpty {
+            keystrokeSprites = pressed.events.map { event in
+                RecorderKeystrokeRenderer.image(keys: event.keys,
+                                                style: pressed.style,
+                                                canvasHeight: canvas.height)
+            }
+            let fade = min(0.2, pressed.style.dwell * 0.22)
+            let margin = min(canvas.width, canvas.height) * 0.02
+            for index in 0..<frames {
+                let time = sourceTimes[index]
+                guard let active = pressed.activeEventIndex(at: time),
+                      pressed.events.indices.contains(active) else { continue }
+                keystrokeActive[index] = active
+                let event = pressed.events[active]
+                keystrokeOpacity[index] = RecorderMotion.overlayOpacity(
+                    at: time,
+                    start: event.time,
+                    end: event.time + pressed.style.dwell,
+                    fade: fade)
+                guard keystrokeSprites.indices.contains(active),
+                      let sprite = keystrokeSprites[active] else { continue }
+                let spriteSize = CGSize(width: sprite.width, height: sprite.height)
+                if let anchor = pressed.style.placement.anchor {
+                    keystrokeOrigins[index] = anchor.origin(of: spriteSize, in: canvas)
+                } else if track.samples.isEmpty {
+                    // Following a pointer that was never recorded has no
+                    // meaning; the corner is the honest fallback.
+                    keystrokeOrigins[index] = RecorderTextOverlay.Anchor.bottomTrailing
+                        .origin(of: spriteSize, in: canvas)
+                } else {
+                    let source = positions.indices.contains(index) ? positions[index] : .zero
+                    var point = canvasPoint(source: source,
+                                            index: index,
+                                            zoom: zoom,
+                                            travel: travel,
+                                            sourceSize: sourceSize,
+                                            card: card)
+                    // Beside and above the pointer, so the row never covers
+                    // the spot the person is working on.
+                    let offset = canvas.height * 0.025
+                    point.x += offset
+                    point.y += offset
+                    point.x = min(max(margin, point.x),
+                                  max(margin, canvas.width - spriteSize.width - margin))
+                    point.y = min(max(margin, point.y),
+                                  max(margin, canvas.height - spriteSize.height - margin))
+                    keystrokeOrigins[index] = point
+                }
+            }
+        }
+
         var textOpacity: [[Double]] = []
         if !texts.isEmpty {
             textOpacity = texts.map { overlay in
@@ -268,7 +328,36 @@ extension RecorderComposer {
                     imageSprites: imageSprites,
                     imageOpacity: imageOpacity,
                     blurs: blurs,
-                    blurCovers: blurCovers)
+                    blurCovers: blurCovers,
+                    keystrokeSprites: keystrokeSprites,
+                    keystrokeActive: keystrokeActive,
+                    keystrokeOpacity: keystrokeOpacity,
+                    keystrokeOrigins: keystrokeOrigins)
+    }
+
+    /// Where a point inside the recorded picture lands on the finished canvas:
+    /// through the same zoom the composer applies to the content, then the fit
+    /// into the card. Key caps follow the pointer through both so a zoomed
+    /// recording keeps the row beside what is being pressed.
+    private static func canvasPoint(source uv: CGPoint,
+                                    index: Int,
+                                    zoom: [Double],
+                                    travel: [CGPoint],
+                                    sourceSize: CGSize,
+                                    card: CGRect) -> CGPoint {
+        var x = uv.x * sourceSize.width
+        var y = (1 - uv.y) * sourceSize.height
+        if zoom.indices.contains(index), travel.indices.contains(index),
+           zoom[index] > 1.001 {
+            let amount = zoom[index]
+            let origin = RecorderMotion.viewportOrigin(travel: travel[index], zoom: amount)
+            let bottom = 1 - origin.y - 1 / amount
+            x = x * amount - origin.x * sourceSize.width * amount
+            y = y * amount - bottom * sourceSize.height * amount
+        }
+        let scaleX = card.width / sourceSize.width
+        let scaleY = card.height / sourceSize.height
+        return CGPoint(x: card.minX + x * scaleX, y: card.minY + y * scaleY)
     }
 
     // MARK: - Plate

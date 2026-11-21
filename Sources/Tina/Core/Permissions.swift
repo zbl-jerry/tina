@@ -17,6 +17,9 @@ final class Permissions: ObservableObject {
 
     @Published private(set) var accessibility = false
     @Published private(set) var screenRecording = false
+    /// Input Monitoring is needed only by the recorder's optional key overlay:
+    /// macOS withholds key events from a listen-only tap without it.
+    @Published private(set) var inputMonitoring = false
     /// Optional — only used to make the uninstaller's scan more thorough by
     /// reaching protected locations. There is no API prompt for it; the user
     /// grants it in System Settings.
@@ -204,9 +207,11 @@ final class Permissions: ObservableObject {
     private func refreshActivePermissions() {
         let ax = AXIsProcessTrusted()
         let sr = CGPreflightScreenCaptureAccess()
+        let im = CGPreflightListenEventAccess()
         DispatchQueue.main.async {
             if self.accessibility != ax { self.accessibility = ax }
             if self.screenRecording != sr { self.screenRecording = sr }
+            if self.inputMonitoring != im { self.inputMonitoring = im }
             // A flip can change which cadence applies (e.g. the last grant
             // landed while the app was in the background).
             self.scheduleActivePermissionPolling()
@@ -270,6 +275,17 @@ final class Permissions: ObservableObject {
         }
     }
 
+    /// Shows the system Input Monitoring prompt (once per TCC reset) and opens
+    /// the pane while the grant is missing. Unlike Screen Recording, the
+    /// grant starts working in this process without a relaunch.
+    func requestInputMonitoring() {
+        _ = CGRequestListenEventAccess()
+        refreshActivePermissions()
+        if !inputMonitoring {
+            openInputMonitoringSettings()
+        }
+    }
+
     /// Drops this app's entry from the list and asks again. The entry macOS
     /// keeps is bound to the app's code signature, so a copy signed
     /// differently (a local build, an update signed another way) finds the
@@ -301,6 +317,10 @@ final class Permissions: ObservableObject {
 
     func openScreenRecordingSettings() {
         open(pane: "Privacy_ScreenCapture")
+    }
+
+    func openInputMonitoringSettings() {
+        open(pane: "Privacy_ListenEvent")
     }
 
     func openFullDiskAccessSettings() {

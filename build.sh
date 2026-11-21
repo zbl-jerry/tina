@@ -416,6 +416,8 @@ if (( TEST )); then
         Sources/Tina/Services/Recorder/RecorderMotion.swift
         Sources/Tina/Services/Recorder/RecorderPointerTrack.swift
         Sources/Tina/Services/Recorder/RecorderTypingTrack.swift
+        Sources/Tina/Services/Recorder/RecorderKeystrokeTrack.swift
+        Sources/Tina/Services/Recorder/RecorderKeystrokeRenderer.swift
         Sources/Tina/Services/Recorder/RecorderTimeline.swift
         Sources/Tina/Services/Recorder/RecorderTextOverlay.swift
         Sources/Tina/Services/Recorder/RecorderImageOverlay.swift

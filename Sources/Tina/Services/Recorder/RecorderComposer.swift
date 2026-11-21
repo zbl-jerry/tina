@@ -68,6 +68,12 @@ final class RecorderComposer {
         /// Areas kept unreadable and, for each frame, whether each one is on.
         let blurs: [RecorderBlurRegion]
         let blurCovers: [[Bool]]
+        /// One raster per pressed combination, the combination on screen at
+        /// each frame (-1 for none), how solid it is, and where it sits.
+        let keystrokeSprites: [CGImage?]
+        let keystrokeActive: [Int]
+        let keystrokeOpacity: [Double]
+        let keystrokeOrigins: [CGPoint]
     }
 
     private let plan: Plan
@@ -116,8 +122,28 @@ final class RecorderComposer {
             content = content.composited(over: plate)
         }
         content = drawImages(on: content, index: index)
+        content = drawKeystrokes(on: content, index: index)
         content = drawTexts(on: content, index: index)
         return content.cropped(to: CGRect(origin: .zero, size: plan.canvasSize))
+    }
+
+    /// Keys sit above the picture and its zooms, under any caption. They
+    /// belong to the moment they were pressed, so the plan already decided
+    /// which one is on screen and where; a frame is a lookup and a composite.
+    private func drawKeystrokes(on content: CIImage, index: Int) -> CIImage {
+        guard plan.keystrokeActive.indices.contains(index),
+              plan.keystrokeActive[index] >= 0,
+              plan.keystrokeOpacity.indices.contains(index),
+              plan.keystrokeOpacity[index] > 0.01,
+              plan.keystrokeOrigins.indices.contains(index),
+              plan.keystrokeSprites.indices.contains(plan.keystrokeActive[index]),
+              let sprite = plan.keystrokeSprites[plan.keystrokeActive[index]],
+              sprite.width > 0
+        else { return content }
+        let origin = plan.keystrokeOrigins[index]
+        return faded(CIImage(cgImage: sprite), opacity: plan.keystrokeOpacity[index])
+            .transformed(by: CGAffineTransform(translationX: origin.x, y: origin.y))
+            .composited(over: content)
     }
 
     /// Pictures share the captions' place above the zoom, and go under them:

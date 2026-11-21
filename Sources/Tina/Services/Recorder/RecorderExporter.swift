@@ -82,6 +82,7 @@ final class RecorderExporter {
             failure = await exportVideo(asset: asset,
                                         videoTrack: videoTrack,
                                         pointerURL: take.pointerURL,
+                                        keystrokeURL: take.keystrokesURL,
                                         document: document,
                                         trim: trim,
                                         sourceSize: sourceSize,
@@ -92,6 +93,7 @@ final class RecorderExporter {
             failure = await exportGIF(asset: asset,
                                       videoTrack: videoTrack,
                                       pointerURL: take.pointerURL,
+                                      keystrokeURL: take.keystrokesURL,
                                       document: document,
                                       sourceSize: sourceSize,
                                       to: staged,
@@ -146,6 +148,7 @@ final class RecorderExporter {
             let failure = await exportVideo(asset: asset,
                                             videoTrack: videoTrack,
                                             pointerURL: take.pointerURL,
+                                            keystrokeURL: take.keystrokesURL,
                                             document: document,
                                             trim: trim,
                                             sourceSize: sourceSize,
@@ -181,6 +184,7 @@ final class RecorderExporter {
     private func exportVideo(asset: AVURLAsset,
                              videoTrack: AVAssetTrack,
                              pointerURL: URL,
+                             keystrokeURL: URL,
                              document: RecorderEditDocument,
                              trim: RecorderSupport.Trim,
                              sourceSize: CGSize,
@@ -236,6 +240,8 @@ final class RecorderExporter {
         // resampled afterwards.
         let plan = RecorderComposer.makePlan(document: document,
                                              track: track,
+                                             keystrokes: RecorderKeystrokeTrack.decoded(
+                                                try? Data(contentsOf: keystrokeURL)),
                                              sourceSize: sourceSize,
                                              frameRate: outputFrameRate,
                                              duration: duration,
@@ -551,6 +557,7 @@ final class RecorderExporter {
     private func exportGIF(asset: AVURLAsset,
                            videoTrack: AVAssetTrack,
                            pointerURL: URL,
+                           keystrokeURL: URL,
                            document: RecorderEditDocument,
                            sourceSize: CGSize,
                            to destination: URL,
@@ -579,6 +586,8 @@ final class RecorderExporter {
         let track = RecorderPointerTrack.decoded(try? Data(contentsOf: pointerURL))
         let plan = RecorderComposer.makePlan(document: document,
                                              track: track,
+                                             keystrokes: RecorderKeystrokeTrack.decoded(
+                                                try? Data(contentsOf: keystrokeURL)),
                                              sourceSize: sourceSize,
                                              frameRate: RecorderSupport.sanitizedFrameRate(frameRate),
                                              duration: duration,
