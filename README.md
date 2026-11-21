@@ -140,6 +140,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **Radial menu.** Open a customizable wheel of apps, files, shortcuts and tools around the pointer, with profiles and submenus.
 - **Scratchpad.** Keep autosaved notes in tabs, with Markdown preview and export, in a floating window or Dynamic Island.
 - **Cleaning Mode.** Lock keyboard input while cleaning, with a black screen or a small visible indicator.
+- **Verification codes.** Generate standard TOTP codes from the menu bar without an account or a sync service. Codes stay masked until hovered, secrets live only in this Mac's Keychain, and accounts can be added from an otpauth setup link, a Base32 key or a QR code on screen. See [verification codes](docs/TOTP-AUTHENTICATOR.md).
 
 ### Capture and create
 

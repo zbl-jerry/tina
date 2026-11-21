@@ -827,6 +827,7 @@ enum DefaultsKey {
     static let panelUtilityKillProcess = "panelUtilityKillProcess"
     static let panelUtilityHostsProfiles = "panelUtilityHostsProfiles"
     static let panelUtilityAutoInputSource = "panelUtilityAutoInputSource"
+    static let panelUtilityTOTP = "panelUtilityTOTP"
 
     // Hosts profiles: named fragments applied to /etc/hosts inside one managed
     // block. The list is JSON so it travels in settings backups.
@@ -838,6 +839,12 @@ enum DefaultsKey {
     static let autoInputSourceEnabled = "autoInputSourceEnabled"
     static let autoInputSourceData = "autoInputSourceData"
     static let autoInputSourceLastSources = "autoInputSourceLastSources"
+
+    // Verification codes: account labels, issuer and TOTP parameters. The
+    // secrets themselves are Keychain items, and this metadata is deliberately
+    // left out of settings backups (it is not registered below): labels without
+    // their Keychain secrets would restore as rows that cannot produce a code.
+    static let totpAccountsData = "totpAccountsData"
 
     // Window Layout — snapping, global shortcuts and optional pointer gestures.
     static let windowLayoutShortcutsEnabled = "windowLayoutShortcutsEnabled"
@@ -2027,6 +2034,7 @@ enum Defaults {
         DefaultsKey.autoInputSourceEnabled: false,
         DefaultsKey.autoInputSourceData: "",
         DefaultsKey.autoInputSourceLastSources: "",
+        DefaultsKey.panelUtilityTOTP: true,
         DefaultsKey.screenshotShowCaptureMenuOnShortcut: true,
         DefaultsKey.recorderShowCaptureMenuOnShortcut: true,
         DefaultsKey.screenOCRShowCaptureMenuOnShortcut: true,

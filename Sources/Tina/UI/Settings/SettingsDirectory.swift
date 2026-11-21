@@ -596,6 +596,14 @@ enum SettingsDirectory {
                                                  FeatureStrings.commandBar(language).searchPlaceholder,
                                                  FeatureStrings.commandBar(language).appCenterTitle,
                                                  FeatureStrings.commandBar(language).appAliasLabel]),
+                SettingsDirectoryItem(page: .totpAuthenticator,
+                                      title: FeatureStrings.totpAuthenticator(language).title,
+                                      icon: AppFeature.totpAuthenticator.symbolName,
+                                      keywords: ["totp", "authenticator", "2fa", "two-factor",
+                                                 "verification code", "one-time password",
+                                                 FeatureStrings.totpAuthenticator(language).caption,
+                                                 FeatureStrings.totpAuthenticator(language)
+                                                    .addAccount]),
                 SettingsDirectoryItem(page: .quickTools, title: s.quickToolsTab, icon: "wand.and.rays",
                                        featureKeywords: [
                                         (.quickLauncher, [s.launcherName]),

@@ -607,6 +607,7 @@ struct SettingsView: View {
         case .portManager: PortManagerView()
         case .hostsProfiles: HostsProfilesSettings()
         case .autoInputSource: AutoInputSourceSettings()
+        case .totpAuthenticator: TOTPAuthenticatorSettings()
         case .launchpad: LaunchpadSettings()
         case .urlCleaner: URLCleanerSettings()
         case .cleaner: CleanerSettings()

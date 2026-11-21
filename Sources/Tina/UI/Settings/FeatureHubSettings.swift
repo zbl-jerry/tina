@@ -1214,6 +1214,7 @@ extension AppFeature {
         case .portManager: return FeatureStrings.portManager(language).title
         case .hostsProfiles: return FeatureStrings.hostsProfiles(language).title
         case .autoInputSource: return FeatureStrings.autoInputSource(language).title
+        case .totpAuthenticator: return FeatureStrings.totpAuthenticator(language).title
         case .launchpad: return FeatureStrings.launchpad(language).pageTitle
         case .homebrew: return s.homebrewName
         case .appUpdates: return FeatureStrings.appUpdates(language).pageTitle
@@ -1313,6 +1314,8 @@ extension AppFeature {
         case .portManager: return FeatureStrings.portManager(L10n.shared.language).hubDescription
         case .hostsProfiles: return FeatureStrings.hostsProfiles(L10n.shared.language).hubDescription
         case .autoInputSource: return FeatureStrings.autoInputSource(L10n.shared.language).hubDescription
+        case .totpAuthenticator:
+            return FeatureStrings.totpAuthenticator(L10n.shared.language).hubDescription
         case .launchpad: return FeatureStrings.launchpad(L10n.shared.language).hubDescription
         case .homebrew: return hub.descHomebrew
         case .appUpdates: return FeatureStrings.appUpdates(L10n.shared.language).hubDescription

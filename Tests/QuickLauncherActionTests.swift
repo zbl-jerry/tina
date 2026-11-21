@@ -108,6 +108,7 @@ enum QuickLauncherContract {
             (.uninstaller, .uninstaller, nil, nil),
             (.cleaner, .cleaner, nil, nil),
             (.toggles, .quickToggles, nil, nil),
+            (.totpAuthenticator, .totpAuthenticator, nil, nil),
         ]
         suite.expect(Set(cases.map { $0.0 }) == Set(QuickLauncherItem.allCases),
                      "every launcher tile has an activation contract")

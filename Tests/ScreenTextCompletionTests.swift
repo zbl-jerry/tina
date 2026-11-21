@@ -81,6 +81,11 @@ enum ScreenTextCompletionTests {
             return outcomes[image] ?? .text("capture \(image)")
         }
         static func copyToPasteboard(_ value: String) { NSPasteboard.general.write(value) }
+        /// The generated class calls this when a QR import request is pending;
+        /// no existing case installs one, so it only has to type-check.
+        func recognizeQRPayload(_ image: CGImage, completion: @escaping (String) -> Void) {
+            completion("")
+        }
     }
 
     static func reset() {

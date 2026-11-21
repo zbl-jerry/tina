@@ -130,6 +130,9 @@ enum SettingsBackupSupport {
     /// out by construction (they are not preference keys), listed here only
     /// when they would otherwise slip in through the registered set.
     static let machineStateKeys: Set<String> = [
+        // Account labels are meaningless without their Keychain secrets, which
+        // a settings file cannot carry.
+        DefaultsKey.totpAccountsData,
         // Physical monitor UUIDs only have meaning on the originating Mac.
         DefaultsKey.windowCustomZoneLayouts,
         DefaultsKey.displaysSwitchedOff,

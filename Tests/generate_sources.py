@@ -2169,6 +2169,7 @@ def main():
           + "}\n")
     write("ScreenTextCompletion.swift", "import Foundation\n"
           + "extension ScreenTextCompletionTests {\nfinal class ScreenTextService: State {\n"
+          + "    private var pendingQRPayload: ((String) -> Void)?\n"
           + "".join(declaration(screen_text, prefix).replace("private func", "func", 1)
                     for prefix in ["    func copyText(", "    func receiveUnifiedCapture(",
                                    "    private func recognize(", "    func syncWithPreferences()",

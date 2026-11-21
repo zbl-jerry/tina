@@ -556,7 +556,8 @@ private enum UtilityPanelItem: String, PanelOrderItem, Identifiable {
     // are migrated once without disturbing the rest of the user's layout.
     case screenshot, quickLauncher, appUpdates, cleaner, homebrew, media, clipboard, windowLayout,
          uninstaller, cleanURL, cleaning, screenOCR, colorPicker, cameraPreview, scratchpad,
-         commandBar, screenRecorder, portManager, hostsProfiles, autoInputSource, killProcess
+         commandBar, screenRecorder, portManager, hostsProfiles, autoInputSource,
+         totpAuthenticator, killProcess
 
     var id: String { rawValue }
 
@@ -584,6 +585,7 @@ private enum UtilityPanelItem: String, PanelOrderItem, Identifiable {
         case .portManager: return .portManager
         case .hostsProfiles: return .hostsProfiles
         case .autoInputSource: return .autoInputSource
+        case .totpAuthenticator: return .totpAuthenticator
         case .killProcess: return .killProcess
         }
     }
@@ -605,6 +607,7 @@ struct UtilitiesSection: View {
     @State private var showPortManagerPanel = false
     @State private var showHostsProfilesPanel = false
     @State private var showAutoInputSourcePanel = false
+    @State private var showTOTPPanel = false
     @State private var showKillProcessPanel = false
     @AppStorage(DefaultsKey.panelUtilityCleaning) private var showCleaning = true
     @AppStorage(DefaultsKey.panelUtilityURLCleaner) private var showCleanURL = true
@@ -626,6 +629,7 @@ struct UtilitiesSection: View {
     @AppStorage(DefaultsKey.panelUtilityPortManager) private var showPortManager = true
     @AppStorage(DefaultsKey.panelUtilityHostsProfiles) private var showHostsProfiles = true
     @AppStorage(DefaultsKey.panelUtilityAutoInputSource) private var showAutoInputSource = true
+    @AppStorage(DefaultsKey.panelUtilityTOTP) private var showTOTP = true
     @AppStorage(DefaultsKey.panelUtilityKillProcess) private var showKillProcess = true
     @ObservedObject private var recorder = ScreenRecorderService.shared
     @AppStorage(DefaultsKey.clipboardHistoryEnabled) private var clipboardEnabled = false
@@ -695,6 +699,11 @@ struct UtilitiesSection: View {
                     PanelInteractionState.shared.viewKeepsPopoverOpen = false
                     showAutoInputSourcePanel = false
                 }
+            } else if showTOTPPanel {
+                PanelTOTPAuthenticatorView {
+                    PanelInteractionState.shared.viewKeepsPopoverOpen = false
+                    showTOTPPanel = false
+                }
             } else if showKillProcessPanel {
                 PanelKillProcessView {
                     PanelInteractionState.shared.viewKeepsPopoverOpen = false
@@ -743,6 +752,7 @@ struct UtilitiesSection: View {
         if showPortManagerPanel { return .portManager }
         if showHostsProfilesPanel { return .hostsProfiles }
         if showAutoInputSourcePanel { return .autoInputSource }
+        if showTOTPPanel { return .totpAuthenticator }
         if showKillProcessPanel { return .killProcess }
         return nil
     }
@@ -754,7 +764,8 @@ struct UtilitiesSection: View {
         showUninstaller || showCleanerPanel || showURLCleaner || showHomebrewPanel
             || showMediaPanel || showClipboardPanel || showRecentCapturesPanel
             || showWindowLayoutPanel || showAppUpdatesPanel || showPortManagerPanel
-            || showHostsProfilesPanel || showAutoInputSourcePanel || showKillProcessPanel
+            || showHostsProfilesPanel || showAutoInputSourcePanel || showTOTPPanel
+            || showKillProcessPanel
     }
 
     /// Homebrew browsing behaves like an ordinary popover. Other hosted tools
@@ -812,6 +823,7 @@ struct UtilitiesSection: View {
         case .portManager: return showPortManager
         case .hostsProfiles: return showHostsProfiles
         case .autoInputSource: return showAutoInputSource
+        case .totpAuthenticator: return showTOTP
         case .killProcess: return showKillProcess
         }
     }
@@ -1073,6 +1085,14 @@ struct UtilitiesSection: View {
                                 showsDragHandle: true,
                                 visibility: $showAutoInputSource,
                                 action: { showAutoInputSourcePanel = true })
+        case .totpAuthenticator:
+            UtilityActionButton(title: FeatureStrings.totpAuthenticator(l10n.language).title,
+                                caption: FeatureStrings.totpAuthenticator(l10n.language).panelCaption,
+                                systemImage: AppFeature.totpAuthenticator.symbolName,
+                                isEditing: editing,
+                                showsDragHandle: true,
+                                visibility: $showTOTP,
+                                action: { showTOTPPanel = true })
         case .killProcess:
             UtilityActionButton(title: FeatureStrings.killProcess(l10n.language).pageTitle,
                                 caption: FeatureStrings.killProcess(l10n.language).browseSubtitle,

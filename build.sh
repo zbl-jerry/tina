@@ -432,7 +432,11 @@ if (( TEST )); then
         Sources/Tina/Core/PortManagerStrings.swift
         Sources/Tina/Core/HostsProfilesStrings.swift
         Sources/Tina/Core/AutoInputSourceStrings.swift
+        Sources/Tina/Core/TOTPAuthenticatorStrings.swift
         Sources/Tina/Services/HostsProfiles/HostsProfilesSupport.swift
+        Sources/Tina/Services/TOTPAuthenticator/TOTPSupport.swift
+        Sources/Tina/Services/TOTPAuthenticator/TOTPKeychainStore.swift
+        Sources/Tina/Services/TOTPAuthenticator/TOTPAuthenticatorService.swift
         Sources/Tina/Services/AutoInputSource/AutoInputSourceSupport.swift
         Sources/Tina/Core/WhatsAppDownloadStrings.swift
         Sources/Tina/Core/WhatsAppOrganizerStrings.swift
