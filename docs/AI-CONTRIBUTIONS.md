@@ -7,6 +7,8 @@ remains responsible for understanding the change and answering review questions.
 Give the agent the issue, the intended outcome and the scope. Have it inspect the
 existing implementation and related work before implementing a substantial change.
 Resolve product decisions with the maintainer before building a new subsystem.
+Repository-specific rules for agents (branches, CI, screenshots, releases) are in
+the [agent guide](AGENT-GUIDE.md).
 
 Before submitting, review the diff and the evidence:
 
