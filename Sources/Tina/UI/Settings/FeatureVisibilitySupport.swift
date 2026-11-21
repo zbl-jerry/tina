@@ -8,7 +8,7 @@ import Foundation
 /// below and the unit tests can reason about pages without pulling UI in.
 enum SettingsPage: Hashable {
     case general, features, energy, monitor
-    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, launchpad, notch, notchMascot
+    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, launchpad, notch, notchMascot
     case shortcuts, advanced, about, releaseNotes, support
 }
 
@@ -414,6 +414,7 @@ extension AppFeature {
         case .killProcess: return FeatureSettingsDestination(.killProcess)
         case .portManager: return FeatureSettingsDestination(.portManager)
         case .hostsProfiles: return FeatureSettingsDestination(.hostsProfiles)
+        case .autoInputSource: return FeatureSettingsDestination(.autoInputSource)
         case .launchpad: return FeatureSettingsDestination(.launchpad)
         case .homebrew: return FeatureSettingsDestination(.homebrew)
         case .appUpdates: return FeatureSettingsDestination(.appUpdates)
@@ -485,6 +486,7 @@ enum FeatureVisibilitySupport {
         case .killProcess: return [.killProcess]
         case .portManager: return [.portManager]
         case .hostsProfiles: return [.hostsProfiles]
+        case .autoInputSource: return [.autoInputSource]
         case .launchpad: return [.launchpad]
         case .keyDebounce: return [.keyboardDebounce]
         case .superKey: return [.superKey]

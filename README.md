@@ -116,6 +116,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **Key debounce.** Filter repeated letters caused by a worn keyboard.
 - **Super key.** Use Caps Lock or a right-side modifier as a shortcut combination, with a separate tap action and app exclusions.
 - **Layout Fix.** Tap the right Option key after typing in the wrong keyboard layout to retype the last word in another enabled layout.
+- **Automatic input source.** Give each app an input source for its first activation after launch and for every return, with a global default, a never-switch list and a JSON rules file for dotfiles. Switching happens after the app becomes active, never while typing, and asks for no permission. See [automatic input source](docs/AUTO-INPUT-SOURCE.md).
 - **Keyboard shortcuts.** Manage feature shortcuts in one place, including optional takeover of supported macOS shortcuts while a feature is active.
 
 ### Clipboard, files and links

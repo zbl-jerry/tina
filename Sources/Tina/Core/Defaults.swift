@@ -818,10 +818,18 @@ enum DefaultsKey {
     static let panelUtilityPortManager = "panelUtilityPortManager"
     static let panelUtilityKillProcess = "panelUtilityKillProcess"
     static let panelUtilityHostsProfiles = "panelUtilityHostsProfiles"
+    static let panelUtilityAutoInputSource = "panelUtilityAutoInputSource"
 
     // Hosts profiles: named fragments applied to /etc/hosts inside one managed
     // block. The list is JSON so it travels in settings backups.
     static let hostsProfilesData = "hostsProfilesData"
+
+    // Auto input source: per-app rules carried as JSON, so they travel in
+    // settings backups and can be exported as a dotfile. The last source each
+    // app used is habit on one Mac, not configuration.
+    static let autoInputSourceEnabled = "autoInputSourceEnabled"
+    static let autoInputSourceData = "autoInputSourceData"
+    static let autoInputSourceLastSources = "autoInputSourceLastSources"
 
     // Window Layout — snapping, global shortcuts and optional pointer gestures.
     static let windowLayoutShortcutsEnabled = "windowLayoutShortcutsEnabled"
@@ -2000,6 +2008,10 @@ enum Defaults {
         DefaultsKey.panelUtilityKillProcess: true,
         DefaultsKey.panelUtilityHostsProfiles: true,
         DefaultsKey.hostsProfilesData: "",
+        DefaultsKey.panelUtilityAutoInputSource: true,
+        DefaultsKey.autoInputSourceEnabled: false,
+        DefaultsKey.autoInputSourceData: "",
+        DefaultsKey.autoInputSourceLastSources: "",
         DefaultsKey.screenshotShowCaptureMenuOnShortcut: true,
         DefaultsKey.recorderShowCaptureMenuOnShortcut: true,
         DefaultsKey.screenOCRShowCaptureMenuOnShortcut: true,

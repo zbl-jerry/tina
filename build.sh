@@ -430,7 +430,9 @@ if (( TEST )); then
         Sources/Tina/Core/KillProcessStrings.swift
         Sources/Tina/Core/PortManagerStrings.swift
         Sources/Tina/Core/HostsProfilesStrings.swift
+        Sources/Tina/Core/AutoInputSourceStrings.swift
         Sources/Tina/Services/HostsProfiles/HostsProfilesSupport.swift
+        Sources/Tina/Services/AutoInputSource/AutoInputSourceSupport.swift
         Sources/Tina/Core/WhatsAppDownloadStrings.swift
         Sources/Tina/Core/WhatsAppOrganizerStrings.swift
         Sources/Tina/Core/ReleaseNotes.swift

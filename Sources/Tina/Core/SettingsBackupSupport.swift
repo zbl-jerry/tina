@@ -235,6 +235,9 @@ enum SettingsBackupSupport {
         // A fit measured against one Mac's camera housing would misfit another's.
         DefaultsKey.notchCameraFitWidth,
         DefaultsKey.notchCameraFitHeight,
+        // Which source one app last used is habit on this Mac, not a rule to
+        // bring to another one.
+        DefaultsKey.autoInputSourceLastSources,
     ]
 
     /// The file's content: an envelope with the format version, the app
