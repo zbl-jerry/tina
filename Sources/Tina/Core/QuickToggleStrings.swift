@@ -43,6 +43,27 @@ struct QuickToggleFeatureStrings {
     let screenSaverTitle: String
     let screenSaverCaption: String
     let actionFailed: String
+    // System component restarts (issue #36).
+    let restartDockTitle: String
+    let restartDockCaption: String
+    let restartDockConfirmTitle: String
+    let restartDockConfirmMessage: String
+    let restartFinderTitle: String
+    let restartFinderCaption: String
+    let restartFinderConfirmTitle: String
+    let restartFinderConfirmMessage: String
+    let restartMenuBarTitle: String
+    let restartMenuBarCaption: String
+    let restartMenuBarConfirmTitle: String
+    let restartMenuBarConfirmMessage: String
+    let restartInputMethodTitle: String
+    let restartInputMethodCaption: String
+    let restartInputMethodConfirmTitle: String
+    let restartInputMethodConfirmMessage: String
+    let restartInputMethodUnavailable: String
+    let restartInProgress: String
+    let restartSucceeded: String
+    let restartConfirmButton: String
 }
 
 extension FeatureStrings {
@@ -104,7 +125,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "The Mac keeps running with the display off.",
         screenSaverTitle: "Start the screen saver",
         screenSaverCaption: "Starts right away, on every display.",
-        actionFailed: "Could not complete."
+        actionFailed: "Could not complete.",
+        restartDockTitle: "Restart the Dock",
+        restartDockCaption: "Brings back Dock icons, previews and stacks.",
+        restartDockConfirmTitle: "Restart the Dock?",
+        restartDockConfirmMessage: "Dock icons, previews and stacks disappear for a moment. Open apps and windows are not affected.",
+        restartFinderTitle: "Restart the Finder",
+        restartFinderCaption: "Reloads the Finder and its windows.",
+        restartFinderConfirmTitle: "Restart the Finder?",
+        restartFinderConfirmMessage: "Finder windows close and come back. A file operation in progress may be interrupted; other apps are not affected.",
+        restartMenuBarTitle: "Restart the menu bar",
+        restartMenuBarCaption: "Brings back missing or misplaced menu bar icons.",
+        restartMenuBarConfirmTitle: "Restart the menu bar?",
+        restartMenuBarConfirmMessage: "The menu bar and its status items disappear for a moment. Apps keep running.",
+        restartInputMethodTitle: "Restart the input method",
+        restartInputMethodCaption: "Reloads the third-party input method in use.",
+        restartInputMethodConfirmTitle: "Restart the input method?",
+        restartInputMethodConfirmMessage: "The input method restarts. Uncommitted candidates are lost; other apps are not affected.",
+        restartInputMethodUnavailable: "No third-party input method is running.",
+        restartInProgress: "Restarting…",
+        restartSucceeded: "Restarted.",
+        restartConfirmButton: "Restart",
     )
 
     static let ptBR = QuickToggleFeatureStrings(
@@ -143,7 +184,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "O Mac continua funcionando com a tela apagada.",
         screenSaverTitle: "Iniciar o protetor de tela",
         screenSaverCaption: "Começa na hora, em todas as telas.",
-        actionFailed: "Não foi possível concluir."
+        actionFailed: "Não foi possível concluir.",
+        restartDockTitle: "Reiniciar o Dock",
+        restartDockCaption: "Restaura ícones, prévias e pilhas do Dock.",
+        restartDockConfirmTitle: "Reiniciar o Dock?",
+        restartDockConfirmMessage: "Os ícones, as prévias e as pilhas do Dock somem por um momento. Apps e janelas abertas não são afetadas.",
+        restartFinderTitle: "Reiniciar o Finder",
+        restartFinderCaption: "Recarrega o Finder e suas janelas.",
+        restartFinderConfirmTitle: "Reiniciar o Finder?",
+        restartFinderConfirmMessage: "As janelas do Finder fecham e voltam a abrir. Uma operação de arquivo em andamento pode ser interrompida; os outros apps não são afetados.",
+        restartMenuBarTitle: "Reiniciar a barra de menus",
+        restartMenuBarCaption: "Restaura ícones da barra de menus ausentes ou fora do lugar.",
+        restartMenuBarConfirmTitle: "Reiniciar a barra de menus?",
+        restartMenuBarConfirmMessage: "A barra de menus e seus itens de status somem por um momento. Os apps continuam rodando.",
+        restartInputMethodTitle: "Reiniciar o método de entrada",
+        restartInputMethodCaption: "Recarrega o método de entrada de terceiros em uso.",
+        restartInputMethodConfirmTitle: "Reiniciar o método de entrada?",
+        restartInputMethodConfirmMessage: "O método de entrada reinicia. Candidatos não confirmados são perdidos; os outros apps não são afetados.",
+        restartInputMethodUnavailable: "Nenhum método de entrada de terceiros está em execução.",
+        restartInProgress: "Reiniciando…",
+        restartSucceeded: "Reiniciado.",
+        restartConfirmButton: "Reiniciar",
     )
 
     static let tr = QuickToggleFeatureStrings(
@@ -182,7 +243,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "Mac ekran kapalıyken çalışmaya devam eder.",
         screenSaverTitle: "Ekran koruyucuyu başlat",
         screenSaverCaption: "Hemen, tüm ekranlarda başlar.",
-        actionFailed: "Tamamlanamadı."
+        actionFailed: "Tamamlanamadı.",
+        restartDockTitle: "Dock’u yeniden başlat",
+        restartDockCaption: "Dock simgelerini, önizlemelerini ve yığınlarını geri getirir.",
+        restartDockConfirmTitle: "Dock yeniden başlatılsın mı?",
+        restartDockConfirmMessage: "Dock simgeleri, önizlemeleri ve yığınları kısa süreliğine kaybolur. Açık uygulamalar ve pencereler etkilenmez.",
+        restartFinderTitle: "Finder’ı yeniden başlat",
+        restartFinderCaption: "Finder’ı ve pencerelerini yeniden yükler.",
+        restartFinderConfirmTitle: "Finder yeniden başlatılsın mı?",
+        restartFinderConfirmMessage: "Finder pencereleri kapanıp yeniden açılır. Sürmekte olan bir dosya işlemi kesilebilir; diğer uygulamalar etkilenmez.",
+        restartMenuBarTitle: "Menü çubuğunu yeniden başlat",
+        restartMenuBarCaption: "Kaybolan veya yanlış konumlanan menü çubuğu simgelerini geri getirir.",
+        restartMenuBarConfirmTitle: "Menü çubuğu yeniden başlatılsın mı?",
+        restartMenuBarConfirmMessage: "Menü çubuğu ve durum öğeleri kısa süreliğine kaybolur. Uygulamalar çalışmaya devam eder.",
+        restartInputMethodTitle: "Giriş yöntemini yeniden başlat",
+        restartInputMethodCaption: "Kullanılan üçüncü taraf giriş yöntemini yeniden yükler.",
+        restartInputMethodConfirmTitle: "Giriş yöntemi yeniden başlatılsın mı?",
+        restartInputMethodConfirmMessage: "Giriş yöntemi yeniden başlar. Onaylanmamış adaylar kaybolur; diğer uygulamalar etkilenmez.",
+        restartInputMethodUnavailable: "Çalışan üçüncü taraf giriş yöntemi yok.",
+        restartInProgress: "Yeniden başlatılıyor…",
+        restartSucceeded: "Yeniden başlatıldı.",
+        restartConfirmButton: "Yeniden başlat",
     )
 
     static let ru = QuickToggleFeatureStrings(
@@ -221,7 +302,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "Mac продолжает работать с выключенным экраном.",
         screenSaverTitle: "Запустить заставку",
         screenSaverCaption: "Запускается сразу на всех экранах.",
-        actionFailed: "Не удалось выполнить."
+        actionFailed: "Не удалось выполнить.",
+        restartDockTitle: "Перезапустить Dock",
+        restartDockCaption: "Возвращает значки, превью и стопки Dock.",
+        restartDockConfirmTitle: "Перезапустить Dock?",
+        restartDockConfirmMessage: "Значки, превью и стопки Dock исчезнут на мгновение. Открытые программы и окна не пострадают.",
+        restartFinderTitle: "Перезапустить Finder",
+        restartFinderCaption: "Перезагружает Finder и его окна.",
+        restartFinderConfirmTitle: "Перезапустить Finder?",
+        restartFinderConfirmMessage: "Окна Finder закроются и снова откроются. Текущая файловая операция может прерваться; другие программы не пострадают.",
+        restartMenuBarTitle: "Перезапустить строку меню",
+        restartMenuBarCaption: "Возвращает пропавшие или сместившиеся значки строки меню.",
+        restartMenuBarConfirmTitle: "Перезапустить строку меню?",
+        restartMenuBarConfirmMessage: "Строка меню и её элементы состояния исчезнут на мгновение. Программы продолжат работу.",
+        restartInputMethodTitle: "Перезапустить способ ввода",
+        restartInputMethodCaption: "Перезагружает используемый сторонний способ ввода.",
+        restartInputMethodConfirmTitle: "Перезапустить способ ввода?",
+        restartInputMethodConfirmMessage: "Способ ввода перезапустится. Неподтверждённые варианты будут потеряны; другие программы не пострадают.",
+        restartInputMethodUnavailable: "Сторонний способ ввода не запущен.",
+        restartInProgress: "Перезапуск…",
+        restartSucceeded: "Перезапущено.",
+        restartConfirmButton: "Перезапустить",
     )
 
     static let es = QuickToggleFeatureStrings(
@@ -260,7 +361,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "El Mac sigue funcionando con la pantalla apagada.",
         screenSaverTitle: "Iniciar el salvapantallas",
         screenSaverCaption: "Empieza al momento, en todas las pantallas.",
-        actionFailed: "No se pudo completar."
+        actionFailed: "No se pudo completar.",
+        restartDockTitle: "Reiniciar el Dock",
+        restartDockCaption: "Restaura los iconos, las vistas previas y las pilas del Dock.",
+        restartDockConfirmTitle: "¿Reiniciar el Dock?",
+        restartDockConfirmMessage: "Los iconos, las vistas previas y las pilas del Dock desaparecen un momento. Las apps y ventanas abiertas no se ven afectadas.",
+        restartFinderTitle: "Reiniciar el Finder",
+        restartFinderCaption: "Recarga el Finder y sus ventanas.",
+        restartFinderConfirmTitle: "¿Reiniciar el Finder?",
+        restartFinderConfirmMessage: "Las ventanas del Finder se cierran y vuelven a abrirse. Una operación de archivos en curso puede interrumpirse; las demás apps no se ven afectadas.",
+        restartMenuBarTitle: "Reiniciar la barra de menús",
+        restartMenuBarCaption: "Restaura los iconos de la barra de menús que faltan o están mal colocados.",
+        restartMenuBarConfirmTitle: "¿Reiniciar la barra de menús?",
+        restartMenuBarConfirmMessage: "La barra de menús y sus elementos de estado desaparecen un momento. Las apps siguen ejecutándose.",
+        restartInputMethodTitle: "Reiniciar el método de entrada",
+        restartInputMethodCaption: "Recarga el método de entrada de terceros en uso.",
+        restartInputMethodConfirmTitle: "¿Reiniciar el método de entrada?",
+        restartInputMethodConfirmMessage: "El método de entrada se reinicia. Los candidatos sin confirmar se pierden; las demás apps no se ven afectadas.",
+        restartInputMethodUnavailable: "No hay ningún método de entrada de terceros en ejecución.",
+        restartInProgress: "Reiniciando…",
+        restartSucceeded: "Reiniciado.",
+        restartConfirmButton: "Reiniciar",
     )
 
     static let sk = QuickToggleFeatureStrings(
@@ -299,7 +420,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "Mac beží ďalej aj s vypnutou obrazovkou.",
         screenSaverTitle: "Spustiť šetrič obrazovky",
         screenSaverCaption: "Spustí sa hneď, na všetkých displejoch.",
-        actionFailed: "Nepodarilo sa dokončiť."
+        actionFailed: "Nepodarilo sa dokončiť.",
+        restartDockTitle: "Reštartovať Dock",
+        restartDockCaption: "Obnoví ikony, náhľady a skupiny Docku.",
+        restartDockConfirmTitle: "Reštartovať Dock?",
+        restartDockConfirmMessage: "Ikony, náhľady a skupiny Docku na chvíľu zmiznú. Otvorené aplikácie a okná to neovplyvní.",
+        restartFinderTitle: "Reštartovať Finder",
+        restartFinderCaption: "Znovu načíta Finder a jeho okná.",
+        restartFinderConfirmTitle: "Reštartovať Finder?",
+        restartFinderConfirmMessage: "Okná Finderu sa zavrú a znova otvoria. Prebiehajúca operácia so súborom sa môže prerušiť; ostatné aplikácie to neovplyvní.",
+        restartMenuBarTitle: "Reštartovať lištu ponuky",
+        restartMenuBarCaption: "Obnoví chýbajúce alebo posunuté ikony lišty ponuky.",
+        restartMenuBarConfirmTitle: "Reštartovať lištu ponuky?",
+        restartMenuBarConfirmMessage: "Lišta ponuky a jej stavové položky na chvíľu zmiznú. Aplikácie bežia ďalej.",
+        restartInputMethodTitle: "Reštartovať vstupnú metódu",
+        restartInputMethodCaption: "Znovu načíta používanú vstupnú metódu tretej strany.",
+        restartInputMethodConfirmTitle: "Reštartovať vstupnú metódu?",
+        restartInputMethodConfirmMessage: "Vstupná metóda sa reštartuje. Nepotvrdené kandidáty sa stratia; ostatné aplikácie to neovplyvní.",
+        restartInputMethodUnavailable: "Nie je spustená žiadna vstupná metóda tretej strany.",
+        restartInProgress: "Reštartuje sa…",
+        restartSucceeded: "Reštartované.",
+        restartConfirmButton: "Reštartovať",
     )
 
     static let de = QuickToggleFeatureStrings(
@@ -338,7 +479,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "Der Mac läuft mit ausgeschaltetem Bildschirm weiter.",
         screenSaverTitle: "Bildschirmschoner starten",
         screenSaverCaption: "Startet sofort, auf allen Bildschirmen.",
-        actionFailed: "Konnte nicht abgeschlossen werden."
+        actionFailed: "Konnte nicht abgeschlossen werden.",
+        restartDockTitle: "Dock neu starten",
+        restartDockCaption: "Bringt Dock-Symbole, Vorschauen und Stapel zurück.",
+        restartDockConfirmTitle: "Dock neu starten?",
+        restartDockConfirmMessage: "Dock-Symbole, Vorschauen und Stapel verschwinden kurz. Geöffnete Apps und Fenster sind nicht betroffen.",
+        restartFinderTitle: "Finder neu starten",
+        restartFinderCaption: "Lädt den Finder und seine Fenster neu.",
+        restartFinderConfirmTitle: "Finder neu starten?",
+        restartFinderConfirmMessage: "Finder-Fenster schließen und öffnen sich wieder. Ein laufender Dateivorgang kann unterbrochen werden; andere Apps sind nicht betroffen.",
+        restartMenuBarTitle: "Menüleiste neu starten",
+        restartMenuBarCaption: "Bringt fehlende oder falsch platzierte Menüleistensymbole zurück.",
+        restartMenuBarConfirmTitle: "Menüleiste neu starten?",
+        restartMenuBarConfirmMessage: "Die Menüleiste und ihre Statusobjekte verschwinden kurz. Apps laufen weiter.",
+        restartInputMethodTitle: "Eingabemethode neu starten",
+        restartInputMethodCaption: "Lädt die verwendete Eingabemethode von Drittanbietern neu.",
+        restartInputMethodConfirmTitle: "Eingabemethode neu starten?",
+        restartInputMethodConfirmMessage: "Die Eingabemethode startet neu. Nicht übernommene Kandidaten gehen verloren; andere Apps sind nicht betroffen.",
+        restartInputMethodUnavailable: "Keine Eingabemethode von Drittanbietern läuft.",
+        restartInProgress: "Wird neu gestartet…",
+        restartSucceeded: "Neu gestartet.",
+        restartConfirmButton: "Neu starten",
     )
 
     static let fr = QuickToggleFeatureStrings(
@@ -377,7 +538,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "Le Mac continue de fonctionner écran éteint.",
         screenSaverTitle: "Lancer l’économiseur d’écran",
         screenSaverCaption: "Démarre aussitôt, sur tous les écrans.",
-        actionFailed: "Impossible de terminer."
+        actionFailed: "Impossible de terminer.",
+        restartDockTitle: "Redémarrer le Dock",
+        restartDockCaption: "Rétablit les icônes, aperçus et piles du Dock.",
+        restartDockConfirmTitle: "Redémarrer le Dock\u{00A0}?",
+        restartDockConfirmMessage: "Les icônes, aperçus et piles du Dock disparaissent un instant. Les apps et fenêtres ouvertes ne sont pas affectées.",
+        restartFinderTitle: "Redémarrer le Finder",
+        restartFinderCaption: "Recharge le Finder et ses fenêtres.",
+        restartFinderConfirmTitle: "Redémarrer le Finder\u{00A0}?",
+        restartFinderConfirmMessage: "Les fenêtres du Finder se ferment puis se rouvrent. Une opération de fichier en cours peut être interrompue\u{00A0}; les autres apps ne sont pas affectées.",
+        restartMenuBarTitle: "Redémarrer la barre des menus",
+        restartMenuBarCaption: "Rétablit les icônes de barre des menus absentes ou mal placées.",
+        restartMenuBarConfirmTitle: "Redémarrer la barre des menus\u{00A0}?",
+        restartMenuBarConfirmMessage: "La barre des menus et ses éléments d’état disparaissent un instant. Les apps continuent de tourner.",
+        restartInputMethodTitle: "Redémarrer la méthode de saisie",
+        restartInputMethodCaption: "Recharge la méthode de saisie tierce utilisée.",
+        restartInputMethodConfirmTitle: "Redémarrer la méthode de saisie\u{00A0}?",
+        restartInputMethodConfirmMessage: "La méthode de saisie redémarre. Les candidats non validés sont perdus\u{00A0}; les autres apps ne sont pas affectées.",
+        restartInputMethodUnavailable: "Aucune méthode de saisie tierce n’est en cours d’exécution.",
+        restartInProgress: "Redémarrage…",
+        restartSucceeded: "Redémarré.",
+        restartConfirmButton: "Redémarrer",
     )
 
     static let it = QuickToggleFeatureStrings(
@@ -416,7 +597,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "Il Mac continua a funzionare con lo schermo spento.",
         screenSaverTitle: "Avvia il salvaschermo",
         screenSaverCaption: "Parte subito, su tutti gli schermi.",
-        actionFailed: "Impossibile completare."
+        actionFailed: "Impossibile completare.",
+        restartDockTitle: "Riavvia il Dock",
+        restartDockCaption: "Ripristina icone, anteprime e pile del Dock.",
+        restartDockConfirmTitle: "Riavviare il Dock?",
+        restartDockConfirmMessage: "Le icone, le anteprime e le pile del Dock scompaiono per un momento. Le app e le finestre aperte non sono interessate.",
+        restartFinderTitle: "Riavvia il Finder",
+        restartFinderCaption: "Ricarica il Finder e le sue finestre.",
+        restartFinderConfirmTitle: "Riavviare il Finder?",
+        restartFinderConfirmMessage: "Le finestre del Finder si chiudono e si riaprono. Un’operazione sui file in corso potrebbe essere interrotta; le altre app non sono interessate.",
+        restartMenuBarTitle: "Riavvia la barra dei menu",
+        restartMenuBarCaption: "Ripristina le icone della barra dei menu mancanti o spostate.",
+        restartMenuBarConfirmTitle: "Riavviare la barra dei menu?",
+        restartMenuBarConfirmMessage: "La barra dei menu e le sue voci di stato scompaiono per un momento. Le app continuano a funzionare.",
+        restartInputMethodTitle: "Riavvia il metodo di input",
+        restartInputMethodCaption: "Ricarica il metodo di input di terze parti in uso.",
+        restartInputMethodConfirmTitle: "Riavviare il metodo di input?",
+        restartInputMethodConfirmMessage: "Il metodo di input si riavvia. I candidati non confermati vanno persi; le altre app non sono interessate.",
+        restartInputMethodUnavailable: "Nessun metodo di input di terze parti è in esecuzione.",
+        restartInProgress: "Riavvio in corso…",
+        restartSucceeded: "Riavviato.",
+        restartConfirmButton: "Riavvia",
     )
 
     static let ja = QuickToggleFeatureStrings(
@@ -455,7 +656,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "画面を消しても Mac は動き続けます。",
         screenSaverTitle: "スクリーンセーバを開始",
         screenSaverCaption: "すべてのディスプレイですぐに始まります。",
-        actionFailed: "完了できませんでした。"
+        actionFailed: "完了できませんでした。",
+        restartDockTitle: "Dockを再起動",
+        restartDockCaption: "Dockのアイコン、プレビュー、スタックを復元します。",
+        restartDockConfirmTitle: "Dockを再起動しますか？",
+        restartDockConfirmMessage: "Dockのアイコン、プレビュー、スタックが一時的に消えます。開いているアプリとウインドウには影響しません。",
+        restartFinderTitle: "Finderを再起動",
+        restartFinderCaption: "Finderとそのウインドウを再読み込みします。",
+        restartFinderConfirmTitle: "Finderを再起動しますか？",
+        restartFinderConfirmMessage: "Finderのウインドウが閉じて再び開きます。進行中のファイル操作は中断される場合があります。ほかのアプリには影響しません。",
+        restartMenuBarTitle: "メニューバーを再起動",
+        restartMenuBarCaption: "消えた、または位置がずれたメニューバーのアイコンを復元します。",
+        restartMenuBarConfirmTitle: "メニューバーを再起動しますか？",
+        restartMenuBarConfirmMessage: "メニューバーとそのステータス項目が一時的に消えます。アプリは動作を続けます。",
+        restartInputMethodTitle: "入力ソースを再起動",
+        restartInputMethodCaption: "使用中のサードパーティ入力ソースを再読み込みします。",
+        restartInputMethodConfirmTitle: "入力ソースを再起動しますか？",
+        restartInputMethodConfirmMessage: "入力ソースが再起動し、未確定の候補は失われます。ほかのアプリには影響しません。",
+        restartInputMethodUnavailable: "実行中のサードパーティ入力ソースはありません。",
+        restartInProgress: "再起動しています…",
+        restartSucceeded: "再起動しました。",
+        restartConfirmButton: "再起動",
     )
 
     static let ko = QuickToggleFeatureStrings(
@@ -494,7 +715,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "화면이 꺼져도 Mac은 계속 작동합니다.",
         screenSaverTitle: "화면 보호기 시작",
         screenSaverCaption: "모든 디스플레이에서 바로 시작됩니다.",
-        actionFailed: "완료할 수 없습니다."
+        actionFailed: "완료할 수 없습니다.",
+        restartDockTitle: "Dock 재시작",
+        restartDockCaption: "Dock 아이콘, 미리보기 및 스택을 다시 불러옵니다.",
+        restartDockConfirmTitle: "Dock을 재시작할까요?",
+        restartDockConfirmMessage: "Dock 아이콘, 미리보기 및 스택이 잠시 사라집니다. 열린 앱과 윈도우는 영향을 받지 않습니다.",
+        restartFinderTitle: "Finder 재시작",
+        restartFinderCaption: "Finder와 윈도우를 다시 불러옵니다.",
+        restartFinderConfirmTitle: "Finder를 재시작할까요?",
+        restartFinderConfirmMessage: "Finder 윈도우가 닫혔다가 다시 열립니다. 진행 중인 파일 작업이 중단될 수 있으며 다른 앱은 영향을 받지 않습니다.",
+        restartMenuBarTitle: "메뉴 막대 재시작",
+        restartMenuBarCaption: "사라지거나 잘못 놓인 메뉴 막대 아이콘을 다시 불러옵니다.",
+        restartMenuBarConfirmTitle: "메뉴 막대를 재시작할까요?",
+        restartMenuBarConfirmMessage: "메뉴 막대와 상태 항목이 잠시 사라집니다. 앱은 계속 실행됩니다.",
+        restartInputMethodTitle: "입력기 재시작",
+        restartInputMethodCaption: "사용 중인 타사 입력기를 다시 불러옵니다.",
+        restartInputMethodConfirmTitle: "입력기를 재시작할까요?",
+        restartInputMethodConfirmMessage: "입력기가 재시작되며 확정되지 않은 후보가 사라집니다. 다른 앱은 영향을 받지 않습니다.",
+        restartInputMethodUnavailable: "실행 중인 타사 입력기가 없습니다.",
+        restartInProgress: "재시작 중…",
+        restartSucceeded: "재시작됨.",
+        restartConfirmButton: "재시작",
     )
 
     static let zhHans = QuickToggleFeatureStrings(
@@ -533,7 +774,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "显示器关闭后 Mac 继续运行。",
         screenSaverTitle: "启动屏幕保护程序",
         screenSaverCaption: "在所有显示器上立即启动。",
-        actionFailed: "无法完成。"
+        actionFailed: "无法完成。",
+        restartDockTitle: "重启 Dock",
+        restartDockCaption: "恢复 Dock 图标、预览和堆栈。",
+        restartDockConfirmTitle: "重启 Dock？",
+        restartDockConfirmMessage: "Dock 图标、预览和堆栈会短暂消失。已打开的 App 和窗口不受影响。",
+        restartFinderTitle: "重启访达",
+        restartFinderCaption: "重新载入访达及其窗口。",
+        restartFinderConfirmTitle: "重启访达？",
+        restartFinderConfirmMessage: "访达窗口会关闭后重新打开。正在进行的文件操作可能中断；其他 App 不受影响。",
+        restartMenuBarTitle: "重启菜单栏",
+        restartMenuBarCaption: "恢复消失或错位的菜单栏图标。",
+        restartMenuBarConfirmTitle: "重启菜单栏？",
+        restartMenuBarConfirmMessage: "菜单栏及其状态项会短暂消失。App 继续运行。",
+        restartInputMethodTitle: "重启输入法",
+        restartInputMethodCaption: "重新载入当前使用的第三方输入法。",
+        restartInputMethodConfirmTitle: "重启输入法？",
+        restartInputMethodConfirmMessage: "输入法会重启，未上屏的候选词会丢失；其他 App 不受影响。",
+        restartInputMethodUnavailable: "没有正在运行的第三方输入法。",
+        restartInProgress: "正在重启…",
+        restartSucceeded: "已重启。",
+        restartConfirmButton: "重启",
     )
 
     static let zhTW = QuickToggleFeatureStrings(
@@ -572,7 +833,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "螢幕關閉後 Mac 仍繼續運作。",
         screenSaverTitle: "啟動螢幕保護程式",
         screenSaverCaption: "在所有顯示器上立即啟動。",
-        actionFailed: "無法完成。"
+        actionFailed: "無法完成。",
+        restartDockTitle: "重新啟動 Dock",
+        restartDockCaption: "讓 Dock 圖示、預覽和堆疊重新出現。",
+        restartDockConfirmTitle: "重新啟動 Dock？",
+        restartDockConfirmMessage: "Dock 圖示、預覽和堆疊會暫時消失。已開啟的 App 和視窗不受影響。",
+        restartFinderTitle: "重新啟動 Finder",
+        restartFinderCaption: "重新載入 Finder 及其視窗。",
+        restartFinderConfirmTitle: "重新啟動 Finder？",
+        restartFinderConfirmMessage: "Finder 視窗會關閉後重新開啟。正在進行的檔案操作可能中斷；其他 App 不受影響。",
+        restartMenuBarTitle: "重新啟動選單列",
+        restartMenuBarCaption: "讓消失或錯位的選單列圖示重新出現。",
+        restartMenuBarConfirmTitle: "重新啟動選單列？",
+        restartMenuBarConfirmMessage: "選單列及其狀態項目會暫時消失。App 繼續執行。",
+        restartInputMethodTitle: "重新啟動輸入法",
+        restartInputMethodCaption: "重新載入目前使用的第三方輸入法。",
+        restartInputMethodConfirmTitle: "重新啟動輸入法？",
+        restartInputMethodConfirmMessage: "輸入法會重新啟動，尚未送出的候選字會遺失；其他 App 不受影響。",
+        restartInputMethodUnavailable: "沒有正在執行的第三方輸入法。",
+        restartInProgress: "正在重新啟動…",
+        restartSucceeded: "已重新啟動。",
+        restartConfirmButton: "重新啟動",
     )
 
     static let zhHK = QuickToggleFeatureStrings(
@@ -611,7 +892,27 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "螢幕關閉後 Mac 仍繼續運作。",
         screenSaverTitle: "啟動螢幕保護程式",
         screenSaverCaption: "在所有顯示器上立即啟動。",
-        actionFailed: "無法完成。"
+        actionFailed: "無法完成。",
+        restartDockTitle: "重新啟動 Dock",
+        restartDockCaption: "讓 Dock 圖示、預覽和堆疊重新出現。",
+        restartDockConfirmTitle: "重新啟動 Dock？",
+        restartDockConfirmMessage: "Dock 圖示、預覽和堆疊會暫時消失。已開啟的 App 和視窗不受影響。",
+        restartFinderTitle: "重新啟動 Finder",
+        restartFinderCaption: "重新載入 Finder 及其視窗。",
+        restartFinderConfirmTitle: "重新啟動 Finder？",
+        restartFinderConfirmMessage: "Finder 視窗會關閉後重新開啟。正在進行的檔案操作可能中斷；其他 App 不受影響。",
+        restartMenuBarTitle: "重新啟動選單列",
+        restartMenuBarCaption: "讓消失或錯位的選單列圖示重新出現。",
+        restartMenuBarConfirmTitle: "重新啟動選單列？",
+        restartMenuBarConfirmMessage: "選單列及其狀態項目會暫時消失。App 繼續執行。",
+        restartInputMethodTitle: "重新啟動輸入法",
+        restartInputMethodCaption: "重新載入目前使用的第三方輸入法。",
+        restartInputMethodConfirmTitle: "重新啟動輸入法？",
+        restartInputMethodConfirmMessage: "輸入法會重新啟動，尚未送出的候選字會遺失；其他 App 不受影響。",
+        restartInputMethodUnavailable: "沒有正在執行的第三方輸入法。",
+        restartInProgress: "正在重新啟動…",
+        restartSucceeded: "已重新啟動。",
+        restartConfirmButton: "重新啟動",
     )
     static let uk = QuickToggleFeatureStrings(
         pageTitle: "Швидкі перемикачі",
@@ -649,6 +950,26 @@ extension QuickToggleFeatureStrings {
         displayOffCaption: "Mac продовжує працювати з вимкненим екраном.",
         screenSaverTitle: "Запустити зберігач екрана",
         screenSaverCaption: "Запускається одразу, на кожному дисплеї.",
-        actionFailed: "Не вдалося завершити."
+        actionFailed: "Не вдалося завершити.",
+        restartDockTitle: "Перезапустити Dock",
+        restartDockCaption: "Повертає значки, прев’ю та стоси Dock.",
+        restartDockConfirmTitle: "Перезапустити Dock?",
+        restartDockConfirmMessage: "Значки, прев’ю та стоси Dock зникнуть на мить. Відкриті програми та вікна не постраждають.",
+        restartFinderTitle: "Перезапустити Finder",
+        restartFinderCaption: "Перезавантажує Finder та його вікна.",
+        restartFinderConfirmTitle: "Перезапустити Finder?",
+        restartFinderConfirmMessage: "Вікна Finder закриються й знову відкриються. Поточна файлова операція може перерватися; інші програми не постраждають.",
+        restartMenuBarTitle: "Перезапустити рядок меню",
+        restartMenuBarCaption: "Повертає зниклі або зміщені значки рядка меню.",
+        restartMenuBarConfirmTitle: "Перезапустити рядок меню?",
+        restartMenuBarConfirmMessage: "Рядок меню та його елементи стану зникнуть на мить. Програми продовжать роботу.",
+        restartInputMethodTitle: "Перезапустити спосіб введення",
+        restartInputMethodCaption: "Перезавантажує поточний сторонній спосіб введення.",
+        restartInputMethodConfirmTitle: "Перезапустити спосіб введення?",
+        restartInputMethodConfirmMessage: "Спосіб введення перезапуститься. Незатверджені варіанти буде втрачено; інші програми не постраждають.",
+        restartInputMethodUnavailable: "Сторонній спосіб введення не запущено.",
+        restartInProgress: "Перезапуск…",
+        restartSucceeded: "Перезапущено.",
+        restartConfirmButton: "Перезапустити",
     )
 }
