@@ -14,7 +14,7 @@ import Foundation
 /// primary control when no enable choice was saved before.
 enum AppFeature: String, CaseIterable {
     // Windows and Dock
-    case switcher, dockPreview, dockClick, windowMaximizer, windowLayout, autoQuit, spacesOrder
+    case switcher, dockPreview, dockClick, windowMaximizer, windowLayout, windowPinning, autoQuit, spacesOrder
     // Mouse and keyboard
     case scrollInverter, scrollHorizontal, scrollZoom, focusFollowsMouse, smoothScroll, linearScroll, scrollSpeed, mouseAcceleration, mouseNavigation, mouseButtonShortcuts, middleClick,
          mouseClickDebounce, keyboardDebounce, textSnippets, layoutFix, superKey, autoInputSource, quitWindowProtection
@@ -103,7 +103,8 @@ extension AppFeature {
 
     var group: FeatureGroup {
         switch self {
-        case .switcher, .dockPreview, .dockClick, .launchpad, .windowMaximizer, .windowLayout, .autoQuit, .spacesOrder:
+        case .switcher, .dockPreview, .dockClick, .launchpad, .windowMaximizer, .windowLayout,
+             .windowPinning, .autoQuit, .spacesOrder:
             return .windowsDock
         case .scrollInverter, .scrollHorizontal, .scrollZoom, .focusFollowsMouse, .smoothScroll, .linearScroll, .scrollSpeed, .mouseAcceleration, .mouseNavigation, .mouseButtonShortcuts, .middleClick,
              .keyboardDebounce, .textSnippets, .layoutFix, .superKey, .autoInputSource,
@@ -138,6 +139,7 @@ extension AppFeature {
         case .dockClick: return "dock.arrow.down.rectangle"
         case .windowMaximizer: return "arrow.up.left.and.arrow.down.right"
         case .windowLayout: return "rectangle.3.group"
+        case .windowPinning: return "pin"
         case .autoQuit: return "xmark.rectangle"
         case .spacesOrder: return "rectangle.split.3x1"
         case .scrollInverter: return "arrow.up.arrow.down"
@@ -252,6 +254,7 @@ extension AppFeature {
                                  DefaultsKey.dockClickHide,
                                  DefaultsKey.dockClickCycleWindows]
         case .windowMaximizer: return [DefaultsKey.windowMaximizeEnabled]
+        case .windowPinning: return [DefaultsKey.windowPinningEnabled]
         case .autoQuit: return [DefaultsKey.autoQuitEnabled]
         case .spacesOrder: return [DefaultsKey.spacesOrderEnabled]
         case .scrollInverter: return [DefaultsKey.scrollInverterEnabled,
@@ -391,6 +394,9 @@ extension AppFeature {
         case .dockPreview: return [.accessibility, .screenRecording]
         case .screenOCR: return [.screenRecording]
         case .screenshot: return [.screenRecording]
+        // A mirror is read with ScreenCaptureKit, and handing control back
+        // to the real window raises it through Accessibility.
+        case .windowPinning: return [.screenRecording, .accessibility]
         // The sound of the Mac is read through an audio grant of its own.
         // Microphone access stays contextual, and Accessibility only keeps
         // typing timing.
@@ -514,7 +520,8 @@ extension AppFeature {
         case .focusFollowsMouse, .scrollHorizontal, .scrollZoom, .linearScroll, .scrollSpeed, .diskImageInstaller, .audioPriority,
              .wallpaper, .killProcess, .portManager, .hostsProfiles, .totpAuthenticator,
              .fanControl, .notchMascot, .spacesOrder, .quitApps,
-             .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource:
+             .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource,
+             .windowPinning:
             return false
         }
     }

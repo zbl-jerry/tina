@@ -100,6 +100,10 @@ extension AppFeature {
         // stamps its modifiers on mouse presses from a second tap.
         case .switcher, .superKey, .textSnippets, .autoQuit:
             return .inputs
+        // Each pinned window keeps a ScreenCaptureKit stream running while it
+        // is visible, so the profile is a live periodic sampler.
+        case .windowPinning:
+            return .periodic
         case .windowLayout:
             let edgeSnapRuns = UserDefaults.standard.bool(forKey: DefaultsKey.windowEdgeSnapEnabled)
                 && !WindowEdgeSnapZone.enabledZones(

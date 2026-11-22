@@ -8,7 +8,7 @@ import Foundation
 /// below and the unit tests can reason about pages without pulling UI in.
 enum SettingsPage: Hashable {
     case general, features, energy, monitor
-    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, notch, notchMascot
+    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, windowPinning, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, notch, notchMascot
     case shortcuts, advanced, about, releaseNotes, support
 }
 
@@ -334,6 +334,7 @@ extension AppFeature {
         case .windowMaximizer:
             return FeatureSettingsDestination(.windowLayout, sectionAnchor: .windowMaximizer)
         case .windowLayout: return FeatureSettingsDestination(.windowLayout)
+        case .windowPinning: return FeatureSettingsDestination(.windowPinning)
         case .autoQuit: return FeatureSettingsDestination(.autoQuit)
         case .quitWindowProtection: return FeatureSettingsDestination(.quitProtection)
 
@@ -477,6 +478,7 @@ enum FeatureVisibilitySupport {
         case .switcher: return [.switcher]
         case .dock: return [.dockPreview, .dockClick, .spacesOrder]
         case .windowLayout: return [.windowLayout, .windowMaximizer]
+        case .windowPinning: return [.windowPinning]
         case .autoQuit: return [.autoQuit]
         case .quitProtection: return [.quitWindowProtection]
         case .clipboard: return [.clipboardHistory, .pastePlain, .finderCutPaste]

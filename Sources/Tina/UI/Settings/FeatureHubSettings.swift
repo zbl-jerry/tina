@@ -1142,6 +1142,7 @@ extension AppFeature {
         case .dockClick: return hub.titleDockClick
         case .windowMaximizer: return s.windowMaximizeName
         case .windowLayout: return FeatureStrings.windowLayout(language).title
+        case .windowPinning: return FeatureStrings.windowPinning(language).title
         case .autoQuit: return s.autoQuitName
         case .spacesOrder: return s.spacesOrderName
         case .quitWindowProtection: return FeatureStrings.quitProtection(language).name
@@ -1236,6 +1237,7 @@ extension AppFeature {
         case .dockClick: return hub.descDockClick
         case .windowMaximizer: return hub.descWindowMaximizer
         case .windowLayout: return hub.descWindowLayout
+        case .windowPinning: return FeatureStrings.windowPinning(L10n.shared.language).caption
         case .autoQuit: return hub.descAutoQuit
         case .spacesOrder: return L10n.shared.s.spacesOrderCaption
         case .quitWindowProtection: return FeatureStrings.quitProtection(L10n.shared.language).description

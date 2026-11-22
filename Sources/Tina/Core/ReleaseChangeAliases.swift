@@ -67,6 +67,8 @@ enum ReleaseChangeAliases {
         case .windowLayout: return ["window layout", "window layouts", "snap areas", "edge snapping",
             "window snapping", "snap windows at screen edges", "window dragging", "move and resize by dragging",
             "maximize with margin", "window tools", "resizing windows by dragging"]
+        case .windowPinning: return ["window pinning", "pin window", "pinned window", "pinned windows",
+            "window on top", "always on top", "window mirror"]
         case .autoQuit: return ["quit on close", "auto quit", "quit on last window close"]
         case .spacesOrder: return ["spaces order", "keep spaces in a fixed order"]
         case .scrollInverter: return ["scroll inverter", "invert mouse scrolling", "inverted mouse scrolling",

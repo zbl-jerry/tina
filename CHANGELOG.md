@@ -11,6 +11,9 @@ here before the version in `Resources/Info.plist` is bumped.
 
 ## [Unreleased]
 
+### Added
+- Window pinning: keep any window visible above other apps as a live, resizable mirror. Pinned windows follow their source, pause while minimized, on another Space or fully covered, and hand control back to the real window on click or hover. The feature is installed from the Hub, uses Screen Recording and Accessibility, and its settings join Settings backup.
+
 ### Fixed
 - Update checks ask the repository the app is built from, so they no longer fail against a renamed repository. A response GitHub rejects now reports its HTTP status instead of a placeholder.
 - The post-update What's New window reads the changelog bundled with the app again, so it lists the changes made in every version between the previous install and the current one.
