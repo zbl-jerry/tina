@@ -77,6 +77,10 @@ struct QuickTogglesList: View {
     @AppStorage(DefaultsKey.panelToggleMicMute) private var showMicMute = true
     @AppStorage(DefaultsKey.panelToggleEmptyTrash) private var showEmptyTrash = true
     @AppStorage(DefaultsKey.panelToggleQuitAllApps) private var showQuitAllApps = true
+    @AppStorage(DefaultsKey.panelToggleRestartDock) private var showRestartDock = true
+    @AppStorage(DefaultsKey.panelToggleRestartFinder) private var showRestartFinder = true
+    @AppStorage(DefaultsKey.panelToggleRestartMenuBar) private var showRestartMenuBar = true
+    @AppStorage(DefaultsKey.panelToggleRestartInputMethod) private var showRestartInputMethod = true
     @AppStorage(DefaultsKey.panelToggleEjectDisks) private var showEjectDisks = true
     @AppStorage(DefaultsKey.panelToggleHiddenFiles) private var showHiddenFiles = true
     @AppStorage(DefaultsKey.panelToggleDesktopIcons) private var showDesktopIcons = true
@@ -99,11 +103,14 @@ struct QuickTogglesList: View {
                                  order: itemOrderBinding,
                                  dragging: $draggingItem) {
                 itemView(item)
-                    .disabled(toggles.state(for: item) == .running)
+                    .disabled(!editing && (toggles.state(for: item) == .running
+                                           || isUnavailable(item)))
+                    .opacity(isUnavailable(item) ? 0.55 : 1)
             }
         }
         .onAppear {
             toggles.refreshPermissionStates()
+            toggles.refreshInputMethodTarget()
             brightness.refreshKeyboardLight()
         }
     }
@@ -114,6 +121,8 @@ struct QuickTogglesList: View {
         for key in [DefaultsKey.panelToggleDarkMode, DefaultsKey.panelToggleKeyboardLight,
                     DefaultsKey.panelToggleMicMute,
                     DefaultsKey.panelToggleEmptyTrash, DefaultsKey.panelToggleQuitAllApps,
+                    DefaultsKey.panelToggleRestartDock, DefaultsKey.panelToggleRestartFinder,
+                    DefaultsKey.panelToggleRestartMenuBar, DefaultsKey.panelToggleRestartInputMethod,
                     DefaultsKey.panelToggleEjectDisks, DefaultsKey.panelToggleHiddenFiles,
                     DefaultsKey.panelToggleDesktopIcons, DefaultsKey.panelToggleLockScreen,
                     DefaultsKey.panelToggleDisplayOff, DefaultsKey.panelToggleScreenSaver] {
@@ -155,6 +164,10 @@ struct QuickTogglesList: View {
         case .micMute: return $showMicMute
         case .emptyTrash: return $showEmptyTrash
         case .quitAllApps: return $showQuitAllApps
+        case .restartDock: return $showRestartDock
+        case .restartFinder: return $showRestartFinder
+        case .restartMenuBar: return $showRestartMenuBar
+        case .restartInputMethod: return $showRestartInputMethod
         case .ejectDisks: return $showEjectDisks
         case .hiddenFiles: return $showHiddenFiles
         case .desktopIcons: return $showDesktopIcons
@@ -231,6 +244,27 @@ struct QuickTogglesList: View {
                                 action: {
                                     QuickTogglesService.shared.showQuitApps()
                                 })
+        case .restartDock:
+            restartRow(item, title: strings.restartDockTitle,
+                       caption: strings.restartDockCaption,
+                       systemImage: "dock.rectangle")
+        case .restartFinder:
+            restartRow(item, title: strings.restartFinderTitle,
+                       caption: strings.restartFinderCaption,
+                       systemImage: "face.smiling")
+        case .restartMenuBar:
+            restartRow(item, title: strings.restartMenuBarTitle,
+                       caption: strings.restartMenuBarCaption,
+                       systemImage: "menubar.rectangle")
+        case .restartInputMethod:
+            // The row stays in place without a target, dimmed with the reason
+            // in its caption instead of vanishing from the list.
+            let idle = toggles.inputMethodTarget == nil
+                ? strings.restartInputMethodUnavailable
+                : strings.restartInputMethodCaption
+            restartRow(item, title: strings.restartInputMethodTitle,
+                       caption: idle,
+                       systemImage: "character.cursor.ibeam")
         case .ejectDisks:
             // Anything but the plain description is news: nothing to eject,
             // ejecting now, or a failure.
@@ -314,22 +348,51 @@ struct QuickTogglesList: View {
 
     /// True while the caption is a failure or permission note rather than the
     /// idle description, so the row keeps it in view.
+    /// One of the four system component rows (issue #36). They differ only in
+    /// copy and symbol, so the row shape is shared.
+    private func restartRow(_ item: QuickToggleAction,
+                            title: String,
+                            caption idle: String,
+                            systemImage: String) -> some View {
+        UtilityActionButton(title: title,
+                            caption: caption(for: item, idle: idle),
+                            systemImage: systemImage,
+                            isEditing: editing,
+                            showsDragHandle: true,
+                            visibility: visibilityBinding(item),
+                            captionStaysVisible: isUnavailable(item) || reportsState(item),
+                            action: {
+                                QuickTogglesService.shared.requestRestart(item)
+                            })
+    }
+
     private func reportsState(_ item: QuickToggleAction) -> Bool {
         switch toggles.state(for: item) {
-        case .failed, .needsPermission: return true
+        case .failed, .needsPermission, .succeeded: return true
         case .running, .none: return false
         }
     }
 
-    /// The idle caption, replaced by a short-lived failure note; success needs
-    /// no caption, the row itself already reflects the new state.
+    /// The input method row is present but unusable when no third-party input
+    /// method is running; its caption says why rather than leaving a silent
+    /// no-op.
+    private func isUnavailable(_ item: QuickToggleAction) -> Bool {
+        item == .restartInputMethod && toggles.inputMethodTarget == nil
+    }
+
+    /// The idle caption, replaced by a progress, result or failure note; a
+    /// plain success in the other rows needs no caption, the row itself
+    /// already reflects the new state.
     private func caption(for item: QuickToggleAction, idle: String) -> String {
         let strings = FeatureStrings.quickToggles(l10n.language)
         switch toggles.state(for: item) {
         case .failed: return strings.actionFailed
+        case .succeeded: return strings.restartSucceeded
         case .needsPermission:
             return "\(l10n.s.permissionRequired): \(permissionName(item))"
-        case .running, .none: return idle
+        case .running:
+            return item.restartsSystemComponent ? strings.restartInProgress : idle
+        case .none: return idle
         }
     }
 
@@ -343,7 +406,7 @@ struct QuickTogglesList: View {
         switch toggles.state(for: .ejectDisks) {
         case .running: return l10n.s.diskEjecting
         case .failed: return l10n.s.diskEjectFailed
-        case .needsPermission, .none:
+        case .needsPermission, .succeeded, .none:
             return toggles.ejectableVolumeCount() > 0 ? strings.ejectCaption : l10n.s.diskNoExternal
         }
     }

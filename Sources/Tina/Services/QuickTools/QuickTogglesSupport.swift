@@ -101,6 +101,53 @@ enum QuickTogglesSupport {
         return false
     }
 
+    // MARK: - System component restarts (issue #36)
+
+    /// The processes that host the menu bar. `ControlCenter` draws the system
+    /// status items on current releases; `SystemUIServer` still hosts parts of
+    /// the bar on some systems. Both are probed at run time, because killing a
+    /// name that is absent on this release would report a false failure.
+    static let menuBarHostNames = ["ControlCenter", "SystemUIServer"]
+
+    /// Which menu bar hosts are actually running, in the fixed order above.
+    static func runningMenuBarHosts(_ running: Set<String>) -> [String] {
+        menuBarHostNames.filter(running.contains)
+    }
+
+    /// A third-party input method as the running-app list describes it. Plain
+    /// values, so the target decision stays free of AppKit and Carbon.
+    struct InputMethodCandidate: Equatable {
+        let bundleIdentifier: String
+        let name: String
+        let bundlePath: String
+    }
+
+    /// The input method a restart should target.
+    ///
+    /// The current source wins because that is the one being typed with.
+    /// Input source ids extend the bundle id (`com.tencent.inputmethod.wetype`
+    /// owns `...wetype.pinyin`), so the longest matching prefix is the app.
+    /// When the current source is an Apple layout but exactly one third-party
+    /// method is running, that method is still the only possible target: this
+    /// covers a stuck method that cannot even be selected. Several candidates
+    /// without a current match stay ambiguous and are left alone rather than
+    /// restarting the wrong input method.
+    static func inputMethodTarget(sourceID: String?,
+                                  candidates: [InputMethodCandidate]) -> InputMethodCandidate? {
+        guard !candidates.isEmpty else { return nil }
+        if let sourceID, !sourceID.hasPrefix("com.apple.") {
+            let matches = candidates.filter {
+                sourceID == $0.bundleIdentifier || sourceID.hasPrefix($0.bundleIdentifier + ".")
+            }
+            if let longest = matches.max(by: {
+                $0.bundleIdentifier.count < $1.bundleIdentifier.count
+            }) {
+                return longest
+            }
+        }
+        return candidates.count == 1 ? candidates[0] : nil
+    }
+
     // MARK: - Quit all apps
 
     /// Tina's own identifiers, including the local signing variant. Quitting

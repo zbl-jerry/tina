@@ -152,6 +152,7 @@ struct MetricsTests {
                 TextSnippetExpansionTests.run(suite)
                 QuickTogglesAlertTests.run(suite)
                 QuickTogglesQuitAllTests.run(suite)
+                QuickTogglesRestartTests.run(suite)
                 QuitAppsRuntimeTests.run(suite)
                 PortManagerRefreshTests.run(suite)
                 HostsProfilesTests.run(suite)
