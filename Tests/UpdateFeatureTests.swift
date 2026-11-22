@@ -1166,6 +1166,21 @@ enum UpdateFeatureTests {
         let selectedFromHigherBeta = UpdateServiceSupport.selectUpdate(from: candidateList, currentVersion: "3.3.4-beta.1", includeBetas: false)
         suite.expect(selectedFromHigherBeta == nil, "user on beta turning off betas does not downgrade to older stable")
 
+        // The API address follows the repository the app already links to, so
+        // a rename cannot leave the checker asking a repository that is gone.
+        suite.expect(AppInfo.repositoryPath == "zbl-jerry/tina",
+                     "update checks ask the repository the app is built from")
+        suite.expect(UpdateServiceSupport.checkFailureReason(error: nil, statusCode: 404) == "HTTP 404",
+                     "a rejected response reports its HTTP status")
+        suite.expect(UpdateServiceSupport.checkFailureReason(error: nil, statusCode: 403) == "HTTP 403",
+                     "a rate-limited response reports its HTTP status")
+        let offline = URLError(.notConnectedToInternet)
+        suite.expect(UpdateServiceSupport.checkFailureReason(error: offline, statusCode: nil)
+                        == offline.localizedDescription,
+                     "a transport error keeps its own description")
+        suite.expect(!UpdateServiceSupport.checkFailureReason(error: nil, statusCode: nil).isEmpty,
+                     "an unexplained failure still has readable text")
+
         let knownDigest = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
         suite.expect(UpdateServiceSupport.sha256Matches(Data("abc".utf8), expectedHex: knownDigest),
                "update media accepts its pinned SHA-256 digest")

@@ -134,6 +134,18 @@ enum UpdateServiceSupport {
         return candidateVersion > currentVersion
     }
 
+    // MARK: - Check Failure
+
+    /// The readable reason shown after "Couldn't check". GitHub answers a
+    /// missing repository (404) or a rate limit (403) with a valid JSON body,
+    /// so URLSession reports no error and the status is the only detail there
+    /// is. A transport error is more specific when both are present.
+    static func checkFailureReason(error: Error?, statusCode: Int?) -> String {
+        if let error { return error.localizedDescription }
+        if let statusCode { return "HTTP \(statusCode)" }
+        return URLError(.unknown).localizedDescription
+    }
+
     // MARK: - Release Candidate Selection
 
     struct ReleaseCandidate {
