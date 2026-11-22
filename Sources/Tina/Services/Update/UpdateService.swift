@@ -337,21 +337,27 @@ final class UpdateService: ObservableObject {
 
         let appDirectory = (appPath as NSString).deletingLastPathComponent
         let lastFailure = UserDefaults.standard.string(forKey: DefaultsKey.updateLastInstallFailure)
+        // The release is signed with the same certificate as this running app,
+        // so its digest is what the installer verifies the download against.
+        let certificateSHA1 = CodeSigningIdentity.pinnedCertificateSHA1
         if fm.isWritableFile(atPath: appDirectory),
            !UpdateInstallerSupport.shouldForceAdminInstall(afterFailureCode: lastFailure) {
             launchUserInstaller(appPath: appPath, dmgPath: dmgPath, pid: pid,
-                                resultPath: resultURL.path, expectedVersion: expectedVersion)
+                                resultPath: resultURL.path, expectedVersion: expectedVersion,
+                                certificateSHA1: certificateSHA1)
         } else {
             // Either the folder is not writable, or the last attempt died at
             // the copy/swap step: retry with admin rights instead of failing
             // the same way twice.
             launchAdminInstaller(appPath: appPath, dmgPath: dmgPath, pid: pid,
-                                 resultPath: resultURL.path, expectedVersion: expectedVersion)
+                                 resultPath: resultURL.path, expectedVersion: expectedVersion,
+                                 certificateSHA1: certificateSHA1)
         }
     }
 
     private func launchUserInstaller(appPath: String, dmgPath: String, pid: Int32,
-                                     resultPath: String, expectedVersion: String) {
+                                     resultPath: String, expectedVersion: String,
+                                     certificateSHA1: String) {
         let scriptURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("tina-update-\(pid)-\(UUID().uuidString).sh")
         do {
@@ -367,7 +373,7 @@ final class UpdateService: ObservableObject {
             // app's session and launchd job, before the swap it is here for.
             try DetachedProcess.spawn("/bin/sh",
                                       [scriptURL.path, appPath, dmgPath, "\(pid)", resultPath,
-                                       "\(getuid())", expectedVersion])
+                                       "\(getuid())", expectedVersion, certificateSHA1])
         } catch {
             try? FileManager.default.removeItem(at: scriptURL)
             failInstall(dmgPath: dmgPath, message: error.localizedDescription)
@@ -386,13 +392,15 @@ final class UpdateService: ObservableObject {
     /// its own session so the prompt returns while the installer waits for our
     /// exit — and so it survives that exit.
     private func launchAdminInstaller(appPath: String, dmgPath: String, pid: Int32,
-                                      resultPath: String, expectedVersion: String) {
+                                      resultPath: String, expectedVersion: String,
+                                      certificateSHA1: String) {
         let command = UpdateInstallerSupport.elevatedInstallCommand(appPath: appPath,
                                                                     dmgPath: dmgPath,
                                                                     pid: pid,
                                                                     resultPath: resultPath,
                                                                     uid: getuid(),
-                                                                    expectedVersion: expectedVersion)
+                                                                    expectedVersion: expectedVersion,
+                                                                    expectedCertificateSHA1: certificateSHA1)
         // The in-process authorization holds the main thread until it is
         // answered, and the system dialog never appears while the Extra
         // Brightness overlay is on screen (#1917). Once the request waits,

@@ -14,6 +14,7 @@ VOLUME="$APP_NAME"
 STAGING=""
 WORK=""
 MOUNT=""
+CERT_DIR=""
 
 cleanup() {
     if [[ -n "$MOUNT" ]]; then
@@ -23,6 +24,7 @@ cleanup() {
     fi
     [[ -n "$STAGING" ]] && rm -rf "$STAGING"
     [[ -n "$WORK" ]] && rm -rf "$WORK"
+    [[ -n "$CERT_DIR" ]] && rm -rf "$CERT_DIR"
 }
 trap cleanup EXIT
 
@@ -133,5 +135,33 @@ echo "▸ Compressing…"
 mkdir -p dist
 rm -f "$OUT"
 hdiutil convert "$RW" -format UDZO -imagekey zlib-level=9 -o "$OUT" -quiet
+
+echo "▸ Signing…"
+# The built-in updater accepts only a disk image signed by the certificate
+# that signed the installed app. Releases are self-signed, so the DMG needs
+# that signature too; an ad-hoc build (CI) gets an ad-hoc image.
+IDENTITY="$(/usr/bin/codesign -dv --verbose=2 "$APP" 2>&1 \
+    | /usr/bin/awk -F= '/^Authority=/{authority=$2} END{if (authority != "") print authority}')"
+if [[ -n "$IDENTITY" ]]; then
+    # The local signing keychain is locked after every reboot; build.sh
+    # unlocks the same one before signing the app.
+    security unlock-keychain -p tina-signing \
+        "$HOME/Library/Keychains/tina-signing.keychain-db" 2>/dev/null || true
+    codesign --force --sign "$IDENTITY" "$OUT"
+    # Prove the updater will accept it: the same requirement shape the
+    # installer builds, pinned to this app's leaf certificate.
+    CERT_DIR="$(mktemp -d)"
+    codesign -d --extract-certificates="$CERT_DIR/cert" "$APP" >/dev/null 2>&1
+    CERT_SHA1="$(openssl x509 -inform DER -in "$CERT_DIR/cert0" -noout -fingerprint -sha1 2>/dev/null \
+        | sed 's/^.*=//; s/://g' | tr 'A-F' 'a-f')"
+    if [[ -z "$CERT_SHA1" ]]; then
+        echo "✗ Could not read the app's signing certificate" >&2
+        exit 1
+    fi
+    codesign --verify --strict -R="certificate leaf = H\"$CERT_SHA1\"" "$OUT"
+else
+    codesign --force --sign - "$OUT"
+    codesign --verify --strict "$OUT"
+fi
 
 echo "✓ DMG ready: $OUT"

@@ -9,6 +9,12 @@ window reads the entries between the version a person updated from and the
 version they are running, so every release needs a dated `## [version]` section
 here before the version in `Resources/Info.plist` is bumped.
 
+## [Unreleased]
+
+### Fixed
+- Built-in updates install again. Releases are self-signed, but the installer required an Apple-anchored Developer ID signature that no release could carry, so every attempt stopped at `fail-dmg-verify`. The disk image is now signed by the same certificate as the app, and the installer pins that certificate instead of a team ID. Releases up to 3.7.1 still need one manual install.
+- The fan-control helper's XPC peer requirement pins the signing certificate of the running app instead of a Developer ID team, matching how releases are actually signed.
+
 ## [3.7.1] - 2026-11-22
 
 ### Added

@@ -13,6 +13,18 @@ Tina's GitHub releases and local builds are signed with a stable local identity 
 
 Tina lives in the menu bar, so once it starts, look for its icon up there rather than in the Dock.
 
+## The built-in update fails
+
+Releases up to and including 3.7.1 expected the disk image to carry an
+Apple-anchored Developer ID signature, but releases are self-signed, so the
+installer stopped at its DMG check and kept the old version. The saved failure
+reason is `fail-dmg-verify`.
+
+Install that one release from GitHub by hand: open `Tina-<version>.dmg`, drag
+`Tina.app` to Applications, and confirm the Gatekeeper prompt as above. From
+the next release on, the installer pins the certificate that signed the
+installed app, so in-place updates work again.
+
 ## A feature does nothing, or a permission will not stick
 
 Most features lean on a macOS permission, which the [permissions guide](PERMISSIONS.md) lays out. When something does nothing, walk through this.

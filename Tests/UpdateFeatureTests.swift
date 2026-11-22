@@ -972,8 +972,19 @@ enum UpdateFeatureTests {
             suite.expect(installerScript.contains(step),
                    "installer script reports the \(step) step")
         }
-        suite.expect(installerScript.contains("spctl --status"),
-               "installer script skips Gatekeeper assessment when the user disabled it")
+        // Releases are self-signed: there is no Developer ID team to anchor to
+        // and no notarization for Gatekeeper to accept. The installer pins the
+        // certificate that signed the running app instead.
+        suite.expect(installerScript.contains("EXPECTED_CERT_SHA1=\"$7\""),
+               "installer takes the running app's certificate digest as an argument")
+        suite.expect(installerScript.contains("DMG_VERIFY_REQ=\"certificate leaf = H\\\"$EXPECTED_CERT_SHA1\\\"\"")
+                && installerScript.contains("VERIFY_REQ=\"identifier \\\"com.tina.utils\\\" and certificate leaf = H\\\"$EXPECTED_CERT_SHA1\\\"\""),
+               "installer pins the running app's certificate for both the DMG and the bundle")
+        suite.expect(!installerScript.contains("3D485NHW29")
+                && !installerScript.contains("anchor apple generic"),
+               "installer no longer requires a Developer ID team the project does not have")
+        suite.expect(!installerScript.contains("spctl"),
+               "installer does not expect Gatekeeper to accept a self-signed release")
         let dmgVerification = installerScript.range(of: "DMG_VERIFY_REQ")
         let dmgMount = installerScript.range(of: "/usr/bin/hdiutil attach")
         suite.expect(dmgVerification != nil && dmgMount != nil
@@ -1005,7 +1016,8 @@ enum UpdateFeatureTests {
             pid: 123,
             resultPath: "/tmp/result",
             uid: 501,
-            expectedVersion: "3.3.3")
+            expectedVersion: "3.3.3",
+            expectedCertificateSHA1: "1ed99ee19d3388550ac6a586521f97ea23aacdf7")
         suite.expect(elevated.contains("POSIX::setsid()") && elevated.hasSuffix("&"),
                "elevated installer leaves this app's session so it outlives the app it replaces")
         suite.expect(elevated.contains("nohup"),
@@ -1014,6 +1026,8 @@ enum UpdateFeatureTests {
                "elevated installer passes the app path quoted for the shell")
         suite.expect(elevated.contains("'3.3.3'"),
                "elevated installer passes the expected version quoted for the shell")
+        suite.expect(elevated.contains("'1ed99ee19d3388550ac6a586521f97ea23aacdf7'"),
+               "elevated installer passes the pinned certificate digest quoted for the shell")
         // The script travels inline and is long; it must be spelled once, with
         // both the setsid attempt and the fallback reusing the same "$@".
         suite.expect(elevated.components(separatedBy: "DMG_VERIFY_REQ=").count == 2

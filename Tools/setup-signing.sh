@@ -17,8 +17,10 @@
 # It does NOT replace Apple notarization: downloaded builds still show Gatekeeper's
 # "unverified developer" prompt on first launch. It only stabilizes the identity.
 #
-# Maintainers: official releases use the protected release-signing environment.
-# Run this only to get the same permission-preserving behavior for local builds.
+# Maintainers: official releases are built with this identity, and both the
+# updater and the fan helper pin it. Back up tina-signing.keychain-db: a
+# reissued certificate cannot update apps signed by the old one, so that
+# transition needs one manual install.
 set -euo pipefail
 
 IDENTITY="Tina Utils Signing"

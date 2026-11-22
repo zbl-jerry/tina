@@ -2004,6 +2004,31 @@ enum RepositoryFeatureTests {
                    "\(script) asks codesign to sign a throwaway copy of /bin/echo with the stable identity")
         }
 
+        // MARK: Trust requirements match the self-signed release process
+        // The project has no Developer ID certificate, so a team OU cannot be
+        // the trust anchor: the updater and the privileged helper pin the
+        // certificate that signed the running app instead.
+        let updateInstallerSource = repository.source(
+            at: "Sources/Tina/Services/Update/UpdateInstallerSupport.swift")
+        let fanControlSource = repository.source(
+            at: "Sources/Tina/Services/FanControl/FanControlXPC.swift")
+        let signingIdentitySource = repository.source(
+            at: "Sources/Tina/Core/CodeSigningIdentity.swift")
+        suite.expect(!signingIdentitySource.isEmpty,
+               "the shared signing identity source reads back")
+        suite.expect(!updateInstallerSource.contains("3D485NHW29")
+                && !fanControlSource.contains("3D485NHW29"),
+               "trust requirements no longer depend on a Developer ID team")
+        suite.expect(updateInstallerSource.contains("EXPECTED_CERT_SHA1")
+                && !updateInstallerSource.contains("anchor apple generic"),
+               "the installer verifies self-signed releases without an Apple anchor")
+        suite.expect(fanControlSource.contains("CodeSigningIdentity.requirement"),
+               "the privileged helper pins the running certificate too")
+        let dmgScript = (try? String(contentsOfFile: "Tools/make-dmg.sh",
+                                     encoding: .utf8)) ?? ""
+        suite.expect(dmgScript.contains("codesign --force --sign \"$IDENTITY\" \"$OUT\""),
+               "the DMG is signed by the same identity as the app before it ships")
+
         // MARK: Uninstallation paths stay aligned across SelfUninstall and Tools/uninstall.sh
         let selfUninstallSource = repository.source(
             at: "Sources/Tina/Services/SelfUninstall.swift")

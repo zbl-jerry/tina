@@ -692,6 +692,7 @@ echo "▸ Compiling protected helper…"
 swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" "${BUILD_VARIANT_FLAGS[@]}" \
     Sources/Tina/Services/FanControl/FanControlSupport.swift \
     Sources/Tina/Services/FanControl/FanControlXPC.swift \
+    Sources/Tina/Core/CodeSigningIdentity.swift \
     Sources/Tina/Services/SystemMonitor/SMCClient.swift \
     Sources/Tina/Services/Metrics/TemperatureSensorSelector.swift \
     Sources/Tina/Services/FanControl/FanControlHardware.swift \

@@ -54,7 +54,8 @@ enum UpdateAdminInstallContract {
             AdminShell.answer = nil
             let service = Service()
             service.launchAdminInstaller(appPath: "/Applications/Tina.app", dmgPath: "/tmp/update.dmg",
-                                         pid: 42, resultPath: "/tmp/update-result", expectedVersion: "9.9.9")
+                                         pid: 42, resultPath: "/tmp/update-result", expectedVersion: "9.9.9",
+                                         certificateSHA1: "1ed99ee19d3388550ac6a586521f97ea23aacdf7")
             suite.expect(events == ["prompt"],
                          "the brightness overlay leaves the screen before the prompt holds the main thread")
             AdminShell.answer?(granted)
