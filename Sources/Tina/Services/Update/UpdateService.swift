@@ -27,7 +27,7 @@ final class UpdateService: ObservableObject {
     /// preview. Set alongside `.available`; cleared otherwise.
     @Published private(set) var availableNotes: String?
 
-    private let repository = "tina/tina-utils"
+    private let repository = AppInfo.repositoryPath
     private var downloadURL: URL?
     /// Size the release advertises for the asset, used to bound the download.
     private var downloadExpectedBytes: Int64?
@@ -127,13 +127,18 @@ final class UpdateService: ObservableObject {
         request.setValue("Tina/\(AppInfo.version)", forHTTPHeaderField: "User-Agent")
         request.cachePolicy = .reloadIgnoringLocalCacheData
 
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
             DispatchQueue.main.async {
                 self.lastChecked = Date()
-                guard let data, error == nil else {
+                // A 404 or a rate-limit response still carries a valid JSON
+                // body, so URLSession reports no error. Check the status before
+                // decoding, and never leave the reason as a placeholder.
+                let status = (response as? HTTPURLResponse)?.statusCode
+                guard error == nil, let data, status == 200 else {
                     self.availableNotes = nil
-                    self.state = .failed(error?.localizedDescription ?? "-")
+                    self.state = .failed(UpdateServiceSupport.checkFailureReason(error: error,
+                                                                                  statusCode: status))
                     return
                 }
 
@@ -147,8 +152,11 @@ final class UpdateService: ObservableObject {
                 }
 
                 guard !releases.isEmpty else {
+                    // A successful response that lists no release means there
+                    // is nothing to install (the repository has no releases
+                    // yet), not that checking failed.
                     self.availableNotes = nil
-                    self.state = .failed(error?.localizedDescription ?? "-")
+                    self.state = .upToDate
                     return
                 }
 
@@ -254,7 +262,8 @@ final class UpdateService: ObservableObject {
                     guard let tempURL, error == nil else {
                         DispatchQueue.main.async {
                             self.state = offered.map { State.available(version: $0) }
-                                ?? .failed(error?.localizedDescription ?? "-")
+                                ?? .failed(UpdateServiceSupport.checkFailureReason(error: error,
+                                                                                  statusCode: nil))
                         }
                         return
                     }

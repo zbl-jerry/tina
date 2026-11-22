@@ -40,6 +40,11 @@ and contribution rules live in [CONTRIBUTING.md](../CONTRIBUTING.md) and
 
 - The version lives in `Resources/Info.plist` (`CFBundleShortVersionString` and
   `CFBundleVersion`). Bump it in its own commit.
+- Every release needs a dated `## [version] - YYYY-MM-DD` section in
+  `CHANGELOG.md`, with `### Added`, `### Changed` and `### Fixed` entries. The
+  build bundles the file and the post-update What's New window reads it, so a
+  bundle version without an entry fails `./build.sh --test` and a missing file
+  fails `./build.sh`.
 - Build `./build.sh`, run `./build/Tina --selftest`, then `./Tools/make-dmg.sh`
   for `dist/Tina-<version>.dmg`.
 - Tag `v<version>` and create the GitHub release from `dev`; include the

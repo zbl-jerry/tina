@@ -2400,7 +2400,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         }
         let defaults = UserDefaults.standard
         var digest = ReleaseDigest.make(from: previous, to: AppInfo.version,
-                                       changelog: "",
+                                       changelog: ReleaseNotes.bundledChangelog() ?? "",
                                        includeUnreleased: includeUnreleased)
         if isReview, let previewVersion {
             // Keep this build's beta and unreleased notes in the preview;

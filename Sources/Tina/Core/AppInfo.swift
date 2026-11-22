@@ -10,6 +10,15 @@ enum AppInfo {
     static let repositoryURL = URL(string: "https://github.com/zbl-jerry/tina")!
     static let websiteURL = repositoryURL
 
+    /// `owner/name` for the GitHub API, derived from `repositoryURL` so the
+    /// API and the links a person clicks can never name different repositories.
+    static var repositoryPath: String {
+        repositoryURL.pathComponents
+            .filter { $0 != "/" }
+            .suffix(2)
+            .joined(separator: "/")
+    }
+
     /// The bundle version. The fallback only applies to the bare binary
     /// (e.g. `--selftest`), never the shipped app, which reads its Info.plist.
     static var version: String {

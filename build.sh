@@ -753,6 +753,13 @@ mkdir -p "$STAGE/Contents/Frameworks"
 cp "build/$NOW_PLAYING_ADAPTER" "$STAGE/Contents/Frameworks/$NOW_PLAYING_ADAPTER"
 cp Resources/now-playing.pl "$STAGE/Contents/Resources/now-playing.pl"
 cp Resources/agent-prices.json "$STAGE/Contents/Resources/agent-prices.json"
+# The post-update What's New window reads this from the bundle. A build
+# without it would ship a window that lists no changes, so stop here instead.
+if [[ ! -f CHANGELOG.md ]]; then
+    echo "CHANGELOG.md is missing; the What's New window would have no release notes" >&2
+    exit 1
+fi
+cp CHANGELOG.md "$STAGE/Contents/Resources/CHANGELOG.md"
 cp Resources/com.tina.utils.fan-control.plist \
     "$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
 cp Resources/Info.plist "$STAGE/Contents/Info.plist"
