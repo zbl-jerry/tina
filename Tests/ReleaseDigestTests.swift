@@ -11,6 +11,7 @@ enum ReleaseDigestTests {
         checkSettingsPaths(suite)
         checkVersionRanges(suite)
         checkDigest(suite)
+        checkBundledChangelog(suite)
         checkClassifier(suite)
         checkPending(suite)
         checkNewFeatures(suite)
@@ -157,6 +158,31 @@ enum ReleaseDigestTests {
         let kept = ReleaseDigest.make(from: "1.0.0", to: "2.0.0", changelog: highlightsOnly)
         suite.expect(kept.changes.map(\.kind) == [.new, .fixed] && kept.changes.map(\.features) == [[.commandBar], [.cleaner]],
                      "highlights with no other list of additions are the release's news")
+    }
+
+    /// The data source the app actually reads, not a fixture. `build.sh`
+    /// copies `CHANGELOG.md` into the bundle; these checks read the same file
+    /// from the repository root, so a release that forgets its entry fails
+    /// here instead of silently emptying the post-update window again.
+    private static func checkBundledChangelog(_ suite: TestSuite) {
+        guard let changelog = try? String(contentsOfFile: "CHANGELOG.md", encoding: .utf8) else {
+            suite.expect(false, "CHANGELOG.md exists at the repository root")
+            return
+        }
+        let digest = ReleaseDigest.make(from: "3.5.0", to: "3.6.0", changelog: changelog)
+        suite.expect(digest.versions == ["3.6.0"], "the shipped changelog has a 3.6.0 entry")
+        suite.expect(!digest.changes.isEmpty, "updating from 3.5.0 to 3.6.0 lists its changes")
+        let skipped = ReleaseDigest.make(from: "3.4.4", to: "3.6.0", changelog: changelog)
+        suite.expect(skipped.versions == ["3.6.0", "3.5.0", "3.4.5"],
+                     "an update that skipped releases covers every one in between")
+        let listed = ReleaseNotes.allVersions(changelog: changelog)
+        let info = NSDictionary(contentsOfFile: "Resources/Info.plist") as? [String: Any]
+        let current = info?["CFBundleShortVersionString"] as? String
+        suite.expect(current.map { listed.contains($0) } == true,
+                     "the bundle version \(current ?? "?") has a changelog entry")
+        let build = try? String(contentsOfFile: "build.sh", encoding: .utf8)
+        suite.expect(build?.contains("Contents/Resources/CHANGELOG.md") == true,
+                     "the build copies the changelog into the app bundle")
     }
 
     private static func checkClassifier(_ suite: TestSuite) {

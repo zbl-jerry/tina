@@ -16,7 +16,16 @@ struct ReleaseNotes {
         return direct
     }
 
-    static func notes(for version: String, changelog: String? = nil) -> ReleaseNotes {
+    /// The changelog shipped inside the app bundle. The build copies the
+    /// repository's `CHANGELOG.md` into `Contents/Resources`, so the
+    /// post-update window and the release-notes screen read the same file
+    /// the release was cut from.
+    static func bundledChangelog() -> String? {
+        guard let url = Bundle.main.url(forResource: "CHANGELOG", withExtension: "md") else { return nil }
+        return try? String(contentsOf: url, encoding: .utf8)
+    }
+
+    static func notes(for version: String, changelog: String? = bundledChangelog()) -> ReleaseNotes {
         guard let changelog,
               let parsed = parse(version: version, changelog: changelog) else {
             return ReleaseNotes(version: version, date: nil, sections: [])
@@ -26,7 +35,7 @@ struct ReleaseNotes {
 
     /// Every version listed in the changelog, in document order (newest first).
     /// Used to surface the releases a user skipped between updates.
-    static func allVersions(changelog: String? = nil) -> [String] {
+    static func allVersions(changelog: String? = bundledChangelog()) -> [String] {
         guard let changelog else { return [] }
         return changelog
             .components(separatedBy: .newlines)
@@ -37,7 +46,7 @@ struct ReleaseNotes {
     /// Raw markdown body of a version's changelog section (everything between its
     /// `## [version]` header and the next one), so the Developer build can feed
     /// the update preview real notes. Empty when the version is absent.
-    static func rawNotes(for version: String, changelog: String? = nil) -> String {
+    static func rawNotes(for version: String, changelog: String? = bundledChangelog()) -> String {
         guard let changelog else { return "" }
         let lines = changelog.components(separatedBy: .newlines)
         var targetIndex = lines.firstIndex(where: { header(in: $0)?.version == version })
