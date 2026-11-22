@@ -145,7 +145,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "No third-party input method is running.",
         restartInProgress: "Restarting…",
         restartSucceeded: "Restarted.",
-        restartConfirmButton: "Restart",
+        restartConfirmButton: "Restart"
     )
 
     static let ptBR = QuickToggleFeatureStrings(
@@ -204,7 +204,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Nenhum método de entrada de terceiros está em execução.",
         restartInProgress: "Reiniciando…",
         restartSucceeded: "Reiniciado.",
-        restartConfirmButton: "Reiniciar",
+        restartConfirmButton: "Reiniciar"
     )
 
     static let tr = QuickToggleFeatureStrings(
@@ -263,7 +263,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Çalışan üçüncü taraf giriş yöntemi yok.",
         restartInProgress: "Yeniden başlatılıyor…",
         restartSucceeded: "Yeniden başlatıldı.",
-        restartConfirmButton: "Yeniden başlat",
+        restartConfirmButton: "Yeniden başlat"
     )
 
     static let ru = QuickToggleFeatureStrings(
@@ -322,7 +322,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Сторонний способ ввода не запущен.",
         restartInProgress: "Перезапуск…",
         restartSucceeded: "Перезапущено.",
-        restartConfirmButton: "Перезапустить",
+        restartConfirmButton: "Перезапустить"
     )
 
     static let es = QuickToggleFeatureStrings(
@@ -381,7 +381,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "No hay ningún método de entrada de terceros en ejecución.",
         restartInProgress: "Reiniciando…",
         restartSucceeded: "Reiniciado.",
-        restartConfirmButton: "Reiniciar",
+        restartConfirmButton: "Reiniciar"
     )
 
     static let sk = QuickToggleFeatureStrings(
@@ -440,7 +440,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Nie je spustená žiadna vstupná metóda tretej strany.",
         restartInProgress: "Reštartuje sa…",
         restartSucceeded: "Reštartované.",
-        restartConfirmButton: "Reštartovať",
+        restartConfirmButton: "Reštartovať"
     )
 
     static let de = QuickToggleFeatureStrings(
@@ -499,7 +499,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Keine Eingabemethode von Drittanbietern läuft.",
         restartInProgress: "Wird neu gestartet…",
         restartSucceeded: "Neu gestartet.",
-        restartConfirmButton: "Neu starten",
+        restartConfirmButton: "Neu starten"
     )
 
     static let fr = QuickToggleFeatureStrings(
@@ -558,7 +558,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Aucune méthode de saisie tierce n’est en cours d’exécution.",
         restartInProgress: "Redémarrage…",
         restartSucceeded: "Redémarré.",
-        restartConfirmButton: "Redémarrer",
+        restartConfirmButton: "Redémarrer"
     )
 
     static let it = QuickToggleFeatureStrings(
@@ -617,7 +617,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Nessun metodo di input di terze parti è in esecuzione.",
         restartInProgress: "Riavvio in corso…",
         restartSucceeded: "Riavviato.",
-        restartConfirmButton: "Riavvia",
+        restartConfirmButton: "Riavvia"
     )
 
     static let ja = QuickToggleFeatureStrings(
@@ -676,7 +676,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "実行中のサードパーティ入力ソースはありません。",
         restartInProgress: "再起動しています…",
         restartSucceeded: "再起動しました。",
-        restartConfirmButton: "再起動",
+        restartConfirmButton: "再起動"
     )
 
     static let ko = QuickToggleFeatureStrings(
@@ -735,7 +735,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "실행 중인 타사 입력기가 없습니다.",
         restartInProgress: "재시작 중…",
         restartSucceeded: "재시작됨.",
-        restartConfirmButton: "재시작",
+        restartConfirmButton: "재시작"
     )
 
     static let zhHans = QuickToggleFeatureStrings(
@@ -794,7 +794,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "没有正在运行的第三方输入法。",
         restartInProgress: "正在重启…",
         restartSucceeded: "已重启。",
-        restartConfirmButton: "重启",
+        restartConfirmButton: "重启"
     )
 
     static let zhTW = QuickToggleFeatureStrings(
@@ -853,7 +853,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "沒有正在執行的第三方輸入法。",
         restartInProgress: "正在重新啟動…",
         restartSucceeded: "已重新啟動。",
-        restartConfirmButton: "重新啟動",
+        restartConfirmButton: "重新啟動"
     )
 
     static let zhHK = QuickToggleFeatureStrings(
@@ -912,7 +912,7 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "沒有正在執行的第三方輸入法。",
         restartInProgress: "正在重新啟動…",
         restartSucceeded: "已重新啟動。",
-        restartConfirmButton: "重新啟動",
+        restartConfirmButton: "重新啟動"
     )
     static let uk = QuickToggleFeatureStrings(
         pageTitle: "Швидкі перемикачі",
@@ -970,6 +970,6 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Сторонній спосіб введення не запущено.",
         restartInProgress: "Перезапуск…",
         restartSucceeded: "Перезапущено.",
-        restartConfirmButton: "Перезапустити",
+        restartConfirmButton: "Перезапустити"
     )
 }
