@@ -9,6 +9,13 @@ window reads the entries between the version a person updated from and the
 version they are running, so every release needs a dated `## [version]` section
 here before the version in `Resources/Info.plist` is bumped.
 
+## [3.7.3] - 2026-11-23
+
+### Fixed
+- Microphone mute keeps its listeners across normal input changes, registers them again after the audio service restarts, and holds a requested mute on a device until that device comes back.
+- The window switcher waits until an interrupted session can be dismissed before it filters keys and clicks again after macOS pauses its input tap. Suspending the feature or installing a newer switcher supersedes a stale restart.
+- Volume keys on USB outputs without a compatible main volume control are handed to macOS when a reliable step or confirmation is not available, including fine repeats. Dynamic Island reports the level that same output confirmed.
+
 ## [3.7.2] - 2026-11-22
 
 ### Fixed
