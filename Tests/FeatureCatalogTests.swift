@@ -386,7 +386,7 @@ enum FeatureCatalogTests {
 
         // MARK: Features hub catalog
 
-        suite.expect(AppFeature.allCases.count == 88, "feature catalog has 88 features")
+        suite.expect(AppFeature.allCases.count == 89, "feature catalog has 89 features")
         suite.expect(Set(AppFeature.allCases.map(\.rawValue)).count == AppFeature.allCases.count,
                "feature ids are unique")
         suite.expect(AppFeature.allCases.map(\.rawValue) == [
@@ -395,7 +395,7 @@ enum FeatureCatalogTests {
             "mouseClickDebounce", "keyboardDebounce", "textSnippets", "layoutFix", "superKey", "autoInputSource", "quitWindowProtection",
             "clipboardHistory", "pastePlain", "finderCutPaste", "finderRename", "shelf", "urlCleaner",
             "diskImageInstaller",
-            "mixer", "soundOutputSwitcher", "audioPriority", "micMute", "musicBlock",
+            "mixer", "soundOutputSwitcher", "audioPriority", "micMute", "musicBlock", "captions",
             "keepAwake", "brightness", "extraBrightness", "nightWarmth", "bluetoothSleep", "chargeLimit",
             "quickLauncher", "quickToggles", "quitApps", "colorPicker", "screenOCR", "cleaningMode", "mediaTools",
             "cleaner", "uninstaller", "homebrew", "appUpdates", "screenshot", "cameraPreview",
@@ -717,8 +717,8 @@ enum FeatureCatalogTests {
                      "the companion leaves with the island but only comes when picked, with a page of its own")
         suite.expect(AppPermission.allCases.map(\.rawValue) == [
             "accessibility", "screenRecording", "fullDiskAccess", "filesAndFolders", "notifications",
-            "automationFinder", "automationPlayback", "audioCapture", "microphone", "camera",
-            "appManagement", "calendar",
+            "automationFinder", "automationPlayback", "audioCapture", "speechRecognition",
+            "microphone", "camera", "appManagement", "calendar",
         ], "permission portal contains every supported permission")
         let onboardingViewSource = (try? String(
             contentsOfFile: "Sources/Tina/UI/Onboarding/OnboardingView.swift",

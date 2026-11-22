@@ -326,6 +326,9 @@ enum SettingsDirectory {
                                         (.mixer, [s.mixerSection]),
                                         (.soundOutputSwitcher, [s.soundOutputSwitcherTitle]),
                                         (.audioPriority, [s.audioPrioritySection]),
+                                        (.captions, [FeatureStrings.captions(language).title,
+                                                     FeatureStrings.captions(language).recentSessions,
+                                                     FeatureStrings.captions(language).sessionLanguage]),
                                         (.keepAwake, [s.globalHotkeySection, s.hotkeyToggle]),
                                        ]),
                 // Searching any feature name lands here even when the feature

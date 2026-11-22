@@ -179,6 +179,21 @@ enum DefaultsKey {
     static let soundOutputSwitcherEnabled = "soundOutputSwitcherEnabled"
     static let soundOutputSwitcherShortcut = "soundOutputSwitcherShortcut"
     static let soundOutputSwitcherDeviceUIDs = "soundOutputSwitcherDeviceUIDs"
+    // Live captions: the master switch, the listening shortcut, the last
+    // recognition language and the overlay's saved place. The session folder
+    // bookmark is machine-local (a sandbox bookmark cannot travel in a
+    // settings backup), so it stays out of the portable set.
+    static let captionsEnabled = "captionsEnabled"
+    static let captionsShortcutEnabled = "captionsShortcutEnabled"
+    static let captionsShortcut = "captionsShortcut"
+    static let captionsLocale = "captionsLocale"          // empty = system language
+    static let captionsFontSize = "captionsFontSize"
+    static let captionsMaxLines = "captionsMaxLines"
+    static let captionsAutoSave = "captionsAutoSave"
+    static let captionsFolderBookmark = "captionsFolderBookmark"
+    static let captionsFolderPath = "captionsFolderPath"  // shown in Settings only
+    static let captionsOverlayX = "captionsOverlayX"      // 0...1 of the screen's width
+    static let captionsOverlayY = "captionsOverlayY"      // 0...1 of the screen's height
     // Audio device priority: ordered output and microphone lists the feature
     // enforces automatically when its enable flags are on.
     static let audioPriorityOutputEnabled = "audioPriorityOutputEnabled"
@@ -432,6 +447,7 @@ enum DefaultsKey {
     static let panelShowControls = "panelShowControls"
     static let panelShowToggles = "panelShowToggles"
     static let panelShowWallpaper = "panelShowWallpaper"
+    static let panelShowCaptions = "panelShowCaptions"
     // Quick toggles tab: per-action visibility (the order lives in panelToggleOrder).
     static let panelToggleDarkMode = "panelToggleDarkMode"
     static let panelToggleKeyboardLight = "panelToggleKeyboardLight"
@@ -1472,6 +1488,15 @@ enum Defaults {
         DefaultsKey.preciseVolumeRollerEnabled: false,
         DefaultsKey.soundOutputSwitcherEnabled: false,
         DefaultsKey.soundOutputSwitcherShortcut: GlobalShortcut.soundOutputSwitcherDefault.storageValue,
+        DefaultsKey.captionsEnabled: false,
+        DefaultsKey.captionsShortcutEnabled: true,
+        DefaultsKey.captionsShortcut: GlobalShortcut.captionsDefault.storageValue,
+        DefaultsKey.captionsLocale: "",
+        DefaultsKey.captionsFontSize: 20.0,
+        DefaultsKey.captionsMaxLines: 2,
+        DefaultsKey.captionsAutoSave: true,
+        DefaultsKey.captionsOverlayX: 0.5,
+        DefaultsKey.captionsOverlayY: 0.08,
         // The feature itself ships uninstalled. On first install both halves
         // work immediately; an explicit off choice is persisted and wins over
         // these registered defaults on later launches or reinstalls.
@@ -1818,6 +1843,7 @@ enum Defaults {
         DefaultsKey.panelShowControls: true,
         DefaultsKey.panelShowToggles: true,
         DefaultsKey.panelShowWallpaper: true,
+        DefaultsKey.panelShowCaptions: true,
         DefaultsKey.panelToggleDarkMode: true,
         DefaultsKey.panelToggleKeyboardLight: true,
         DefaultsKey.panelToggleMicMute: true,

@@ -250,8 +250,12 @@ struct GlobalShortcut: Equatable, Hashable {
                                                   modifiers: [.option])
     static let commandBarMenusDefault = GlobalShortcut(keyCode: Int64(kVK_ANSI_Slash),
                                                        modifiers: [.control, .option, .shift, .command])
-    // Next to the screenshot's 4, on the same free control-option-command
-    // layer, matching how the system numbers its own capture keys.
+    // S for subtitles, on the free control-option layer. ⌃⌥C already belongs
+    // to the window layout's centre action, and a second feature shipping the
+    // same combination would be dead on arrival.
+    static let captionsDefault = GlobalShortcut(keyCode: Int64(kVK_ANSI_S),
+                                                modifiers: [.control, .option])
+
     static let screenRecorderDefault = GlobalShortcut(keyCode: Int64(kVK_ANSI_5),
                                                       modifiers: [.control, .option, .command])
 
@@ -741,6 +745,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
     case commandBar
     case commandBarMenus
     case screenRecorder
+    case captions
     case displayBrightnessDecrease
     case displayBrightnessIncrease
     case keyboardBrightnessDecrease
@@ -782,6 +787,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .commandBar: return DefaultsKey.commandBarShortcut
         case .commandBarMenus: return DefaultsKey.commandBarMenusShortcut
         case .screenRecorder: return DefaultsKey.recorderShortcut
+        case .captions: return DefaultsKey.captionsShortcut
         case .displayBrightnessDecrease: return DefaultsKey.displayBrightnessDecreaseShortcut
         case .displayBrightnessIncrease: return DefaultsKey.displayBrightnessIncreaseShortcut
         case .keyboardBrightnessDecrease: return DefaultsKey.keyboardBrightnessDecreaseShortcut
@@ -823,6 +829,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .commandBar: return .commandBarDefault
         case .commandBarMenus: return .commandBarMenusDefault
         case .screenRecorder: return .screenRecorderDefault
+        case .captions: return .captionsDefault
         case .displayBrightnessDecrease: return .displayBrightnessDecreaseDefault
         case .displayBrightnessIncrease: return .displayBrightnessIncreaseDefault
         case .keyboardBrightnessDecrease: return .keyboardBrightnessDecreaseDefault
@@ -904,6 +911,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .commandBarMenus: return FeatureStrings.commandBar(L10n.shared.language).kindMenu
         case .commandBar: return FeatureStrings.commandBar(L10n.shared.language).pageTitle
         case .screenRecorder: return FeatureStrings.recorder(L10n.shared.language).pageTitle
+        case .captions: return FeatureStrings.captions(L10n.shared.language).title
         case .displayBrightnessDecrease:
             return FeatureStrings.brightness(L10n.shared.language).displayBrightnessDecrease
         case .displayBrightnessIncrease:
@@ -974,6 +982,8 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .commandBarMenus: return [DefaultsKey.commandBarMenusShortcutEnabled]
         case .commandBar: return [DefaultsKey.commandBarShortcutEnabled]
         case .screenRecorder: return [DefaultsKey.recorderShortcutEnabled]
+        case .captions: return [DefaultsKey.captionsEnabled,
+                                DefaultsKey.captionsShortcutEnabled]
         case .displayBrightnessDecrease, .displayBrightnessIncrease:
             return [DefaultsKey.brightnessControlEnabled, DefaultsKey.displayBrightnessShortcutsEnabled]
         case .keyboardBrightnessDecrease, .keyboardBrightnessIncrease:
@@ -1010,6 +1020,7 @@ enum GlobalShortcutRole: CaseIterable, Identifiable {
         case .snippetLibrary: return .textSnippets
         case .commandBar, .commandBarMenus: return .commandBar
         case .screenRecorder: return .screenRecorder
+        case .captions: return .captions
         case .displayBrightnessDecrease, .displayBrightnessIncrease: return .brightness
         case .keyboardBrightnessDecrease, .keyboardBrightnessIncrease: return .brightness
         case .pointerNextDisplay: return .windowLayout

@@ -22,7 +22,7 @@ enum AppFeature: String, CaseIterable {
     case clipboardHistory, pastePlain, finderCutPaste, finderRename, shelf, urlCleaner,
          diskImageInstaller
     // Sound
-    case mixer, soundOutputSwitcher, audioPriority, micMute, musicBlock
+    case mixer, soundOutputSwitcher, audioPriority, micMute, musicBlock, captions
     // Energy and display
     case keepAwake, brightness, extraBrightness, nightWarmth, bluetoothSleep, chargeLimit
     // Tools
@@ -46,7 +46,8 @@ enum FeatureGroup: String, CaseIterable {
 /// System permissions surfaced by the hub's transparency portal.
 enum AppPermission: String, CaseIterable {
     case accessibility, screenRecording, fullDiskAccess, filesAndFolders, notifications,
-         automationFinder, automationPlayback, audioCapture, microphone, camera, appManagement, calendar
+         automationFinder, automationPlayback, audioCapture, speechRecognition, microphone, camera,
+         appManagement, calendar
 }
 
 enum PermissionPollingSupport {
@@ -85,7 +86,10 @@ extension AppFeature {
         // Watch asks when an area is chosen and checks on every reading. The
         // companion and Launchpad use no permission at all.
         case .screenOCR, .cleaningMode, .screenshot, .commandBar, .screenRecorder, .wallpaper, .notchWatch,
-             .notchMascot, .launchpad, .nightWarmth, .autoInputSource, .totpAuthenticator:
+             .notchMascot, .launchpad, .nightWarmth, .autoInputSource, .totpAuthenticator,
+             // Speech Recognition has no cheap poll; the portal refreshes it
+             // when it appears, and the service asks at start.
+             .captions:
             return false
         default:
             return true
@@ -113,7 +117,7 @@ extension AppFeature {
         case .clipboardHistory, .pastePlain, .finderCutPaste, .finderRename, .shelf, .urlCleaner,
              .diskImageInstaller:
             return .clipboardFiles
-        case .mixer, .soundOutputSwitcher, .audioPriority, .micMute, .musicBlock:
+        case .mixer, .soundOutputSwitcher, .audioPriority, .micMute, .musicBlock, .captions:
             return .sound
         case .keepAwake, .brightness, .extraBrightness, .nightWarmth, .bluetoothSleep, .chargeLimit:
             return .energyDisplay
@@ -174,6 +178,7 @@ extension AppFeature {
         case .audioPriority: return "list.number"
         case .micMute: return "mic.slash"
         case .musicBlock: return "music.note"
+        case .captions: return "captions.bubble.fill"
         case .keepAwake: return "moon.zzz.fill"
         case .brightness: return "display.2"
         case .extraBrightness: return "sun.max.fill"
@@ -303,6 +308,7 @@ extension AppFeature {
         case .audioPriority: return [DefaultsKey.audioPriorityOutputEnabled,
                                      DefaultsKey.audioPriorityInputEnabled]
         case .musicBlock: return [DefaultsKey.musicBlockEnabled]
+        case .captions: return [DefaultsKey.captionsEnabled]
         case .brightness: return [DefaultsKey.brightnessControlEnabled]
         case .extraBrightness: return [DefaultsKey.extraBrightnessEnabled]
         case .nightWarmth: return [DefaultsKey.nightWarmthEnabled]
@@ -410,6 +416,9 @@ extension AppFeature {
         case .appUpdates: return [.notifications, .appManagement]
         case .diskImageInstaller: return [.appManagement]
         case .mixer: return [.audioCapture, .accessibility]
+        // The Mac's sound is read through the audio grant the recorder uses;
+        // Speech Recognition is a per-app TCC grant of its own.
+        case .captions: return [.audioCapture, .speechRecognition]
         case .musicBlock: return [.accessibility]
         case .monitorCPU, .monitorMemory, .monitorDisk, .monitorPower: return [.notifications]
         case .clipboardHistory, .shelf, .urlCleaner,
@@ -521,7 +530,7 @@ extension AppFeature {
              .wallpaper, .killProcess, .portManager, .hostsProfiles, .totpAuthenticator,
              .fanControl, .notchMascot, .spacesOrder, .quitApps,
              .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource,
-             .windowPinning:
+             .windowPinning, .captions:
             return false
         }
     }
@@ -661,6 +670,7 @@ extension AppPermission {
         case .notifications: return "bell.badge"
         case .automationFinder, .automationPlayback: return "gearshape.2"
         case .audioCapture: return "waveform"
+        case .speechRecognition: return "captions.bubble"
         case .microphone: return "mic"
         case .calendar: return "calendar"
         case .camera: return "camera"

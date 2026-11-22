@@ -945,6 +945,12 @@ struct PermissionsPortalSections: View {
             case .denied, .undetermined: return .missing
             case .unknown: return .unknown
             }
+        case .speechRecognition:
+            switch permissions.speechRecognition {
+            case .granted: return .granted
+            case .denied, .restricted, .undetermined: return .missing
+            case .unknown: return .unknown
+            }
         case .calendar:
             return permissions.calendarAccess == .fullAccess ? .granted : .missing
         case .camera:
@@ -1078,6 +1084,7 @@ private struct PermissionPortalRow: View {
             || Permissions.shared.calendarAccess == .writeOnly
         case .camera: return Permissions.shared.camera == .undetermined
         case .microphone: return Permissions.shared.microphone == .undetermined
+        case .speechRecognition: return Permissions.shared.speechRecognition == .undetermined
         case .filesAndFolders, .automationFinder, .automationPlayback, .audioCapture,
              .appManagement: return false
         }
@@ -1096,6 +1103,7 @@ private struct PermissionPortalRow: View {
         case .calendar: Permissions.shared.requestCalendar()
         case .camera: Permissions.shared.requestCamera()
         case .microphone: Permissions.shared.requestMicrophone()
+        case .speechRecognition: Permissions.shared.requestSpeechRecognition()
         case .filesAndFolders, .automationFinder, .automationPlayback, .audioCapture,
              .appManagement:
             break
@@ -1111,6 +1119,7 @@ private struct PermissionPortalRow: View {
         case .notifications: Permissions.shared.openNotificationSettings()
         case .automationFinder, .automationPlayback: Permissions.shared.openAutomationSettings()
         case .audioCapture: Permissions.shared.openAudioCaptureSettings()
+        case .speechRecognition: Permissions.shared.openSpeechRecognitionSettings()
         case .microphone: Permissions.shared.openMicrophoneSettings()
         case .calendar: Permissions.shared.openCalendarSettings()
         case .camera: Permissions.shared.openCameraSettings()
@@ -1174,6 +1183,7 @@ extension AppFeature {
         case .mixer: return s.mixerSection
         case .soundOutputSwitcher: return s.soundOutputSwitcherTitle
         case .audioPriority: return hub.titleAudioPriority
+        case .captions: return FeatureStrings.captions(language).title
         case .micMute: return s.micMuteName
         case .musicBlock: return hub.titleMusicBlock
         case .keepAwake: return s.keepAwakeTitle
@@ -1269,6 +1279,7 @@ extension AppFeature {
         case .mixer: return hub.descMixer
         case .soundOutputSwitcher: return hub.descSoundOutputSwitcher
         case .audioPriority: return hub.descAudioPriority
+        case .captions: return FeatureStrings.captions(L10n.shared.language).hubDescription
         case .micMute: return hub.descMicMute
         case .musicBlock: return hub.descMusicBlock
         case .keepAwake: return hub.descKeepAwake
@@ -1344,6 +1355,7 @@ extension AppPermission {
         case .automationFinder: return hub.permAutomationFinder
         case .automationPlayback: return FeatureStrings.notchMusicExtras(L10n.shared.language).automationPermission
         case .audioCapture: return hub.permAudioCapture
+        case .speechRecognition: return hub.permSpeechRecognition
         case .microphone: return FeatureStrings.recorder(L10n.shared.language).microphonePermissionName
         case .calendar: return FeatureStrings.notchCalendar(L10n.shared.language).title
         case .camera: return FeatureStrings.cameraPreview(L10n.shared.language).permName
@@ -1361,6 +1373,7 @@ extension AppPermission {
         case .automationFinder: return hub.explainAutomationFinder
         case .automationPlayback: return FeatureStrings.notchMusicExtras(L10n.shared.language).automationExplanation
         case .audioCapture: return hub.explainAudioCapture
+        case .speechRecognition: return hub.explainSpeechRecognition
         case .microphone:
             return FeatureStrings.recorder(L10n.shared.language).microphonePermissionExplain
         case .calendar: return FeatureStrings.notchCalendar(L10n.shared.language).permission

@@ -50,6 +50,9 @@ struct GeneralToolSettings: View {
                 case .musicBlocking:
                     MusicBlockingSettings()
                         .settingsSectionAnchor(.musicBlocking, cornerRadius: 16)
+                case .captions:
+                    CaptionSettingsCard()
+                        .settingsSectionAnchor(.captions, cornerRadius: 16)
                 default:
                     EmptyView()
                 }

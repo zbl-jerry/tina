@@ -77,6 +77,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 
 ### Know what your Mac is doing
 
+- **Live captions.** Turn the sound your Mac is playing into captions on screen, recognized on this Mac, with a draggable click-through bar, a global shortcut and local sessions you can export as SRT, Markdown or plain text. See [live captions](docs/LIVE-CAPTIONS.md).
 - **System monitor.** CPU, GPU, memory, temperatures, battery health and power use, with history graphs and a view of energy-hungry apps.
 - **Fan Control (beta).** Set manual fan speeds or temperature curves and monitor live RPM.
 - **Menu bar readouts.** Put your chosen readings, usage bars, battery time or fan speed directly in the menu bar.
