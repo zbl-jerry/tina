@@ -314,6 +314,7 @@ final class FeatureRuntime: ObservableObject {
             AudioPriorityService.shared.syncWithPreferences()
         },
         .micMute: { MicMuteService.shared.syncWithPreferences() },
+        .captions: { CaptionService.shared.syncWithPreferences() },
         .quickToggles: { QuickTogglesService.shared.syncWithPreferences() },
         .quitApps: { QuickTogglesService.shared.syncWithPreferences() },
         .musicBlock: { MusicLaunchBlocker.shared.syncWithPreferences() },
@@ -438,6 +439,12 @@ extension AppFeature {
     /// or when the feature depends on no hardware at all.
     var hardwareUnsupportedReason: String? {
         switch self {
+        // The system audio tap the caption feature reads exists from 14.4;
+        // earlier 14.0–14.3 releases hide the feature instead of offering a
+        // switch that could never hear anything.
+        case .captions:
+            if #available(macOS 14.4, *) { return nil }
+            return FeatureStrings.captions(L10n.shared.language).unsupportedOS
         case .fanControl:
             return FanControlHardware.hasControllableFan
                 ? nil : FeatureStrings.fanControl(L10n.shared.language).noFans

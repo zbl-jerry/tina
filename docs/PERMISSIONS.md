@@ -9,7 +9,8 @@ You can review or change every grant in System Settings, under Privacy and Secur
 | Accessibility | Yes | Scroll direction, Window Layout, the app and window switcher, Dock Preview, Dock click to minimize, middle click, paste as plain text, Finder cut and paste, quit on close, radial menu key actions, optional notch notification mirroring and keyboard feedback |
 | Screen Recording | Yes | Window previews, screenshots, copy text from screen, magnified color picking and screen recordings |
 | Input Monitoring | Yes | The optional key overlay in screen recordings |
-| System Audio Recording | Yes | Volume mixer, optional live equalizer and system audio capture for recordings |
+| System Audio Recording | Yes | Volume mixer, optional live equalizer, system audio capture for recordings and live captions |
+| Speech Recognition | Yes | Turning the Mac's own sound into live captions with on-device recognition |
 | Microphone | Yes | Your voice in a screen recording, only when you turn it on |
 | Camera | Yes | The camera preview mirror, floating or inside the notch |
 | Calendars | Yes | Upcoming appointments in the notch |
@@ -92,7 +93,17 @@ on is running.
 
 **If you say no.** Apps keep using normal system audio. The mixer cannot adjust or route individual apps, and the island uses animated music bars. The recorder can fall back to the screen capture stream's audio when available.
 
-**Optional.** Yes. The mixer and equalizer process audio in memory without saving or uploading it; apps you route to AirPlay are streamed from memory to the speaker you pick on your local network, through macOS's own AirPlay. The recorder saves audio only as part of a recording you start; sharing that recording is a separate action.
+**Optional.** Yes. The mixer and equalizer process audio in memory without saving or uploading it; apps you route to AirPlay are streamed from memory to the speaker you pick on your local network, through macOS's own AirPlay. The recorder saves audio only as part of a recording you start; sharing that recording is a separate action. Live captions process the same mix in memory and keep only the recognized text.
+
+## Speech Recognition
+
+**Why it comes up.** macOS asks before an app can turn audio into text with Apple's Speech framework.
+
+**What uses it.** Live captions, and only while listening. Recognition is required to run on this Mac; a language without an on-device model is refused instead of sent to a server.
+
+**If you say no.** Live captions stays installed but cannot start. The panel and Settings explain that the permission is missing and offer a shortcut to the system pane. Nothing else in the app uses Speech.
+
+**Optional.** Yes. Audio is not saved by the caption feature and is not sent anywhere. The local transcript is written only to the captions folder and is deleted when you delete the session.
 
 ## Microphone
 

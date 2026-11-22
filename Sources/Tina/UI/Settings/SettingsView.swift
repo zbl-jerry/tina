@@ -579,7 +579,7 @@ struct SettingsView: View {
         case .general:
             if let anchor = router.destination.sectionAnchor,
                [.panelConfiguration, .mixer, .soundOutputSwitcher,
-                .audioPriority, .musicBlocking].contains(anchor),
+                .audioPriority, .musicBlocking, .captions].contains(anchor),
                sidebarItems.contains(where: { $0.destination == router.destination }) {
                 GeneralToolSettings(anchor: anchor)
             } else {
@@ -1043,6 +1043,7 @@ enum PermissionKind {
     case screenRecording
     case inputMonitoring
     case microphone
+    case speechRecognition
     case camera
 }
 
@@ -1059,6 +1060,7 @@ struct PermissionRow: View {
         case .screenRecording: return permissions.screenRecording
         case .inputMonitoring: return permissions.inputMonitoring
         case .microphone: return permissions.microphone == .granted
+        case .speechRecognition: return permissions.speechRecognition == .granted
         case .camera: return permissions.camera == .granted
         }
     }
@@ -1066,7 +1068,7 @@ struct PermissionRow: View {
     private var monitorsActivePermission: Bool {
         switch kind {
         case .accessibility, .screenRecording, .inputMonitoring: return true
-        case .microphone, .camera: return false
+        case .microphone, .speechRecognition, .camera: return false
         }
     }
 
@@ -1078,6 +1080,8 @@ struct PermissionRow: View {
             return FeatureStrings.recorder(l10n.language).keystrokePermissionName
         case .microphone:
             return FeatureStrings.recorder(l10n.language).microphonePermissionName
+        case .speechRecognition:
+            return FeatureStrings.hub(l10n.language).permSpeechRecognition
         case .camera:
             return FeatureStrings.recorder(l10n.language).cameraPermissionName
         }
@@ -1106,6 +1110,8 @@ struct PermissionRow: View {
                             permissions.requestInputMonitoring()
                         case .microphone:
                             permissions.requestMicrophone()
+                        case .speechRecognition:
+                            permissions.requestSpeechRecognition()
                         case .camera:
                             permissions.requestCamera()
                         }
@@ -1120,6 +1126,8 @@ struct PermissionRow: View {
                             permissions.openInputMonitoringSettings()
                         case .microphone:
                             permissions.openMicrophoneSettings()
+                        case .speechRecognition:
+                            permissions.openSpeechRecognitionSettings()
                         case .camera:
                             permissions.openCameraSettings()
                         }

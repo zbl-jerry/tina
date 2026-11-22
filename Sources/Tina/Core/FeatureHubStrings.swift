@@ -44,6 +44,7 @@ struct FeatureHubStrings {
     let permNotifications: String
     let permAutomationFinder: String
     let permAudioCapture: String
+    let permSpeechRecognition: String
     let explainAccessibility: String
     let explainScreenRecording: String
     let explainFullDisk: String
@@ -51,6 +52,7 @@ struct FeatureHubStrings {
     let explainNotifications: String
     let explainAutomationFinder: String
     let explainAudioCapture: String
+    let explainSpeechRecognition: String
     // One-line feature descriptions
     let descSwitcher: String
     let descDockPreview: String
@@ -123,7 +125,7 @@ struct FeatureHubStrings {
     let onboardingOtherPermissionsCaption: String
     // Uninstalling the Dynamic Island while extensions of it are installed
     let notchUninstallTitle: String
-    let notchUninstallMessageFormat: String   // "…: %@. …", the installed extensions' names
+    let notchUninstallMessageFormat: String   // "…: %@. …", the installed extensions’ names
     let notchUninstallWithExtensions: String
     let notchUninstallKeepExtensions: String
     // Installed features never turned on, offered for uninstalling together
@@ -191,6 +193,7 @@ extension FeatureHubStrings {
         permNotifications: "알림",
         permAutomationFinder: "Finder 자동화",
         permAudioCapture: "앱 오디오",
+        permSpeechRecognition: "음성 인식",
         explainAccessibility: "기능이 클릭과 키 입력에 반응하고 윈도우를 이동할 수 있게 합니다.",
         explainScreenRecording: "기능이 윈도우 썸네일을 표시하고 화면의 텍스트를 읽을 수 있게 합니다.",
         explainFullDisk: "정리기와 앱 제거기가 어디서나 남은 파일을 찾을 수 있게 합니다.",
@@ -198,6 +201,7 @@ extension FeatureHubStrings {
         explainNotifications: "켜 둔 경고를 앱에서 알릴 수 있게 합니다.",
         explainAutomationFinder: "앱이 Finder에 파일 이동을 요청할 수 있게 합니다.",
         explainAudioCapture: "믹서가 앱별 볼륨을 조절하고, Dynamic Island의 음악 막대가 음악을 따라 움직이며, 화면 기록에 Mac의 소리를 담을 수 있게 합니다.",
+        explainSpeechRecognition: "실시간 자막이 Mac에서 재생되는 소리를 기기 안에서 텍스트로 바꿀 수 있게 합니다.",
         descSwitcher: "미리보기로 앱과 윈도우 전환",
         descDockPreview: "Dock에 포인터를 올리면 윈도우 미리보기",
         descDockClick: "Dock 아이콘 클릭으로 최소화 또는 윈도우 전환",
@@ -313,6 +317,7 @@ extension FeatureHubStrings {
         permNotifications: "Notifications",
         permAutomationFinder: "Finder automation",
         permAudioCapture: "App audio",
+        permSpeechRecognition: "Speech Recognition",
         explainAccessibility: "Lets features react to clicks and keys, and move windows.",
         explainScreenRecording: "Lets features show window thumbnails and read text on screen.",
         explainFullDisk: "Lets the cleaner and the uninstaller find leftover files everywhere.",
@@ -320,6 +325,7 @@ extension FeatureHubStrings {
         explainNotifications: "Lets the app notify you about alerts you turned on.",
         explainAutomationFinder: "Lets the app ask Finder to move files for you.",
         explainAudioCapture: "Lets the mixer adjust each app’s volume, the Dynamic Island bars follow the music and screen recordings include the Mac’s sound.",
+        explainSpeechRecognition: "Lets live captions turn the sound your Mac plays into text, with recognition on this Mac.",
         descSwitcher: "Switch apps and windows with previews",
         descDockPreview: "Window previews when hovering the Dock",
         descDockClick: "Click a Dock icon to minimize or cycle windows",
@@ -433,6 +439,7 @@ extension FeatureHubStrings {
         permNotifications: "Notificações",
         permAutomationFinder: "Automação do Finder",
         permAudioCapture: "Áudio dos apps",
+        permSpeechRecognition: "Reconhecimento de Fala",
         explainAccessibility: "Deixa os recursos reagirem a cliques e teclas e moverem janelas.",
         explainScreenRecording: "Deixa os recursos mostrarem miniaturas de janelas e lerem texto na tela.",
         explainFullDisk: "Deixa o limpador e o desinstalador acharem restos de arquivos em todo lugar.",
@@ -440,6 +447,7 @@ extension FeatureHubStrings {
         explainNotifications: "Deixa o app avisar você sobre os alertas que ligou.",
         explainAutomationFinder: "Deixa o app pedir ao Finder para mover arquivos por você.",
         explainAudioCapture: "Deixa o mixer ajustar o volume de cada app, as barras da Dynamic Island seguirem a música e as gravações de tela incluírem o som do Mac.",
+        explainSpeechRecognition: "Permite que as legendas ao vivo transformem o som do Mac em texto, com reconhecimento neste Mac.",
         descSwitcher: "Troque de app e janela com miniaturas",
         descDockPreview: "Miniaturas das janelas ao passar o mouse no Dock",
         descDockClick: "Clique no ícone do Dock para minimizar ou alternar",
@@ -553,6 +561,7 @@ extension FeatureHubStrings {
         permNotifications: "Bildirimler",
         permAutomationFinder: "Finder otomasyonu",
         permAudioCapture: "Uygulama sesi",
+        permSpeechRecognition: "Konuşma Tanıma",
         explainAccessibility: "Özelliklerin tıklamalara ve tuşlara tepki vermesini ve pencereleri taşımasını sağlar.",
         explainScreenRecording: "Özelliklerin pencere önizlemeleri göstermesini ve ekrandaki metni okumasını sağlar.",
         explainFullDisk: "Temizleyicinin ve kaldırıcının artık dosyaları her yerde bulmasını sağlar.",
@@ -560,6 +569,7 @@ extension FeatureHubStrings {
         explainNotifications: "Uygulamanın açtığınız uyarılar için sizi bilgilendirmesini sağlar.",
         explainAutomationFinder: "Uygulamanın Finder’dan sizin için dosya taşımasını istemesini sağlar.",
         explainAudioCapture: "Mikserin her uygulamanın sesini ayarlamasını, çentikteki çubukların müziği izlemesini ve ekran kayıtlarının Mac’in sesini içermesini sağlar.",
+        explainSpeechRecognition: "Canlı altyazıların Mac’in sesini bu Mac’te tanıyarak metne dönüştürmesini sağlar.",
         descSwitcher: "Önizlemelerle uygulama ve pencere değiştirin",
         descDockPreview: "Dock üzerine gelince pencere önizlemeleri",
         descDockClick: "Dock simgesine tıklayarak küçültün veya geçiş yapın",
@@ -673,6 +683,7 @@ extension FeatureHubStrings {
         permNotifications: "Уведомления",
         permAutomationFinder: "Автоматизация Finder",
         permAudioCapture: "Звук приложений",
+        permSpeechRecognition: "Распознавание речи",
         explainAccessibility: "Позволяет функциям реагировать на клики и клавиши и перемещать окна.",
         explainScreenRecording: "Позволяет функциям показывать миниатюры окон и читать текст с экрана.",
         explainFullDisk: "Позволяет очистке и деинсталлятору находить остатки файлов повсюду.",
@@ -680,6 +691,7 @@ extension FeatureHubStrings {
         explainNotifications: "Позволяет приложению сообщать о включённых вами оповещениях.",
         explainAutomationFinder: "Позволяет приложению просить Finder перемещать файлы за вас.",
         explainAudioCapture: "Позволяет микшеру настраивать громкость каждого приложения, полоскам в вырезе следовать музыке, а записям экрана включать звук Mac.",
+        explainSpeechRecognition: "Позволяет живым субтитрам превращать звук Mac в текст с распознаванием на этом Mac.",
         descSwitcher: "Переключайте приложения и окна с миниатюрами",
         descDockPreview: "Миниатюры окон при наведении на Dock",
         descDockClick: "Клик по значку в Dock сворачивает или переключает окна",
@@ -793,6 +805,7 @@ extension FeatureHubStrings {
         permNotifications: "Notificaciones",
         permAutomationFinder: "Automatización del Finder",
         permAudioCapture: "Audio de las apps",
+        permSpeechRecognition: "Reconocimiento de voz",
         explainAccessibility: "Permite que las funciones reaccionen a clics y teclas y muevan ventanas.",
         explainScreenRecording: "Permite mostrar miniaturas de ventanas y leer texto en pantalla.",
         explainFullDisk: "Permite que el limpiador y el desinstalador encuentren restos en todas partes.",
@@ -800,6 +813,7 @@ extension FeatureHubStrings {
         explainNotifications: "Permite que la app te avise de las alertas que activaste.",
         explainAutomationFinder: "Permite que la app pida al Finder mover archivos por ti.",
         explainAudioCapture: "Permite que el mezclador ajuste el volumen de cada app, que las barras del Dynamic Island sigan la música y que las grabaciones de pantalla incluyan el sonido del Mac.",
+        explainSpeechRecognition: "Permite que los subtítulos en vivo conviertan el sonido del Mac en texto, con reconocimiento en este Mac.",
         descSwitcher: "Cambia de app y ventana con miniaturas",
         descDockPreview: "Miniaturas de ventanas al pasar por el Dock",
         descDockClick: "Clic en un icono del Dock para minimizar o alternar",
@@ -913,6 +927,7 @@ extension FeatureHubStrings {
         permNotifications: "Hlásenia",
         permAutomationFinder: "Automatizácia Findera",
         permAudioCapture: "Zvuk aplikácií",
+        permSpeechRecognition: "Rozpoznávanie reči",
         explainAccessibility: "Umožňuje funkciám reagovať na kliknutia a klávesy a presúvať okná.",
         explainScreenRecording: "Umožňuje funkciám zobrazovať miniatúry okien a čítať text na obrazovke.",
         explainFullDisk: "Umožňuje čističu a nástroju na odinštalovanie nájsť zvyšné súbory kdekoľvek.",
@@ -920,6 +935,7 @@ extension FeatureHubStrings {
         explainNotifications: "Umožňuje aplikácii upozorňovať vás na hlásenia, ktoré ste zapli.",
         explainAutomationFinder: "Umožňuje aplikácii požiadať Finder, aby za vás presunul súbory.",
         explainAudioCapture: "Umožňuje mixéru upravovať hlasitosť jednotlivých aplikácií, pruhom v Dynamic Island sledovať hudbu a nahrávkam obrazovky zachytiť zvuk Macu.",
+        explainSpeechRecognition: "Umožňuje živým titulkom premeniť zvuk Macu na text s rozpoznávaním na tomto Macu.",
         descSwitcher: "Prepínanie aplikácií a okien s náhľadmi",
         descDockPreview: "Náhľady okien pri prejdení kurzorom nad Dockom",
         descDockClick: "Kliknutím na ikonu v Docku minimalizujete alebo prepínate okná",
@@ -1033,6 +1049,7 @@ extension FeatureHubStrings {
         permNotifications: "Mitteilungen",
         permAutomationFinder: "Finder-Automation",
         permAudioCapture: "App-Audio",
+        permSpeechRecognition: "Spracherkennung",
         explainAccessibility: "Lässt Funktionen auf Klicks und Tasten reagieren und Fenster bewegen.",
         explainScreenRecording: "Lässt Funktionen Fenstervorschauen zeigen und Text vom Bildschirm lesen.",
         explainFullDisk: "Lässt Reiniger und Deinstallierer überall Dateireste finden.",
@@ -1040,6 +1057,7 @@ extension FeatureHubStrings {
         explainNotifications: "Lässt die App dich über aktivierte Warnungen informieren.",
         explainAutomationFinder: "Lässt die App den Finder bitten, Dateien für dich zu bewegen.",
         explainAudioCapture: "Lässt den Mixer die Lautstärke jeder App regeln, die Balken im Dynamic Island der Musik folgen und Bildschirmaufnahmen den Ton des Mac aufnehmen.",
+        explainSpeechRecognition: "Lässt Live-Untertitel den Ton deines Macs auf diesem Mac in Text umwandeln.",
         descSwitcher: "Apps und Fenster mit Vorschauen wechseln",
         descDockPreview: "Fenstervorschauen beim Zeigen aufs Dock",
         descDockClick: "Dock-Symbol klicken, um zu minimieren oder zu wechseln",
@@ -1153,6 +1171,7 @@ extension FeatureHubStrings {
         permNotifications: "Notifications",
         permAutomationFinder: "Automatisation du Finder",
         permAudioCapture: "Audio des apps",
+        permSpeechRecognition: "Reconnaissance vocale",
         explainAccessibility: "Permet aux fonctions de réagir aux clics et touches et de déplacer les fenêtres.",
         explainScreenRecording: "Permet d’afficher des aperçus de fenêtres et de lire le texte à l’écran.",
         explainFullDisk: "Permet au nettoyeur et au désinstalleur de trouver les restes partout.",
@@ -1160,6 +1179,7 @@ extension FeatureHubStrings {
         explainNotifications: "Permet à l’app de vous prévenir des alertes que vous avez activées.",
         explainAutomationFinder: "Permet à l’app de demander au Finder de déplacer des fichiers pour vous.",
         explainAudioCapture: "Permet au mixeur d’ajuster le volume de chaque app, aux barres du Dynamic Island de suivre la musique et aux enregistrements d’écran d’inclure le son du Mac.",
+        explainSpeechRecognition: "Permet aux sous-titres en direct de transformer le son du Mac en texte, avec reconnaissance sur ce Mac.",
         descSwitcher: "Changez d’app et de fenêtre avec des aperçus",
         descDockPreview: "Aperçus des fenêtres au survol du Dock",
         descDockClick: "Cliquez une icône du Dock pour réduire ou alterner",
@@ -1273,6 +1293,7 @@ extension FeatureHubStrings {
         permNotifications: "Notifiche",
         permAutomationFinder: "Automazione del Finder",
         permAudioCapture: "Audio delle app",
+        permSpeechRecognition: "Riconoscimento vocale",
         explainAccessibility: "Permette alle funzioni di reagire a clic e tasti e spostare finestre.",
         explainScreenRecording: "Permette di mostrare anteprime delle finestre e leggere il testo sullo schermo.",
         explainFullDisk: "Permette a pulizia e disinstallazione di trovare residui ovunque.",
@@ -1280,6 +1301,7 @@ extension FeatureHubStrings {
         explainNotifications: "Permette all’app di avvisarti degli allarmi che hai attivato.",
         explainAutomationFinder: "Permette all’app di chiedere al Finder di spostare file per te.",
         explainAudioCapture: "Permette al mixer di regolare il volume di ogni app, alle barre del Dynamic Island di seguire la musica e alle registrazioni dello schermo di includere l’audio del Mac.",
+        explainSpeechRecognition: "Consente ai sottotitoli in tempo reale di trasformare l’audio del Mac in testo, con riconoscimento su questo Mac.",
         descSwitcher: "Cambia app e finestra con le anteprime",
         descDockPreview: "Anteprime delle finestre passando sul Dock",
         descDockClick: "Clic su un’icona del Dock per ridurre o alternare",
@@ -1393,6 +1415,7 @@ extension FeatureHubStrings {
         permNotifications: "通知",
         permAutomationFinder: "Finderの自動化",
         permAudioCapture: "アプリのオーディオ",
+        permSpeechRecognition: "音声認識",
         explainAccessibility: "機能がクリックやキーに反応し、ウインドウを動かせるようにします。",
         explainScreenRecording: "ウインドウのサムネイル表示や画面上の文字の読み取りを可能にします。",
         explainFullDisk: "クリーナーとアンインストーラが残りファイルをどこでも見つけられるようにします。",
@@ -1400,6 +1423,7 @@ extension FeatureHubStrings {
         explainNotifications: "オンにした警告をアプリが通知できるようにします。",
         explainAutomationFinder: "アプリがFinderにファイル移動を頼めるようにします。",
         explainAudioCapture: "ミキサーがアプリごとの音量を調整し、Dynamic Islandのバーが音楽に合わせて動き、画面収録にMacの音声を含められるようにします。",
+        explainSpeechRecognition: "リアルタイム字幕が Mac の音をこの Mac 上でテキストに変換できるようにします。",
         descSwitcher: "プレビュー付きでアプリとウインドウを切り替え",
         descDockPreview: "Dockにポインタを重ねるとウインドウをプレビュー",
         descDockClick: "Dockアイコンのクリックで最小化や切り替え",
@@ -1513,6 +1537,7 @@ extension FeatureHubStrings {
         permNotifications: "通知",
         permAutomationFinder: "访达自动化",
         permAudioCapture: "App 音频",
+        permSpeechRecognition: "语音识别",
         explainAccessibility: "让功能响应点按和按键，并移动窗口。",
         explainScreenRecording: "让功能显示窗口缩略图并读取屏幕上的文字。",
         explainFullDisk: "让清理器和卸载器在任何位置找到残留文件。",
@@ -1520,6 +1545,7 @@ extension FeatureHubStrings {
         explainNotifications: "让 App 就你开启的警报发出通知。",
         explainAutomationFinder: "让 App 请访达替你移动文件。",
         explainAudioCapture: "让混音器调整每个 App 的音量，让 Dynamic Island 的音柱跟随音乐，并让屏幕录制包含 Mac 的声音。",
+        explainSpeechRecognition: "让实时字幕在本机把 Mac 播放的声音转换成文字。",
         descSwitcher: "带预览地切换 App 和窗口",
         descDockPreview: "悬停程序坞时显示窗口预览",
         descDockClick: "点按程序坞图标以最小化或切换窗口",
@@ -1633,6 +1659,7 @@ extension FeatureHubStrings {
         permNotifications: "通知",
         permAutomationFinder: "Finder 自動化",
         permAudioCapture: "App 音訊",
+        permSpeechRecognition: "語音辨識",
         explainAccessibility: "讓功能回應點按和按鍵，並移動視窗。",
         explainScreenRecording: "讓功能顯示視窗縮圖並讀取螢幕上的文字。",
         explainFullDisk: "讓清理器和解除安裝器在任何位置找到殘留檔案。",
@@ -1640,6 +1667,7 @@ extension FeatureHubStrings {
         explainNotifications: "讓 App 就你開啟的警示發出通知。",
         explainAutomationFinder: "讓 App 請 Finder 替你移動檔案。",
         explainAudioCapture: "讓混音器調整每個 App 的音量，讓 Dynamic Island 的音柱跟隨音樂，並讓螢幕錄製包含 Mac 的聲音。",
+        explainSpeechRecognition: "讓即時字幕在本機把 Mac 播放的聲音轉換成文字。",
         descSwitcher: "帶預覽地切換 App 和視窗",
         descDockPreview: "游標停在 Dock 上時顯示視窗預覽",
         descDockClick: "點按 Dock 圖像以縮到最小或切換視窗",
@@ -1753,6 +1781,7 @@ extension FeatureHubStrings {
         permNotifications: "通知",
         permAutomationFinder: "Finder 自動化",
         permAudioCapture: "App 音訊",
+        permSpeechRecognition: "語音辨識",
         explainAccessibility: "讓功能回應點按和按鍵，並移動視窗。",
         explainScreenRecording: "讓功能顯示視窗縮圖並讀取螢幕上的文字。",
         explainFullDisk: "讓清理器和移除器在任何位置找到殘留檔案。",
@@ -1760,6 +1789,7 @@ extension FeatureHubStrings {
         explainNotifications: "讓 App 就你開啟的警示發出通知。",
         explainAutomationFinder: "讓 App 請 Finder 代你移動檔案。",
         explainAudioCapture: "讓混音器調整每個 App 的音量，讓 Dynamic Island 的音柱跟隨音樂，並讓螢幕錄製包含 Mac 的聲音。",
+        explainSpeechRecognition: "讓即時字幕在本機將 Mac 播放的聲音轉換成文字。",
         descSwitcher: "帶預覽地切換 App 和視窗",
         descDockPreview: "游標停在 Dock 上時顯示視窗預覽",
         descDockClick: "點按 Dock 圖示以縮到最小或切換視窗",
@@ -1876,6 +1906,7 @@ extension FeatureHubStrings {
         permNotifications: "Сповіщення",
         permAutomationFinder: "Автоматизація Finder",
         permAudioCapture: "Звук програм",
+        permSpeechRecognition: "Розпізнавання мовлення",
         explainAccessibility: "Дозволяє функціям реагувати на клацання та клавіші та переміщати вікна.",
         explainScreenRecording: "Дозволяє функціям показувати мініатюри вікон та читати текст на екрані.",
         explainFullDisk: "Дозволяє очищувачу та деінсталятору знаходити залишки файлів всюди.",
@@ -1883,6 +1914,7 @@ extension FeatureHubStrings {
         explainNotifications: "Дозволяє програмі сповіщати вас про увімкнені оповіщення.",
         explainAutomationFinder: "Дозволяє програмі просити Finder переміщати файли за вас.",
         explainAudioCapture: "Дозволяє мікшеру налаштовувати гучність кожної програми, смугам Dynamic Island реагувати на музику, а записам екрана захоплювати звук Mac.",
+        explainSpeechRecognition: "Дозволяє живим субтитрам перетворювати звук Mac на текст із розпізнаванням на цьому Mac.",
         descSwitcher: "Перемикайте програми та вікна з прев’ю",
         descDockPreview: "Прев’ю вікон при наведенні на Dock",
         descDockClick: "Клац по значку Dock згортає або перемикає вікна",

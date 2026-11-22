@@ -11,6 +11,9 @@ here before the version in `Resources/Info.plist` is bumped.
 
 ## [Unreleased]
 
+### Added
+- Live captions: turn the sound your Mac is playing into on-screen captions with on-device Speech recognition, a draggable click-through caption bar, a menu bar indicator and a global shortcut. Sessions are saved locally and can be exported as SRT, Markdown or plain text, copied, or removed, and captions stop cleanly when a screen recording starts because the two cannot share the system audio tap.
+
 ### Fixed
 - Update checks ask the repository the app is built from, so they no longer fail against a renamed repository. A response GitHub rejects now reports its HTTP status instead of a placeholder.
 - The post-update What's New window reads the changelog bundled with the app again, so it lists the changes made in every version between the previous install and the current one.

@@ -345,6 +345,8 @@ if (( TEST )); then
         Sources/Tina/Services/Notch/NotchPlaybackCommand.swift
         Sources/Tina/Services/Notch/NotchMusicCommandWriter.swift
         Sources/Tina/Core/FeatureCatalog.swift
+        Sources/Tina/Core/CaptionStrings.swift
+        Sources/Tina/Services/Captions/CaptionSupport.swift
         Sources/Tina/Core/FeaturePresets.swift
         Sources/Tina/Core/FeatureHubStrings.swift
         Sources/Tina/Core/NightWarmthStrings.swift

@@ -108,6 +108,8 @@ enum ReleaseChangeAliases {
         case .micMute: return ["mute microphone", "mic mute", "microphone mute", "muting the microphone"]
         case .musicBlock: return ["music app blocker", "replacement for music", "music launch blocking",
             "music from opening", "unwanted music launches"]
+        case .captions: return ["live captions", "live caption", "captions", "caption bar", "subtitles",
+            "subtitles on screen", "system audio captions", "transcript", "transcription"]
         case .keepAwake: return ["keep awake", "closed lid mode", "keep going with lid closed", "keep-awake"]
         case .brightness: return [.exact("Displays"), "display brightness", "brightness keys",
             "brightness shortcuts", "control displays", "display controls", "extra dimming", "closed-lid dimming",
