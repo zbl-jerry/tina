@@ -2943,7 +2943,7 @@ enum SwitcherModelFeatureTests {
         // slice can never run past it into an unrelated body that happens to
         // carry the same words.
         let shelfProviderCode = stripCommentLines((statusAnchorAppDelegateSource
-            .components(separatedBy: "ShelfService.shared.statusItemFrameProvider =").last ?? "")
+            .components(separatedBy: "ShelfService.statusItemFrameProvider =").last ?? "")
             .components(separatedBy: "\n        }").first ?? "")
         let statusControllerSource = (try? String(
             contentsOfFile: "Sources/Tina/App/StatusItemController.swift",
