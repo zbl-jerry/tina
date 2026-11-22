@@ -412,6 +412,7 @@ enum DefaultsKey {
     static let panelUtilityMedia = "panelUtilityMedia"
     static let panelUtilityClipboard = "panelUtilityClipboard"
     static let panelUtilityWindowLayout = "panelUtilityWindowLayout"
+    static let panelUtilityWindowPinning = "panelUtilityWindowPinning"
     static let panelControlMouseScroll = "panelControlMouseScroll"
     static let panelControlFocusFollowsMouse = "panelControlFocusFollowsMouse"
     static let panelControlMouseNavigation = "panelControlMouseNavigation"
@@ -586,6 +587,12 @@ enum DefaultsKey {
     static let panelPowerOrder = "panelPowerOrder"
     static let panelNavigationEnabled = "panelNavigationEnabled" // legacy: the panel always navigates by sections since 3.1.8
     static let updateLastInstallFailure = "updateLastInstallFailure" // last installer step that failed (fail-copy etc.)
+    // Window Pinning: live mirrors of other apps' windows.
+    static let windowPinningEnabled = "windowPinningEnabled"
+    static let windowPinningFrameRate = "windowPinningFrameRate"
+    static let windowPinningHandoff = "windowPinningHandoff"
+    static let windowPinningKeepFocus = "windowPinningKeepFocus"
+    static let windowPinningPauseWhenHidden = "windowPinningPauseWhenHidden"
     static let windowLayoutHiddenActions = "windowLayoutHiddenActions" // comma-separated action ids hidden from the grid
     static let windowLayoutWindowGap = "windowLayoutWindowGap" // px between adjacent snapped windows
     static let windowLayoutScreenGap = "windowLayoutScreenGap" // px between a snapped window and the visible frame edge
@@ -1562,6 +1569,11 @@ enum Defaults {
         DefaultsKey.displayVolumeEnabled: false,
         DefaultsKey.displayVolumeKeysEnabled: false,
         DefaultsKey.displayPresets: Data(),
+        DefaultsKey.windowPinningEnabled: false,
+        DefaultsKey.windowPinningFrameRate: WindowPinningSupport.defaultFrameRate,
+        DefaultsKey.windowPinningHandoff: WindowPinHandoff.click.rawValue,
+        DefaultsKey.windowPinningKeepFocus: true,
+        DefaultsKey.windowPinningPauseWhenHidden: true,
         DefaultsKey.ddcVolumeStep: MonitorVolumeKeySettings.defaultStepPercent,
         DefaultsKey.ddcVolumeMinimum: 0,
         DefaultsKey.ddcVolumeMaximum: 100,
@@ -1798,6 +1810,7 @@ enum Defaults {
         DefaultsKey.panelUtilityMedia: true,
         DefaultsKey.panelUtilityClipboard: true,
         DefaultsKey.panelUtilityWindowLayout: true,
+        DefaultsKey.panelUtilityWindowPinning: true,
         DefaultsKey.panelControlMouseScroll: true,
         DefaultsKey.panelControlFocusFollowsMouse: true,
         DefaultsKey.panelControlMouseNavigation: true,

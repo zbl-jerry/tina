@@ -6,8 +6,8 @@ You can review or change every grant in System Settings, under Privacy and Secur
 
 | Permission | Optional | Powers |
 |---|---|---|
-| Accessibility | Yes | Scroll direction, Window Layout, the app and window switcher, Dock Preview, Dock click to minimize, middle click, paste as plain text, Finder cut and paste, quit on close, radial menu key actions, optional notch notification mirroring and keyboard feedback |
-| Screen Recording | Yes | Window previews, screenshots, copy text from screen, magnified color picking and screen recordings |
+| Accessibility | Yes | Scroll direction, Window Layout, window pinning hand-off, the app and window switcher, Dock Preview, Dock click to minimize, middle click, paste as plain text, Finder cut and paste, quit on close, radial menu key actions, optional notch notification mirroring and keyboard feedback |
+| Screen Recording | Yes | Window previews, live window mirrors, screenshots, copy text from screen, magnified color picking and screen recordings |
 | Input Monitoring | Yes | The optional key overlay in screen recordings |
 | System Audio Recording | Yes | Volume mixer, optional live equalizer, system audio capture for recordings and live captions |
 | Speech Recognition | Yes | Turning the Mac's own sound into live captions with on-device recognition |
@@ -32,6 +32,7 @@ You can review or change every grant in System Settings, under Privacy and Secur
 - **Notch**, for optional mirroring of new visible notifications, opening their original native action and optionally hiding the original banner, plus system key feedback. Scrolling gestures inside the notch window need no global input permission.
 - **Scroll direction inverter**, which flips the mouse wheel.
 - **Window Layout**, which moves or resizes windows when you use a layout action, shortcut or optional trackpad or mouse gesture.
+- **Window pinning**, which raises the real window when you click its mirror. Capturing the mirror itself needs Screen Recording; without Accessibility the mirror still shows and moves, but a click falls back to activating the source app.
 - **App and window switcher**, which captures the switcher hotkey and reads the window list.
 - **Dock Preview**, which reads Dock items and brings windows forward for a temporary peek.
 - **Dock click to minimize**, which spots clicks on the Dock icon of the active app and minimizes or restores its windows.
@@ -51,7 +52,7 @@ You can review or change every grant in System Settings, under Privacy and Secur
 
 **Why it comes up.** On macOS, reading other windows' titles and grabbing their thumbnails counts as screen recording.
 
-**What uses it.** The window switcher and Dock Preview for live thumbnails and titles, screenshots and copy text from screen for the area you select, and the screen recorder for the area, window or display you choose.
+**What uses it.** The window switcher and Dock Preview for live thumbnails and titles, window pinning for the live mirror of a chosen window, screenshots and copy text from screen for the area you select, and the screen recorder for the area, window or display you choose.
 
 The color picker also uses this permission for Tina's magnifier and keyboard controls. Arrow keys select a pixel; Return or keypad Enter copies its color and closes the picker. C copies without closing. Without this permission, the native macOS color picker remains available.
 

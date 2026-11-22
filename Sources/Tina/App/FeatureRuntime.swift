@@ -251,6 +251,7 @@ final class FeatureRuntime: ObservableObject {
             WindowLayoutService.shared.syncWithPreferences()
             PointerDisplayService.shared.syncWithPreferences()
         },
+        .windowPinning: { WindowPinningService.shared.syncWithPreferences() },
         .autoQuit: { AutoQuitService.shared.syncWithPreferences() },
         .spacesOrder: { SpacesOrderHold.shared.syncWithPreferences() },
         .scrollInverter: { ScrollInverter.shared.syncWithPreferences() },

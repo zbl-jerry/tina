@@ -559,7 +559,7 @@ private enum UtilityPanelItem: String, PanelOrderItem, Identifiable {
     // to allCases). Screenshot leads in 3.1.13; existing orders that predate it
     // are migrated once without disturbing the rest of the user's layout.
     case screenshot, quickLauncher, appUpdates, cleaner, homebrew, media, clipboard, windowLayout,
-         uninstaller, cleanURL, cleaning, screenOCR, colorPicker, cameraPreview, scratchpad,
+         windowPinning, uninstaller, cleanURL, cleaning, screenOCR, colorPicker, cameraPreview, scratchpad,
          commandBar, screenRecorder, portManager, hostsProfiles, autoInputSource,
          totpAuthenticator, killProcess
 
@@ -576,6 +576,7 @@ private enum UtilityPanelItem: String, PanelOrderItem, Identifiable {
         case .media: return .mediaTools
         case .clipboard: return .clipboardHistory
         case .windowLayout: return .windowLayout
+        case .windowPinning: return .windowPinning
         case .uninstaller: return .uninstaller
         case .cleanURL: return .urlCleaner
         case .cleaning: return .cleaningMode
@@ -622,6 +623,7 @@ struct UtilitiesSection: View {
     @AppStorage(DefaultsKey.panelUtilityMedia) private var showMedia = true
     @AppStorage(DefaultsKey.panelUtilityClipboard) private var showClipboard = true
     @AppStorage(DefaultsKey.panelUtilityWindowLayout) private var showWindowLayout = true
+    @AppStorage(DefaultsKey.panelUtilityWindowPinning) private var showWindowPinning = true
     @AppStorage(DefaultsKey.panelUtilityScreenOCR) private var showScreenOCR = true
     @AppStorage(DefaultsKey.panelUtilityScreenshot) private var showScreenshot = true
     @AppStorage(DefaultsKey.panelUtilityQuickLauncher) private var showQuickLauncher = true
@@ -812,6 +814,7 @@ struct UtilitiesSection: View {
         case .media: return showMedia
         case .clipboard: return showClipboard
         case .windowLayout: return showWindowLayout
+        case .windowPinning: return showWindowPinning
         case .uninstaller: return showUninstallerAction
         case .cleaner: return showCleanerAction
         case .cleanURL: return showCleanURL
@@ -888,6 +891,17 @@ struct UtilitiesSection: View {
                                 visibility: $showWindowLayout,
                                 action: {
                                     showWindowLayoutPanel = true
+                                })
+        case .windowPinning:
+            UtilityActionButton(title: FeatureStrings.windowPinning(l10n.language).title,
+                                caption: FeatureStrings.windowPinning(l10n.language).enableCaption,
+                                systemImage: "pin",
+                                isEditing: editing,
+                                showsDragHandle: true,
+                                visibility: $showWindowPinning,
+                                action: {
+                                    PanelInteractionState.shared.viewKeepsPopoverOpen = false
+                                    WindowPinningService.shared.showPicker()
                                 })
         case .uninstaller:
             UtilityActionButton(title: l10n.s.uninstallerName,
@@ -1170,6 +1184,7 @@ struct UtilitiesSection: View {
         showMedia = true
         showClipboard = true
         showWindowLayout = true
+        showWindowPinning = true
         showUninstallerAction = true
         showCleanerAction = true
         showCleanURL = true
