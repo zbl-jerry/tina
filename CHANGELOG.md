@@ -9,7 +9,7 @@ window reads the entries between the version a person updated from and the
 version they are running, so every release needs a dated `## [version]` section
 here before the version in `Resources/Info.plist` is bumped.
 
-## [Unreleased]
+## [3.7.1] - 2026-11-22
 
 ### Added
 - Dynamic Island AI Agents count Cursor token usage from a dated response with usage counts in a local transcript. Cursor plan credits are still not read from the network.
