@@ -105,7 +105,12 @@ final class ScreenshotSelectionController {
         supportsScrollingCapture && (activeTool == .screenshot || activeTool == .scrolling)
     }
     fileprivate var offersFullScreenCapture: Bool {
-        acceptsCaptureInput && activeMode == .image
+        // Image tools and the recorder pick a whole display the same way.
+        // Geometry mode belongs to the recorder here; scrolling capture has
+        // no whole-display variant, which the helper already knows.
+        let modeOffersWholeScreen = activeMode == .image
+            || (activeMode == .geometry && activeTool == .recording)
+        return acceptsCaptureInput && modeOffersWholeScreen
             && ScreenshotSupport.fullScreenCaptureControlIsAvailable(
                 selectedTool: activeTool,
                 standaloneScreenshot: screenCaptureOptions == nil,

@@ -28,6 +28,7 @@ enum RecorderPreparationTests {
         func requestScreenRecording() {}
         func requestAccessibility() {}
         func requestCamera() {}
+        func requestInputMonitoring() {}
     }
     /// The camera bubble is switched off in these tests. The stubs keep the
     /// extracted preparation methods compiling without a capture device or a
@@ -39,10 +40,12 @@ enum RecorderPreparationTests {
     }
     final class RecorderCameraCapture {}
     final class RecorderCameraLayoutBox {
+        let layout = RecorderCameraLayout()
         init(_ layout: RecorderCameraLayout) {}
     }
     final class RecorderCameraBubble {
         var windowNumber: Int? { nil }
+        var onCameraLayoutChange: ((RecorderCameraLayout) -> Void)?
         init(capture: RecorderCameraCapture,
              layoutBox: RecorderCameraLayoutBox,
              region: RecorderSupport.Region) {}
@@ -91,9 +94,10 @@ enum RecorderPreparationTests {
              capturesKeystrokes: Bool, keystrokeStyle: RecorderKeystrokeStyle,
              camera: RecorderCameraCapture? = nil,
              cameraDeviceID: String = "",
-             cameraLayout: RecorderCameraLayoutBox? = nil) {
+             cameraLayout: RecorderCameraLayout? = nil) {
             self.writer = writer
         }
+        func recordCameraLayout(_ layout: RecorderCameraLayout) {}
     }
     class Fixture {
         var session: RecorderSession?
@@ -110,6 +114,7 @@ enum RecorderPreparationTests {
         struct Strings {
             let recordFailed = "failed"
             let cameraUnavailableHUD = "camera unavailable"
+            let keystrokeUnavailableHUD = "keys unavailable"
         }
         let strings = Strings()
         func startPreparedRecording(_ session: RecorderSession, frameRate: Int,

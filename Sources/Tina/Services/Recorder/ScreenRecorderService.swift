@@ -58,11 +58,16 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
     /// from the capture queue while the main thread watches the clock.
     private let writer: RecorderWriter
     /// The camera bubble is optional and lives only as long as the recording.
-    /// The writer reads its latest frame and its live layout on its own queue.
+    /// Its frames go to a sidecar track, not into the master, so the composer
+    /// can draw the bubble after the edit's zoom instead of the zoom cropping
+    /// it out of the picture.
     private let camera: RecorderCameraCapture?
     private let cameraDeviceID: String
-    private let cameraLayout: RecorderCameraLayoutBox?
-    private let cameraCompositor = RecorderCameraCompositor()
+    private let cameraTrackWriter: RecorderCameraTrackWriter?
+    private let cameraTimelineLock = NSLock()
+    /// The placement in force at each moment of the recording. The first
+    /// event is the layout the recording started with.
+    private var cameraLayoutEvents: [RecorderCameraLayoutEvent] = []
 
     var onUnexpectedStop: ((RecorderFailure) -> Void)?
     var onMicrophoneUnavailable: (() -> Void)?
@@ -84,7 +89,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
           keystrokeStyle: RecorderKeystrokeStyle,
           camera: RecorderCameraCapture? = nil,
           cameraDeviceID: String = "",
-          cameraLayout: RecorderCameraLayoutBox? = nil) {
+          cameraLayout: RecorderCameraLayout? = nil) {
         self.take = take
         self.region = region
         self.writer = writer
@@ -94,7 +99,13 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         self.keystrokeStyle = keystrokeStyle
         self.camera = camera
         self.cameraDeviceID = cameraDeviceID
-        self.cameraLayout = cameraLayout
+        self.cameraTrackWriter = camera == nil
+            ? nil
+            : RecorderCameraTrackWriter(url: take.cameraURL, pauseClock: pauseClock)
+        if camera != nil, let cameraLayout {
+            cameraLayoutEvents = [RecorderCameraLayoutEvent(time: 0,
+                                                           layout: cameraLayout.sanitized())]
+        }
         microphone = capturesMicrophone ? RecorderMicrophoneCapture() : nil
         pointer = RecorderPointerSampler(region: region, pauseClock: pauseClock)
         typing = RecorderTypingSampler(pauseClock: pauseClock)
@@ -114,6 +125,48 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         }
         camera?.onInterruption = { [weak self] in
             self?.onCameraUnavailable?()
+        }
+        camera?.onFrame = { [weak self] sampleBuffer in
+            self?.cameraTrackWriter?.append(sampleBuffer)
+        }
+    }
+
+    /// Remembers where the bubble is after a drag or a resize, in recording
+    /// time. A change before the stream starts just updates the starting
+    /// placement; it belongs to no recorded frame yet.
+    func recordCameraLayout(_ layout: RecorderCameraLayout) {
+        guard camera != nil else { return }
+        let clean = layout.sanitized()
+        let now = CACurrentMediaTime()
+        let mapped = pauseClock.eventTime(now)
+        // A pause hides the recording but the person can still move the
+        // bubble. The change belongs at the frozen pause instant, which is
+        // the first moment the next frame will see; it must not rewrite the
+        // placement from the beginning of the recording.
+        let time = mapped ?? (pauseClock.hasStarted ? pauseClock.elapsed(at: now) : nil)
+        cameraTimelineLock.withLock {
+            guard let time else {
+                if cameraLayoutEvents.isEmpty {
+                    cameraLayoutEvents = [RecorderCameraLayoutEvent(time: 0, layout: clean)]
+                } else {
+                    // Still in the countdown or waiting for the first frame.
+                    cameraLayoutEvents[0].layout = clean
+                }
+                return
+            }
+            if let last = cameraLayoutEvents.last, abs(last.time - time) < 0.000_001 {
+                cameraLayoutEvents[cameraLayoutEvents.count - 1].layout = clean
+            } else {
+                cameraLayoutEvents.append(RecorderCameraLayoutEvent(time: time, layout: clean))
+            }
+        }
+    }
+
+    private var cameraTrack: RecorderCameraTrack? {
+        cameraTimelineLock.withLock {
+            guard camera != nil, !cameraLayoutEvents.isEmpty else { return nil }
+            return RecorderCameraTrack(events: cameraLayoutEvents)
+                .normalized(duration: .greatestFiniteMagnitude)
         }
     }
 
@@ -158,11 +211,13 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
             if startGate.claimStartFailure() { writer.cancel() }
             await tap?.stop()
             await camera?.stop()
+            cameraTrackWriter?.cancel()
             return failure
         }
         guard startGate.isAuthorized else {
             await tap?.stop()
             await camera?.stop()
+            cameraTrackWriter?.cancel()
             await engine.stop()
             return .streamFailed
         }
@@ -179,6 +234,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         guard startGate.isAuthorized else {
             await tap?.stop()
             await camera?.stop()
+            cameraTrackWriter?.cancel()
             await engine.stop()
             return .streamFailed
         }
@@ -190,6 +246,7 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
                 await tap?.stop()
                 await microphone.stop()
                 await camera?.stop()
+                cameraTrackWriter?.cancel()
                 await engine.stop()
                 return .streamFailed
             }
@@ -253,6 +310,9 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
         }
         await tapStop
         await cameraStop
+        // The camera has stopped, so no frame can reach the sidecar after
+        // this point. A track with no frames leaves no file behind.
+        let cameraWritten = await cameraTrackWriter?.finish(at: end) ?? false
         // A tap that lost its reader was cut short by a device or process
         // change, not by a missing permission, so this recording proves
         // nothing either way.
@@ -281,6 +341,15 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
             try? FileManager.default.setAttributes(
                 [.posixPermissions: 0o600],
                 ofItemAtPath: take.keystrokesURL.path)
+        }
+        if written, cameraWritten, let cameraTrack, !cameraTrack.isEmpty,
+           let data = cameraTrack.encoded() {
+            // Camera frames and placement live only in the private take
+            // folder, readable by this user alone, and die with the take.
+            try? data.write(to: take.cameraLayoutURL, options: .atomic)
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o600],
+                ofItemAtPath: take.cameraLayoutURL.path)
         }
         return written
     }
@@ -325,27 +394,8 @@ private final class RecorderSession: NSObject, RecorderCaptureEngineDelegate {
     }
 
     private func append(_ sampleBuffer: CMSampleBuffer, kind: RecorderCaptureEngine.Kind) {
-        writerQueue.async { [writer, camera, cameraLayout, cameraCompositor, pauseClock] in
-            var buffer = sampleBuffer
-            // The bubble is drawn into the frame the encoder receives, so
-            // everything downstream (editor preview, GIF, sharing save) shows
-            // it without knowing the camera exists. A paused recording drops
-            // every video sample anyway, so it is not worth compositing.
-            if kind == .video,
-               !pauseClock.isPaused,
-               writer.isReadyForVideo,
-               let camera,
-               let layout = cameraLayout?.layout,
-               let screen = CMSampleBufferGetImageBuffer(sampleBuffer),
-               let frame = camera.latestFrame(),
-               let composed = cameraCompositor.compose(screen: screen,
-                                                       camera: frame,
-                                                       layout: layout),
-               let rebuilt = RecorderCameraSample.composited(sampleBuffer,
-                                                             imageBuffer: composed) {
-                buffer = rebuilt
-            }
-            writer.append(buffer, kind: kind)
+        writerQueue.async { [writer] in
+            writer.append(sampleBuffer, kind: kind)
         }
     }
 }
@@ -583,9 +633,19 @@ final class ScreenRecorderService: ObservableObject {
         let capturesMicrophone = defaults.bool(forKey: DefaultsKey.recorderMicrophone)
             && Permissions.shared.microphone == .granted
         // The overlay is asked for in settings and granted by macOS, and both
-        // have to hold at the moment the recording starts.
-        let capturesKeystrokes = defaults.bool(forKey: DefaultsKey.recorderKeystrokesEnabled)
-            && Permissions.shared.inputMonitoring
+        // have to hold at the moment the recording starts. A missing grant is
+        // never silent: the recording keeps going, but the person is told why
+        // the keys they asked for are absent.
+        let keystrokesRequested = defaults.bool(forKey: DefaultsKey.recorderKeystrokesEnabled)
+        // Ask the system directly instead of trusting the published cache: a
+        // grant made in System Settings while Tina was running is exactly the
+        // case this feature has to pick up without a relaunch.
+        let inputMonitoringGranted = CGPreflightListenEventAccess()
+        let capturesKeystrokes = keystrokesRequested && inputMonitoringGranted
+        if keystrokesRequested, !inputMonitoringGranted {
+            Permissions.shared.requestInputMonitoring()
+            QuickToolHUD.show(icon: "keyboard", message: strings.keystrokeUnavailableHUD)
+        }
         let keystrokeStyle = RecorderKeystrokeStyle.fromPreferences()
         let pauseClock = RecorderPauseClock()
         isPreparingRecording = true
@@ -616,6 +676,9 @@ final class ScreenRecorderService: ObservableObject {
                     camera = capture
                     cameraLayout = box
                     let view = RecorderCameraBubble(capture: capture, layoutBox: box, region: region)
+                    view.onCameraLayoutChange = { [weak self] layout in
+                        self?.session?.recordCameraLayout(layout)
+                    }
                     view.show()
                     bubble = view
                 } else {
@@ -633,7 +696,7 @@ final class ScreenRecorderService: ObservableObject {
                                           keystrokeStyle: keystrokeStyle,
                                           camera: camera,
                                           cameraDeviceID: RecorderCameraPreference.deviceID(),
-                                          cameraLayout: cameraLayout)
+                                          cameraLayout: cameraLayout?.layout)
             self.cameraBubble = bubble
             self.startPreparedRecording(session, frameRate: frameRate,
                                         capturesSystemAudio: capturesSystemAudio, generation: generation)
@@ -672,6 +735,7 @@ final class ScreenRecorderService: ObservableObject {
             // row that appeared later would land in the video twice.
             let overlay = RecorderKeystrokeOverlay()
             overlay.prepare(on: NSScreen.screens.first { $0.displayID == region.displayID },
+                            region: region,
                             style: session.keystrokeStyle)
             keyOverlay = overlay
             session.onKeystroke = { [weak self] keys in

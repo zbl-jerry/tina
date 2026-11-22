@@ -18,7 +18,10 @@ final class RecorderKeystrokeOverlay {
 
     private var panel: NSPanel?
     private var row: KeyRowView?
-    private var screen: NSScreen?
+    /// The recorded area in Cocoa points. Corners mean the corners of what is
+    /// being recorded, not of the whole display, so a window recording shows
+    /// its row inside the window.
+    private var anchor = CGRect.zero
     private var style = RecorderKeystrokeStyle()
     private var hideWork: DispatchWorkItem?
     private var isPaused = false
@@ -32,10 +35,14 @@ final class RecorderKeystrokeOverlay {
 
     /// Creates the panel ahead of the capture so its window number can be
     /// excluded from the first frame. It stays invisible until a key arrives.
-    func prepare(on screen: NSScreen?, style: RecorderKeystrokeStyle) {
+    func prepare(on screen: NSScreen?,
+                 region: RecorderSupport.Region,
+                 style: RecorderKeystrokeStyle) {
         guard panel == nil else { return }
         let host = screen ?? NSScreen.main ?? NSScreen.screens.first
-        self.screen = host
+        self.anchor = region.anchorRect.width > 0 && region.anchorRect.height > 0
+            ? region.anchorRect
+            : host?.visibleFrame ?? .zero
         self.style = style.sanitized
 
         let row = KeyRowView()
@@ -63,15 +70,19 @@ final class RecorderKeystrokeOverlay {
     /// Shows one combination and starts its dwell over.
     func present(keys: [String]) {
         guard !keys.isEmpty, !isPaused, !isSecure,
-              let panel, let row, let screen else { return }
+              let panel, let row else { return }
         hideWork?.cancel()
 
         row.keys = keys
-        row.capHeight = capHeight(on: screen)
+        row.capHeight = capHeight(for: anchor)
         let size = row.measuredSize
         panel.setContentSize(size)
         row.frame = CGRect(origin: .zero, size: size)
-        panel.setFrameOrigin(origin(for: size, on: screen))
+        panel.setFrameOrigin(RecorderKeystrokeOverlayGeometry.origin(
+            for: size,
+            placement: style.placement,
+            anchor: anchor,
+            pointer: NSEvent.mouseLocation))
         row.needsDisplay = true
 
         if panel.alphaValue < 0.01 {
@@ -118,33 +129,10 @@ final class RecorderKeystrokeOverlay {
         row = nil
     }
 
-    private func capHeight(on screen: NSScreen) -> CGFloat {
-        max(10, screen.frame.height * style.size.fraction)
-    }
-
-    private func origin(for size: CGSize, on screen: NSScreen) -> CGPoint {
-        let margin: CGFloat = 24
-        let frame = screen.visibleFrame
-        func clamped(_ point: CGPoint) -> CGPoint {
-            CGPoint(x: min(max(frame.minX + 8, point.x), max(frame.minX + 8, frame.maxX - size.width - 8)),
-                    y: min(max(frame.minY + 8, point.y), max(frame.minY + 8, frame.maxY - size.height - 8)))
-        }
-
-        switch style.placement {
-        case .topLeading:
-            return CGPoint(x: frame.minX + margin, y: frame.maxY - size.height - margin)
-        case .topTrailing:
-            return CGPoint(x: frame.maxX - size.width - margin, y: frame.maxY - size.height - margin)
-        case .bottomLeading:
-            return CGPoint(x: frame.minX + margin, y: frame.minY + margin)
-        case .bottomTrailing:
-            return CGPoint(x: frame.maxX - size.width - margin, y: frame.minY + margin)
-        case .cursor:
-            // Beside and above the pointer, so the row never covers the spot
-            // being clicked while the combination is being read.
-            let location = NSEvent.mouseLocation
-            return clamped(CGPoint(x: location.x + 18, y: location.y + 16))
-        }
+    private func capHeight(for anchor: CGRect) -> CGFloat {
+        // Relative to the recorded area, not the display, so the live row is
+        // the size the composer will draw at the same setting.
+        max(10, anchor.height * style.size.fraction)
     }
 
     private final class KeyRowView: NSView {

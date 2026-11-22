@@ -24,6 +24,13 @@ final class RecorderTakeStore: @unchecked Sendable {
         /// Key content, written only when the overlay was on. It lives in the
         /// private take folder and is deleted with the take.
         var keystrokesURL: URL { folder.appendingPathComponent(RecorderSupport.takeKeystrokesName) }
+        /// Camera frames and their placement, written only when the bubble
+        /// was on. Both live in the private take folder and are deleted with
+        /// the take.
+        var cameraURL: URL { folder.appendingPathComponent(RecorderSupport.takeCameraName) }
+        var cameraLayoutURL: URL {
+            folder.appendingPathComponent(RecorderSupport.takeCameraLayoutName)
+        }
         var editURL: URL { folder.appendingPathComponent(RecorderSupport.takeEditName) }
     }
 

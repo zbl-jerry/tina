@@ -3,6 +3,7 @@
 
 import AVFoundation
 import CoreGraphics
+import CoreImage
 import CoreMedia
 import CoreVideo
 import Foundation
@@ -109,6 +110,35 @@ enum RecorderCameraOverlayTests {
         box.layout = draggedToCorner
         suite.expect(box.layout == draggedToCorner,
                "the writer sees the layout the bubble was left at")
+
+        // MARK: Placement timeline
+
+        let firstPlacement = RecorderCameraLayout(centerX: 0.2, centerY: 0.3, size: 0.2,
+                                                   shape: .rounded, mirrored: false,
+                                                   showsShadow: false)
+        let laterPlacement = RecorderCameraLayout(centerX: 0.7, centerY: 0.6, size: 0.3)
+        let events = RecorderCameraTrack(events: [
+            RecorderCameraLayoutEvent(time: 2, layout: laterPlacement),
+            RecorderCameraLayoutEvent(time: 0.5, layout: firstPlacement),
+            RecorderCameraLayoutEvent(time: -4, layout: firstPlacement),
+            RecorderCameraLayoutEvent(time: 99, layout: laterPlacement),
+        ]).normalized(duration: 4)
+        suite.expect(events.events.map(\.time) == [0, 0.5, 2, 4],
+                     "a camera placement timeline is ordered and clamped to the recording")
+        let earlyPlacement = events.layout(at: 0.25)
+        let latePlacement = events.layout(at: 3.5)
+        suite.expect(earlyPlacement?.shape == .rounded
+                && earlyPlacement?.mirrored == false
+                && earlyPlacement?.showsShadow == false
+                && abs((earlyPlacement?.centerX ?? 0) - 0.2) < 0.001
+                && abs((latePlacement?.centerX ?? 0) - 0.7) < 0.001,
+                     "the latest drag at or before a moment is the one drawn")
+        suite.expect(events.layout(at: -1) == nil
+                && RecorderCameraTrack().layout(at: 1) == nil,
+                     "a time before the first placement, or a take without a camera, draws nothing")
+        let restored = RecorderCameraTrack.decoded(events.encoded())
+        suite.expect(restored == events,
+                     "the placement timeline survives a save and reopen")
 
         // MARK: Preferences
 
@@ -263,6 +293,88 @@ enum RecorderCameraOverlayTests {
         } else {
             suite.expect(false, "synthetic screen and camera buffers are created")
         }
+
+        // MARK: Composer
+
+        // The bubble is a separate picture track now, so the composer has to
+        // draw it after the zoom and the card fit. A bottom-right bubble and
+        // a zoom aimed at the top-left would lose it if it were still baked
+        // into the screen pixels.
+        var cameraDocument = RecorderEditDocument()
+        cameraDocument.showsPointer = false
+        cameraDocument.zoomEnabled = true
+        cameraDocument.zoomSegments = [RecorderTimeline.ZoomSegment(start: 0, end: 3,
+                                                                   amount: 2,
+                                                                   focusX: 0.1, focusY: 0.1)]
+        let bubbleLayout = RecorderCameraLayout(centerX: 0.9, centerY: 0.9, size: 0.3,
+                                                shape: .circle, mirrored: false,
+                                                showsShadow: false)
+        let cameraTimeline = RecorderCameraTrack(events: [
+            RecorderCameraLayoutEvent(time: 0, layout: bubbleLayout),
+        ])
+        let sourceSize = CGSize(width: 320, height: 180)
+        if let plan = RecorderComposer.makePlan(document: cameraDocument,
+                                                track: RecorderPointerTrack(),
+                                                camera: cameraTimeline,
+                                                sourceSize: sourceSize,
+                                                frameRate: 30,
+                                                duration: 3) {
+            suite.expect(plan.showsCamera && plan.cameraLayouts.contains { $0 != nil },
+                         "a camera track makes the composer draw the bubble")
+            suite.expect((plan.zoom.max() ?? 1) > 1.5,
+                         "the fixture really zooms, so the bubble has something to survive")
+            let composer = RecorderComposer(plan: plan)
+            let source = CIImage(color: CIColor(red: 0, green: 0, blue: 1, alpha: 1))
+                .cropped(to: CGRect(origin: .zero, size: sourceSize))
+            let camera = CIImage(color: CIColor(red: 1, green: 0, blue: 0, alpha: 1))
+                .cropped(to: CGRect(x: 0, y: 0, width: 160, height: 160))
+            let frame = composer.render(source, camera: camera, at: 1.2)
+            let width = Int(plan.canvasSize.width)
+            let height = Int(plan.canvasSize.height)
+            let pixels = rendered(frame, size: plan.canvasSize)
+            var red = 0, blue = 0, redLeft = 0
+            var redSumX = 0, redSumY = 0
+            for y in 0..<height {
+                for x in 0..<width {
+                    let offset = (y * width + x) * 4
+                    let r = Int(pixels[offset])
+                    let g = Int(pixels[offset + 1])
+                    let b = Int(pixels[offset + 2])
+                    if r > 180, g < 80, b < 80 {
+                        red += 1
+                        redSumX += x
+                        redSumY += y
+                        if x < width / 2 { redLeft += 1 }
+                    } else if b > 180, r < 80 {
+                        blue += 1
+                    }
+                }
+            }
+            suite.expect(red > 500 && redLeft == 0 && blue > 1_000,
+                         "the bubble is drawn over the zoomed picture instead of being cropped out")
+            let centroidX = red > 0 ? redSumX / red : 0
+            let centroidY = red > 0 ? redSumY / red : 0
+            suite.expect(centroidX > width / 2,
+                         "the bubble keeps the recorded area's right side")
+            suite.expect(centroidY < height / 3 || centroidY > height * 2 / 3,
+                         "the bubble stays in a corner of the finished picture")
+        } else {
+            suite.expect(false, "a camera track should not fall back to the plain path")
+        }
+    }
+
+    private static func rendered(_ image: CIImage, size: CGSize) -> [UInt8] {
+        let width = Int(size.width)
+        let height = Int(size.height)
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        CIContext(options: [.cacheIntermediates: false]).render(
+            image,
+            toBitmap: &bytes,
+            rowBytes: width * 4,
+            bounds: CGRect(origin: .zero, size: size),
+            format: .RGBA8,
+            colorSpace: CGColorSpaceCreateDeviceRGB())
+        return bytes
     }
 
     private static func buffer(width: Int, height: Int,

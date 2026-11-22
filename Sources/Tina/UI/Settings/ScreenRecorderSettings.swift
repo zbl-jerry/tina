@@ -254,11 +254,17 @@ struct ScreenRecordingCaptureSettings: View {
     /// with no keys.
     private var keyOverlayOptions: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Off cannot be chosen without the grant, but turning an existing
-            // choice off must always remain possible, even if the grant was
-            // revoked later.
+            // Turning the switch on asks macOS for the grant immediately, the
+            // same way the camera and microphone switches do. Leaving it on
+            // without the grant records normally and says so at record time;
+            // hiding the switch until the grant exists only hid the way to
+            // ask for it.
             Toggle(strings.keystrokeToggle, isOn: $keystrokesEnabled)
-                .disabled(!permissions.inputMonitoring && !keystrokesEnabled)
+                .onChange(of: keystrokesEnabled) { _, enabled in
+                    if enabled, !permissions.inputMonitoring {
+                        permissions.requestInputMonitoring()
+                    }
+                }
             Text(strings.keystrokeCaption)
                 .font(.caption)
                 .foregroundStyle(.secondary)
