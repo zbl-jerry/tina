@@ -39,7 +39,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>3.6.0</string>
+	<string>3.7.0</string>
 	<key>CFBundleSupportedPlatforms</key>
 	<array>
 		<string>MacOSX</string>
@@ -56,7 +56,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>109</string>
+	<string>110</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
@@ -85,13 +85,13 @@
 	<string>© 2026 Tina</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Tina records your microphone only when you turn it on for a screen recording. The audio stays on your Mac unless you choose to create a temporary link.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Tina uses on-device speech recognition to turn the sound your Mac is playing into live captions. Audio and transcripts stay on this Mac.</string>
 	<key>NSNetworkVolumesUsageDescription</key>
 	<string>Tina organizes confirmed WhatsApp downloads in a destination folder you explicitly choose. The Cleaner also looks for forgotten screenshots when you save screenshots here.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSRemovableVolumesUsageDescription</key>
 	<string>Tina organizes confirmed WhatsApp downloads in a destination folder you explicitly choose. The Cleaner also looks for forgotten screenshots when you save screenshots here.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Tina uses on-device speech recognition to turn the sound your Mac is playing into live captions. Audio and transcripts stay on this Mac.</string>
 </dict>
 </plist>
