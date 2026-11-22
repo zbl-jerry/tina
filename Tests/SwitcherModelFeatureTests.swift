@@ -3568,6 +3568,8 @@ enum SwitcherModelFeatureTests {
         suite.expect([DefaultsKey.panelToggleDarkMode, DefaultsKey.panelToggleKeyboardLight,
                 DefaultsKey.panelToggleMicMute,
                 DefaultsKey.panelToggleEmptyTrash,
+                DefaultsKey.panelToggleRestartDock, DefaultsKey.panelToggleRestartFinder,
+                DefaultsKey.panelToggleRestartMenuBar, DefaultsKey.panelToggleRestartInputMethod,
                 DefaultsKey.panelToggleEjectDisks, DefaultsKey.panelToggleHiddenFiles,
                 DefaultsKey.panelToggleDesktopIcons, DefaultsKey.panelToggleLockScreen,
                 DefaultsKey.panelToggleDisplayOff, DefaultsKey.panelToggleScreenSaver]
