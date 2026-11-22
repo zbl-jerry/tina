@@ -69,6 +69,13 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
     private(set) var typingTrack = RecorderTypingTrack()
     /// Present only when the recording was made with the key overlay on.
     private(set) var keystrokeTrack = RecorderKeystrokeTrack()
+    /// Present only when the recording was made with the camera bubble on.
+    private(set) var cameraTrack = RecorderCameraTrack()
+    /// The camera video sidecar, kept out of the master so the composer can
+    /// draw the bubble above the edit's zoom.
+    private lazy var cameraAsset: AVURLAsset? = FileManager.default.fileExists(
+        atPath: take.cameraURL.path) ? AVURLAsset(url: take.cameraURL) : nil
+    private var cameraTrackID: CMPersistentTrackID?
     /// True when the recording carries a pointer track at all. Without one the
     /// pointer and zoom controls have nothing to act on and are hidden rather
     /// than shown doing nothing.
@@ -108,6 +115,10 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
         typingTrack = RecorderTypingTrack.decoded(try? Data(contentsOf: take.typingURL))
         keystrokeTrack = RecorderKeystrokeTrack.decoded(
             try? Data(contentsOf: take.keystrokesURL))
+        if FileManager.default.fileExists(atPath: take.cameraURL.path) {
+            cameraTrack = RecorderCameraTrack.decoded(
+                try? Data(contentsOf: take.cameraLayoutURL))
+        }
         loadEditPresets()
         loadBackdropPresets()
         observeTime()
@@ -161,12 +172,14 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
         let asset = sourceAsset
         compositionTask = Task { @MainActor [weak self] in
             guard let result = await RecorderComposition.build(from: asset,
+                                                               camera: self?.cameraAsset,
                                                                ranges: ranges,
                                                                includesAudio: true),
                   let self, !Task.isCancelled
             else { return }
             let item = AVPlayerItem(asset: result.asset)
             self.audioTrackIDs = result.audioTrackIDs
+            self.cameraTrackID = result.cameraTrackID
             item.audioMix = RecorderComposition.audioMix(trackIDs: result.audioTrackIDs,
                                                          document: self.document)
             self.player.replaceCurrentItem(with: item)
@@ -397,6 +410,7 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
             guard let plan = RecorderComposer.makePlan(document: document,
                                                        track: track,
                                                        keystrokes: self.keystrokeTrack,
+                                                       camera: self.cameraTrack,
                                                        sourceSize: sourceSize,
                                                        frameRate: frameRate,
                                                        duration: duration) else {
@@ -405,11 +419,14 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
             }
             let composer = RecorderComposer(plan: plan)
             let asset = item.asset
-            guard let videoTrack = try? await asset.loadTracks(withMediaType: .video).first,
-                  !Task.isCancelled
-            else { return }
+            let videoTracks = (try? await asset.loadTracks(withMediaType: .video)) ?? []
+            guard let videoTrack = videoTracks.first, !Task.isCancelled else { return }
+            let cameraVideoTrack = self.cameraTrackID.flatMap { id in
+                videoTracks.first { $0.trackID == id }
+            }
             let composition = await RecorderComposer.videoComposition(
                 track: videoTrack,
+                cameraTrack: cameraVideoTrack,
                 asset: asset,
                 duration: CMTime(seconds: duration, preferredTimescale: 600),
                 frameRate: frameRate,

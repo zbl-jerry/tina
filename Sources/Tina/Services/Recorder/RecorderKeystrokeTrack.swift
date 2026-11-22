@@ -6,6 +6,7 @@ import Carbon.HIToolbox
 import CoreGraphics
 import Foundation
 import QuartzCore
+import os.log
 
 /// Where the key overlay sits in the finished picture.
 enum RecorderKeystrokePlacement: String, Codable, CaseIterable {
@@ -19,6 +20,49 @@ enum RecorderKeystrokePlacement: String, Codable, CaseIterable {
         case .bottomLeading: return .bottomLeading
         case .bottomTrailing: return .bottomTrailing
         case .cursor: return nil
+        }
+    }
+}
+
+/// Pure placement math for the live row. It lives apart from the panel so the
+/// rule "inside the recorded area, never the display" can be tested without a
+/// screen, and so the overlay and its tests cannot disagree.
+enum RecorderKeystrokeOverlayGeometry {
+    static func origin(for size: CGSize,
+                       placement: RecorderKeystrokePlacement,
+                       anchor: CGRect,
+                       pointer: CGPoint) -> CGPoint {
+        guard anchor.width > 0, anchor.height > 0,
+              size.width.isFinite, size.height.isFinite,
+              size.width > 0, size.height > 0 else { return anchor.origin }
+        let margin = min(24, min(anchor.width, anchor.height) * 0.04)
+        let inset = min(8, margin)
+        func clamped(_ point: CGPoint) -> CGPoint {
+            let lowestX = anchor.minX + inset
+            let lowestY = anchor.minY + inset
+            let highestX = max(lowestX, anchor.maxX - size.width - inset)
+            let highestY = max(lowestY, anchor.maxY - size.height - inset)
+            return CGPoint(x: min(max(lowestX, point.x), highestX),
+                           y: min(max(lowestY, point.y), highestY))
+        }
+
+        switch placement {
+        case .topLeading:
+            return clamped(CGPoint(x: anchor.minX + margin,
+                                   y: anchor.maxY - size.height - margin))
+        case .topTrailing:
+            return clamped(CGPoint(x: anchor.maxX - size.width - margin,
+                                   y: anchor.maxY - size.height - margin))
+        case .bottomLeading:
+            return clamped(CGPoint(x: anchor.minX + margin,
+                                   y: anchor.minY + margin))
+        case .bottomTrailing:
+            return clamped(CGPoint(x: anchor.maxX - size.width - margin,
+                                   y: anchor.minY + margin))
+        case .cursor:
+            // Beside and above the pointer, so the row never covers the spot
+            // being clicked while the combination is being read.
+            return clamped(CGPoint(x: pointer.x + 18, y: pointer.y + 16))
         }
     }
 }
@@ -320,6 +364,8 @@ enum RecorderKeystrokeLabel {
 /// so the overlay is cleared the moment a password field takes it, rather
 /// than at the next key press that never arrives.
 final class RecorderKeystrokeSampler {
+    private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "tina",
+                                    category: "recorder")
     private let pauseClock: RecorderPauseClock
     private let style: RecorderKeystrokeStyle
     private let lock = NSLock()
@@ -347,7 +393,10 @@ final class RecorderKeystrokeSampler {
     @discardableResult
     func start() -> Bool {
         guard !isRunning else { return true }
-        guard CGPreflightListenEventAccess() else { return false }
+        guard CGPreflightListenEventAccess() else {
+            Self.log.notice("Key overlay skipped: Input Monitoring is not granted")
+            return false
+        }
         let mask = CGEventMask(1) << CGEventType.keyDown.rawValue
         guard let created = CGEvent.tapCreate(
             tap: .cghidEventTap,
@@ -369,7 +418,10 @@ final class RecorderKeystrokeSampler {
                 return Unmanaged.passUnretained(event)
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
-        ) else { return false }
+        ) else {
+            Self.log.error("Key overlay skipped: macOS refused the event tap")
+            return false
+        }
 
         tap = created
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, created, 0)

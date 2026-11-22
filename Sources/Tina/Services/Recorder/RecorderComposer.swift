@@ -74,6 +74,12 @@ final class RecorderComposer {
         let keystrokeActive: [Int]
         let keystrokeOpacity: [Double]
         let keystrokeOrigins: [CGPoint]
+        /// The bubble's placement at each frame, or nil when the recording
+        /// has no camera track. The camera frames themselves arrive with the
+        /// composition, one per rendered frame, and are drawn on top of the
+        /// zoom so a zoom can never crop them.
+        let showsCamera: Bool
+        let cameraLayouts: [RecorderCameraLayout?]
     }
 
     private let plan: Plan
@@ -81,6 +87,9 @@ final class RecorderComposer {
     /// so this is a handful of small images for the whole export.
     private let decodedShapes: [CGImage?]
     private let fallbackArrow: CGImage?
+    /// The bubble drawing is cached per size and shape, and the export asks
+    /// for frames from more than one thread.
+    private let cameraBubbles = RecorderCameraCompositor()
 
     init(plan: Plan) {
         self.plan = plan
@@ -97,7 +106,7 @@ final class RecorderComposer {
 
     // MARK: - Rendering
 
-    func render(_ source: CIImage, at seconds: Double) -> CIImage {
+    func render(_ source: CIImage, camera: CIImage? = nil, at seconds: Double) -> CIImage {
         let index = frameIndex(for: seconds)
         var content = source.cropped(to: CGRect(origin: .zero, size: plan.sourceSize))
         content = blurred(content, at: seconds)
@@ -110,6 +119,10 @@ final class RecorderComposer {
         }
         content = zoomed(content, index: index)
         content = fitted(content)
+        // After the zoom and the card fit, so the bubble keeps its place and
+        // size in the finished picture instead of being magnified or cropped
+        // along with the screen.
+        content = drawCamera(on: content, camera: camera, index: index)
 
         if let mask = plan.mask {
             let background = plan.plate ?? CIImage(color: .black)
@@ -143,6 +156,36 @@ final class RecorderComposer {
         let origin = plan.keystrokeOrigins[index]
         return faded(CIImage(cgImage: sprite), opacity: plan.keystrokeOpacity[index])
             .transformed(by: CGAffineTransform(translationX: origin.x, y: origin.y))
+            .composited(over: content)
+    }
+
+    /// The camera bubble belongs to the recorded area, not to the zoom: it is
+    /// drawn after the zoom and the card fit, at its recorded placement and
+    /// size within the card, so neither the automatic zoom nor an aspect crop
+    /// can remove or magnify it.
+    private func drawCamera(on content: CIImage,
+                            camera: CIImage?,
+                            index: Int) -> CIImage {
+        guard plan.showsCamera,
+              plan.cameraLayouts.indices.contains(index),
+              let layout = plan.cameraLayouts[index],
+              let camera
+        else { return content }
+        let card = plan.cardRect
+        let side = layout.side(in: card.size)
+        guard side >= 8, card.width > 0, card.height > 0,
+              let overlay = cameraBubbles.overlay(camera: camera,
+                                                  side: side,
+                                                  layout: layout)
+        else { return content }
+        let rect = layout.rect(in: card.size)
+        // The layout counts down from the top of the card; Core Image counts
+        // up from the bottom of the canvas.
+        let origin = CGPoint(x: card.minX + rect.minX,
+                             y: card.minY + card.height - rect.maxY)
+        return overlay.image
+            .transformed(by: CGAffineTransform(translationX: origin.x - overlay.padding,
+                                               y: origin.y - overlay.padding))
             .composited(over: content)
     }
 
@@ -364,6 +407,7 @@ final class RecorderComposer {
     /// hand back a file missing the areas kept unreadable, and everything else
     /// the person put on the picture.
     static func videoComposition(track: AVAssetTrack,
+                                 cameraTrack: AVAssetTrack? = nil,
                                  asset: AVAsset,
                                  duration: CMTime,
                                  frameRate: Int,
@@ -394,6 +438,7 @@ final class RecorderComposer {
             composition.instructions = [RecorderCompositionInstruction(
                 timeRange: CMTimeRange(start: .zero, duration: timeline),
                 trackID: track.trackID,
+                cameraTrackID: cameraTrack?.trackID,
                 sourceTransform: sourceTransform,
                 composer: composer,
                 timing: RecorderExportTiming(speed: playbackSpeed))]
@@ -452,20 +497,25 @@ private final class RecorderCompositionInstruction: NSObject, AVVideoComposition
     let requiredSourceTrackIDs: [NSValue]?
     let passthroughTrackID = kCMPersistentTrackID_Invalid
     let trackID: CMPersistentTrackID
+    /// Present only for a recording made with the camera bubble on.
+    let cameraTrackID: CMPersistentTrackID?
     let sourceTransform: CGAffineTransform
     /// Only read while rendering, from whichever thread asks for a frame.
     let composer: RecorderComposer
     let timing: RecorderExportTiming
 
-    init(timeRange: CMTimeRange, trackID: CMPersistentTrackID, sourceTransform: CGAffineTransform,
+    init(timeRange: CMTimeRange, trackID: CMPersistentTrackID,
+         cameraTrackID: CMPersistentTrackID?, sourceTransform: CGAffineTransform,
          composer: RecorderComposer,
          timing: RecorderExportTiming) {
         self.timeRange = timeRange
         self.trackID = trackID
+        self.cameraTrackID = cameraTrackID
         self.sourceTransform = sourceTransform
         self.composer = composer
         self.timing = timing
         requiredSourceTrackIDs = [NSNumber(value: trackID)]
+            + (cameraTrackID.map { [NSNumber(value: $0)] } ?? [])
     }
 }
 
@@ -499,6 +549,11 @@ private final class RecorderVideoCompositor: NSObject, AVVideoCompositing, @unch
         let source = request.sourceFrame(byTrackID: instruction.trackID)
             .map { CIImage(cvPixelBuffer: $0).transformed(by: instruction.sourceTransform) }
             ?? CIImage.empty()
+        // A camera track can have gaps (paused, interrupted, or the camera
+        // came up late); the frame simply has no bubble then.
+        let camera = instruction.cameraTrackID
+            .flatMap { request.sourceFrame(byTrackID: $0) }
+            .map { CIImage(cvPixelBuffer: $0) }
         // Plans are built on the edited, unscaled clock. Map back before
         // looking up zooms, cursor shapes, captions and privacy blurs,
         // including frames on either side of a cut.
@@ -506,7 +561,7 @@ private final class RecorderVideoCompositor: NSObject, AVVideoCompositing, @unch
             forOutputTime: CMTimeGetSeconds(request.compositionTime))
         // Over black, as the Core Image handler drew it: a buffer from the
         // pool still holds an earlier frame wherever this one draws nothing.
-        let frame = instruction.composer.render(source, at: seconds)
+        let frame = instruction.composer.render(source, camera: camera, at: seconds)
             .composited(over: CIImage(color: .black)
                 .cropped(to: CGRect(origin: .zero, size: instruction.composer.canvasSize)))
         // Handed on only once the GPU has drawn it.

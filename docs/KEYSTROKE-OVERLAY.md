@@ -88,6 +88,12 @@ same zoom and card fit the composer applies to the picture; if a recording has
 no pointer track, it falls back to the bottom-right corner rather than
 following a point that was never recorded.
 
+The **live** row is placed against the recorded area, not the display: a
+window or area recording shows its row inside that window or area, at a size
+relative to the recording's height, so what is seen while recording matches
+what the composer draws. The exported corners still use the finished canvas,
+which is the recorded card plus any backdrop.
+
 ### Pause and secure input
 
 Pausing hides the row at once. Presses during a pause are not recorded, so
@@ -164,10 +170,13 @@ the untouched master, like the pointer path, captions, images and blurs today.
 ### Permission
 
 Input Monitoring is checked with `CGPreflightListenEventAccess()` and requested
-with `CGRequestListenEventAccess()`. The grant takes effect in the running
-process, so no relaunch is needed. The settings switch is disabled whenever the
-grant is absent, and the recorder re-checks both the switch and the grant at
-the moment a recording starts.
+with `CGRequestListenEventAccess()`. Turning the switch on asks for the grant
+immediately, the same way the camera and microphone switches do. The recorder
+asks the system directly at the moment a recording starts rather than trusting
+a cached status, so a grant made while Tina was running is picked up. If the
+grant is still missing then, the recording continues and a HUD says why the
+keys are absent instead of silently recording without them. A refused event
+tap produces the same notice and a log entry.
 
 ## Privacy and security
 
@@ -186,20 +195,21 @@ the moment a recording starts.
 ## Verification
 
 - `./build.sh --dev` — compiles the app bundle.
-- `./build.sh --test` — 124,628 checks pass, including the new
+- `./build.sh --test` — 125,243 checks pass, including
   `RecorderKeystrokeTests` for defaults, backup inclusion, normalization,
-  active-press lookup, key naming, the rasterizer and the composer plan, and
-  the recorder harness checks that the key tap is installed and removed on the
-  main thread.
-- `./build/Tina --selftest` on the official build.
+  active-press lookup, key naming, the rasterizer and the composer plan, the
+  live row being placed inside the recorded area, and the recorder harness
+  checks that the key tap is installed and removed on the main thread.
 - Manual review, in the main session only (subagents must not drive windows or
   `screencapture`):
   1. Grant Input Monitoring, turn the switch on, record a few shortcuts and a
      text entry.
-  2. Confirm the live row shows `⌘⇧4`-style combinations, hides on pause and
-     returns on resume.
+  2. Confirm the live row shows `⌘⇧4`-style combinations inside the recorded
+     window or area, hides on pause and returns on resume.
   3. Click into a password field while recording; confirm the row clears at
      once and no keys from that period appear in the editor.
   4. Export a video and a GIF; confirm the row is burned in at the chosen
      position, size, dwell and theme.
-  5. Revoke Input Monitoring; confirm the switch greys out with a way back.
+  5. Revoke Input Monitoring; confirm the switch stays usable, the settings
+     page shows the permission row, and starting a recording says the keys
+     cannot be shown instead of silently omitting them.

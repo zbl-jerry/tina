@@ -193,6 +193,10 @@ final class RecorderPauseClock {
 
     var isPaused: Bool { lock.withLock { timeline.isPaused } }
 
+    /// Whether a start time has been fixed. An event that maps to nil can be
+    /// before the stream starts or inside a pause; this tells the two apart.
+    var hasStarted: Bool { lock.withLock { origin != nil } }
+
     @discardableResult
     func begin(at time: Double) -> Bool {
         lock.withLock {
@@ -647,6 +651,11 @@ enum RecorderSupport {
     /// Pressed keys, only present when the key overlay was on. Never part of
     /// the edit document, a backup or the exported file's metadata.
     static let takeKeystrokesName = "keystrokes.json"
+    /// Camera frames recorded beside the master, drawn by the composer after
+    /// the edit's zoom so a bubble can never be cropped out of the picture.
+    /// The layout timeline says where the bubble sat at each moment.
+    static let takeCameraName = "camera.mov"
+    static let takeCameraLayoutName = "camera.json"
     static let takeEditName = "edit.json"
     static let takeFolderPrefix = "Take-"
 

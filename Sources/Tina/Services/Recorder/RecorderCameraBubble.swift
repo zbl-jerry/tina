@@ -15,6 +15,9 @@ final class RecorderCameraBubble {
     private let region: RecorderSupport.Region
     private var panel: CameraBubblePanel?
     private var bubbleView: CameraBubbleView?
+    /// Called after a drag or resize, in addition to saving the preference for
+    /// the next recording, so this recording's timeline learns about it too.
+    var onCameraLayoutChange: ((RecorderCameraLayout) -> Void)?
 
     /// The window the capture has to leave out, so the bubble is not recorded
     /// twice: once floating and once baked in.
@@ -46,6 +49,7 @@ final class RecorderCameraBubble {
             RecorderCameraPreference.save(fitted)
             self.panel?.hasShadow = fitted.showsShadow
             self.panel?.invalidateShadow()
+            self.onCameraLayoutChange?(fitted)
         }
 
         let panel = CameraBubblePanel(contentRect: frame,

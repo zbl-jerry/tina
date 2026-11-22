@@ -151,7 +151,7 @@ def main():
                                    "    static func prepareForRequest("])
           + "}\n")
     recorder = "Sources/Tina/Services/Recorder/ScreenRecorderService.swift"
-    write("RecorderPreparation.swift", "import Foundation\nextension RecorderPreparationTests {\n"
+    write("RecorderPreparation.swift", "import CoreGraphics\nimport Foundation\nextension RecorderPreparationTests {\n"
           + "final class Service: Fixture {\n"
           + "".join(declaration(recorder, prefix).replace("private func", "func", 1)
                     for prefix in ["    private func beginRecording(", "    private func pendingStartIsAuthorized(",

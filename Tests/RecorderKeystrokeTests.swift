@@ -37,6 +37,38 @@ enum RecorderKeystrokeTests {
                      && RecorderKeystrokePlacement.cursor.anchor == nil,
                      "four corners map to caption anchors and the pointer has none")
 
+        // The live row belongs to the recorded area, not the display: a
+        // window recording must show its row inside that window.
+        let window = CGRect(x: 900, y: 200, width: 500, height: 320)
+        let rowSize = CGSize(width: 180, height: 64)
+        func inside(_ point: CGPoint) -> Bool {
+            point.x >= window.minX && point.x + rowSize.width <= window.maxX
+                && point.y >= window.minY && point.y + rowSize.height <= window.maxY
+        }
+        for placement in RecorderKeystrokePlacement.allCases {
+            let point = RecorderKeystrokeOverlayGeometry.origin(
+                for: rowSize, placement: placement, anchor: window,
+                pointer: CGPoint(x: 5_000, y: 5_000))
+            suite.expect(inside(point),
+                         "\(placement.rawValue) keeps the live row inside a window recording")
+        }
+        let nearBottomLeft = RecorderKeystrokeOverlayGeometry.origin(
+            for: rowSize, placement: .bottomLeading, anchor: window,
+            pointer: .zero)
+        suite.expect(nearBottomLeft.x < window.midX && nearBottomLeft.y < window.midY,
+                     "bottom leading means the recorded area's bottom left, not the display's")
+        let followingPointer = RecorderKeystrokeOverlayGeometry.origin(
+            for: rowSize, placement: .cursor, anchor: window,
+            pointer: CGPoint(x: window.midX, y: window.midY))
+        suite.expect(inside(followingPointer)
+                     && followingPointer.x > window.midX && followingPointer.y > window.midY,
+                     "a pointer-following row is placed beside the pointer and kept inside the recording")
+        let tinyRegion = CGRect(x: 10, y: 10, width: 40, height: 30)
+        let tinyOrigin = RecorderKeystrokeOverlayGeometry.origin(
+            for: rowSize, placement: .bottomTrailing, anchor: tinyRegion, pointer: .zero)
+        suite.expect(tinyOrigin.x >= tinyRegion.minX && tinyOrigin.y >= tinyRegion.minY,
+                     "a row larger than its recording still starts inside the area")
+
         // MARK: Style
 
         var style = RecorderKeystrokeStyle()

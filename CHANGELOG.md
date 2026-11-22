@@ -14,6 +14,9 @@ here before the version in `Resources/Info.plist` is bumped.
 ### Fixed
 - Update checks ask the repository the app is built from, so they no longer fail against a renamed repository. A response GitHub rejects now reports its HTTP status instead of a placeholder.
 - The post-update What's New window reads the changelog bundled with the app again, so it lists the changes made in every version between the previous install and the current one.
+- Screen recording keeps the camera bubble in the editor preview and in every video, GIF and shared export by drawing it after the automatic zoom instead of baking it into the recording.
+- The live key row stays inside the recorded window or area, the key switch asks for Input Monitoring when it is turned on, and a missing grant is reported when recording starts instead of silently omitting the keys.
+- The screen-capture chooser offers full-screen recording, and a shortcut's recorder row is hidden while that shortcut is turned off.
 
 ## [3.6.0] - 2026-11-21
 

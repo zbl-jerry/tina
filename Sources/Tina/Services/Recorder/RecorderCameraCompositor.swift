@@ -13,6 +13,9 @@ import CoreVideo
 final class RecorderCameraCompositor {
 
     private let context = CIContext(options: [.cacheIntermediates: false])
+    /// Sprite caches are shared by the live buffer path and by every frame the
+    /// export compositor draws on its own threads.
+    private let lock = NSLock()
     private var cachedSide: CGFloat = 0
     private var cachedShape: RecorderCameraShape?
     private var cachedMask: CIImage?
@@ -39,28 +42,15 @@ final class RecorderCameraCompositor {
                             width: rect.width,
                             height: rect.height)
 
-        guard let cameraImage = squareCameraImage(camera, side: side, layout: layout),
-              let sprites = sprites(side: side, shape: layout.shape) else { return nil }
+        guard let overlay = overlay(camera: CIImage(cvPixelBuffer: camera),
+                                    side: side,
+                                    layout: layout) else { return nil }
 
         var result = CIImage(cvPixelBuffer: screen)
-        if layout.showsShadow, let shadow = sprites.shadow {
-            result = shadow
-                .transformed(by: CGAffineTransform(
-                    translationX: target.minX - sprites.pad,
-                    y: target.minY - sprites.pad - side * 0.035))
-                .composited(over: result)
-        }
-        // Mask and camera must share the origin for the blend; moving the
-        // cutout afterwards is what puts it on the screen.
-        let clear = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: 0))
-            .cropped(to: CGRect(x: 0, y: 0, width: side, height: side))
-        let cutout = cameraImage
-            .applyingFilter("CIBlendWithMask", parameters: [
-                kCIInputBackgroundImageKey: clear,
-                kCIInputMaskImageKey: sprites.mask,
-            ])
-            .transformed(by: CGAffineTransform(translationX: target.minX, y: target.minY))
-        result = cutout.composited(over: result)
+        result = overlay.image
+            .transformed(by: CGAffineTransform(translationX: target.minX - overlay.padding,
+                                               y: target.minY - overlay.padding))
+            .composited(over: result)
 
         var output: CVPixelBuffer?
         let attributes: [String: Any] = [kCVPixelBufferIOSurfacePropertiesKey as String: [:]]
@@ -82,6 +72,47 @@ final class RecorderCameraCompositor {
         return output
     }
 
+    // MARK: - Overlay
+
+    /// The bubble as a transparent image at the origin, with its shadow. The
+    /// caller shifts the whole plate into place, so the same drawing serves
+    /// the live frame compositor and the editor's per-frame renderer even
+    /// though one writes a pixel buffer and the other returns an image.
+    func overlay(camera: CIImage,
+                 side: CGFloat,
+                 layout: RecorderCameraLayout) -> (image: CIImage, padding: CGFloat)? {
+        guard side >= 8, side.isFinite else { return nil }
+        lock.lock()
+        defer { lock.unlock() }
+        guard let cameraImage = squareCameraImage(camera, side: side, layout: layout),
+              let sprites = sprites(side: side, shape: layout.shape) else { return nil }
+
+        let pad = sprites.pad
+        let canvas = CGRect(x: 0, y: 0, width: side + pad * 2, height: side + pad * 2)
+        let clear = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: 0))
+            .cropped(to: canvas)
+        var plate = clear
+        if layout.showsShadow, let shadow = sprites.shadow {
+            // The plate's own origin sits one `pad` below and left of the
+            // bubble, so the shadow image goes down at the plate's corner and
+            // only the small downward offset is added.
+            plate = shadow
+                .transformed(by: CGAffineTransform(translationX: 0,
+                                                   y: -side * 0.035))
+                .composited(over: plate)
+        }
+        // Mask and camera must share the origin for the blend; moving the
+        // cutout afterwards is what puts it on the recording.
+        let cutout = cameraImage
+            .applyingFilter("CIBlendWithMask", parameters: [
+                kCIInputBackgroundImageKey: clear,
+                kCIInputMaskImageKey: sprites.mask,
+            ])
+            .transformed(by: CGAffineTransform(translationX: pad, y: pad))
+        plate = cutout.composited(over: plate)
+        return (plate, pad)
+    }
+
     // MARK: - Camera image
 
     /// Aspect-fills the camera image into a square of `side`, flipping it when
@@ -90,7 +121,13 @@ final class RecorderCameraCompositor {
     private func squareCameraImage(_ buffer: CVImageBuffer,
                                    side: CGFloat,
                                    layout: RecorderCameraLayout) -> CIImage? {
-        var image = CIImage(cvPixelBuffer: buffer)
+        squareCameraImage(CIImage(cvPixelBuffer: buffer), side: side, layout: layout)
+    }
+
+    private func squareCameraImage(_ image: CIImage,
+                                   side: CGFloat,
+                                   layout: RecorderCameraLayout) -> CIImage? {
+        var image = image
         let extent = image.extent
         guard extent.width > 0, extent.height > 0,
               extent.width.isFinite, extent.height.isFinite else { return nil }
