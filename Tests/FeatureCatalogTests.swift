@@ -1798,6 +1798,13 @@ enum FeatureCatalogTests {
                      && restoredMenuSettings?[DefaultsKey.commandBarMenusShortcut] as? String
                         == GlobalShortcut.commandBarMenusDefault.storageValue,
                      "the menu shortcut and its enabled state survive a settings backup round trip")
+        let savedAlerts: Set<String> = [DefaultsKey.monitorAlertDisk, DefaultsKey.monitorAlertCPU]
+        suite.expect(!AppFeature.anyMonitorAlertEnabled(includingDisk: false, isAvailable: { $0 != .monitorCPU },
+                                                       boolFor: savedAlerts.contains),
+                     "the repeat picker stays inactive with disk and a saved alert for a removed CPU monitor")
+        suite.expect(AppFeature.anyMonitorAlertEnabled(includingDisk: false, isAvailable: { _ in true },
+                                                      boolFor: savedAlerts.contains),
+                     "restoring the CPU monitor makes the repeat picker available again")
 
         for role in [GlobalShortcutRole.keepAwake, .snippetLibrary] {
             let key = role.storageKey
