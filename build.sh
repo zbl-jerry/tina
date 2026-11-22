@@ -308,6 +308,8 @@ if (( TEST )); then
         Sources/Tina/Services/AgentUsage/Harness/CodexReader.swift
         Sources/Tina/Services/AgentUsage/Harness/OpenCodeReader.swift
         Sources/Tina/Services/AgentUsage/Harness/CopilotReader.swift
+        Sources/Tina/Services/AgentUsage/Harness/CursorReader.swift
+        Sources/Tina/Services/AgentUsage/Harness/CursorTranscriptAccess.swift
         Sources/Tina/Services/AgentUsage/AgentUsageSummary.swift
         Sources/Tina/Services/AgentUsage/AgentUsageStore.swift
         Sources/Tina/Services/AgentUsage/AgentUsageArchive.swift
@@ -576,6 +578,7 @@ if (( TEST )); then
         Sources/Tina/Services/Switcher/SwitcherModels.swift
         Sources/Tina/Services/Switcher/WindowServerCaptureQueue.swift
         Sources/Tina/Services/Switcher/SwitcherSupport.swift
+        Sources/Tina/Services/Switcher/SwitcherExclusiveFullscreenWatch.swift
         Sources/Tina/Services/Switcher/SpaceHopSupport.swift
         Sources/Tina/Services/Switcher/WindowUseOrder.swift
         Sources/Tina/Services/Switcher/WindowEnumeratorAccessibilityPrefetch.swift
@@ -710,7 +713,9 @@ echo "▸ Generating app icon…"
 # menu bar/BrandMark assets. A stale Assets.car from an older adaptive build
 # must not survive, or macOS would prefer it over the new .icns.
 rm -f build/Assets.car build/actool-failure.log
-swift Tools/MakeIcon.swift build/AppIcon.iconset
+# Use the same pinned SDK as the app build: the default MacOSX.sdk may be 27,
+# whose Command Line Tools copy is missing Foundation headers MakeIcon needs.
+swift -sdk "$SDK" Tools/MakeIcon.swift build/AppIcon.iconset
 xattr -c -r build/AppIcon.iconset build/AppIcon.icns build/MenuBarIcon.png build/MenuBarIcon@2x.png build/BrandMark.png 2>/dev/null || true
 ACTOOL_BIN="$(xcrun --find actool 2>/dev/null || true)"
 ICON_TMP="$(mktemp -d)"
