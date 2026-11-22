@@ -439,6 +439,10 @@ enum DefaultsKey {
     static let panelToggleMicMute = "panelUtilityMicMute"
     static let panelToggleEmptyTrash = "panelToggleEmptyTrash"
     static let panelToggleQuitAllApps = "panelToggleQuitAllApps"
+    static let panelToggleRestartDock = "panelToggleRestartDock"
+    static let panelToggleRestartFinder = "panelToggleRestartFinder"
+    static let panelToggleRestartMenuBar = "panelToggleRestartMenuBar"
+    static let panelToggleRestartInputMethod = "panelToggleRestartInputMethod"
     static let panelToggleEjectDisks = "panelToggleEjectDisks"
     static let panelToggleHiddenFiles = "panelToggleHiddenFiles"
     static let panelToggleDesktopIcons = "panelToggleDesktopIcons"
@@ -1819,6 +1823,10 @@ enum Defaults {
         DefaultsKey.panelToggleMicMute: true,
         DefaultsKey.panelToggleEmptyTrash: true,
         DefaultsKey.panelToggleQuitAllApps: true,
+        DefaultsKey.panelToggleRestartDock: true,
+        DefaultsKey.panelToggleRestartFinder: true,
+        DefaultsKey.panelToggleRestartMenuBar: true,
+        DefaultsKey.panelToggleRestartInputMethod: true,
         DefaultsKey.panelToggleEjectDisks: true,
         DefaultsKey.panelToggleHiddenFiles: true,
         DefaultsKey.panelToggleDesktopIcons: true,

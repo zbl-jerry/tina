@@ -2,15 +2,18 @@
 // Copyright (C) 2026 Vorssaint
 
 import AppKit
+import Carbon.HIToolbox
 
 /// Everything the quick toggles tab can do. Raw values are storage ids for
 /// the user's order and the per-item visibility keys.
 enum QuickToggleAction: String, PanelOrderItem, Identifiable {
     // Case order is the default panel order: the appearance switch leads
     // because it is the tab's headline action (issue request). Quit all sits
-    // next to Empty the Trash (issue #855).
-    case darkMode, keyboardLight, micMute, emptyTrash, quitAllApps, ejectDisks, hiddenFiles,
-         desktopIcons, lockScreen, displayOff, screenSaver
+    // next to Empty the Trash (issue #855), and the four component restarts
+    // (issue #36) follow the other maintenance actions.
+    case darkMode, keyboardLight, micMute, emptyTrash, quitAllApps,
+         restartDock, restartFinder, restartMenuBar, restartInputMethod,
+         ejectDisks, hiddenFiles, desktopIcons, lockScreen, displayOff, screenSaver
 
     var id: String { rawValue }
 
@@ -19,6 +22,15 @@ enum QuickToggleAction: String, PanelOrderItem, Identifiable {
         case .micMute: return .micMute
         case .quitAllApps: return .quitApps
         default: return .quickToggles
+        }
+    }
+
+    /// The rows that ask the system to relaunch a component. They share the
+    /// confirmation, progress and result captions (issue #36).
+    var restartsSystemComponent: Bool {
+        switch self {
+        case .restartDock, .restartFinder, .restartMenuBar, .restartInputMethod: return true
+        default: return false
         }
     }
 }
@@ -34,9 +46,24 @@ final class QuickTogglesService: ObservableObject {
         /// The action needs an Automation consent the user declined; the row
         /// turns into a permission prompt until the grant shows up.
         case needsPermission
+        /// A component restart finished. Shown briefly so the row reports the
+        /// result instead of silently returning to idle (issue #36).
+        case succeeded
+    }
+
+    /// The third-party input method the restart row targets, resolved from
+    /// the current input source and the running apps.
+    struct InputMethodTarget: Equatable {
+        let bundleIdentifier: String
+        let name: String
+        let bundlePath: String
+        let pid: pid_t
     }
 
     @Published private(set) var states: [QuickToggleAction: RunState] = [:]
+    /// Refreshed when a surface shows the list and again before the input
+    /// method confirmation. Nil means the row is disabled and says why.
+    @Published private(set) var inputMethodTarget: InputMethodTarget?
     @Published private(set) var shortcutRegistrationFailed = false
     @Published private(set) var othersShortcutRegistrationFailed = false
     @Published private(set) var quitAllExceptions: [String] = []
@@ -295,6 +322,171 @@ final class QuickTogglesService: ObservableObject {
         let url = URL(fileURLWithPath: "/System/Library/CoreServices/ScreenSaverEngine.app")
         NSWorkspace.shared.openApplication(at: url,
                                            configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    // MARK: - System component restarts (issue #36)
+
+    /// Confirms first, then relaunches one component. The alert is the same
+    /// confirmation the Trash action uses, so the panel keeps a single modal
+    /// contract and the island keeps focus. Nothing runs when the alert is
+    /// cancelled or dismissed.
+    func requestRestart(_ action: QuickToggleAction) {
+        guard available, action.restartsSystemComponent,
+              states[action] != .running else { return }
+        if action == .restartInputMethod {
+            refreshInputMethodTarget()
+            guard inputMethodTarget != nil else { return }
+        }
+        let strings = FeatureStrings.quickToggles(L10n.shared.language)
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = Self.confirmTitle(for: action, strings: strings)
+        alert.informativeText = Self.confirmMessage(for: action, strings: strings)
+        alert.addButton(withTitle: strings.restartConfirmButton)
+        alert.addButton(withTitle: L10n.shared.s.uninstallerCancel)
+        let island = NotchService.shared.presentationWindow
+        let fromIsland = island?.isVisible == true
+            && (NSApp.currentEvent?.window === island || NSApp.keyWindow === island)
+        guard NotchIslandAlert.run(alert, above: fromIsland ? island : nil)
+                == .alertFirstButtonReturn else { return }
+        // The target is resolved on the main thread: TIS and NSWorkspace
+        // reads belong here. The kill and relaunch below run off it.
+        performRestart(action,
+                       inputMethod: action == .restartInputMethod ? inputMethodTarget : nil)
+    }
+
+    /// Re-reads the current input source and the running input methods. TIS
+    /// and NSWorkspace are main-thread APIs; the list calls this when it
+    /// appears so the row's caption and enabled state are current.
+    func refreshInputMethodTarget() {
+        let running = NSWorkspace.shared.runningApplications.compactMap {
+            app -> (candidate: QuickTogglesSupport.InputMethodCandidate, pid: pid_t)? in
+            guard !app.isTerminated,
+                  let bundleIdentifier = app.bundleIdentifier,
+                  let url = app.bundleURL else { return nil }
+            let path = url.path
+            // Apple's methods live under /System and are never restarted.
+            guard path.contains("/Input Methods/"), !path.hasPrefix("/System/") else { return nil }
+            let name = app.localizedName ?? url.deletingPathExtension().lastPathComponent
+            return (.init(bundleIdentifier: bundleIdentifier, name: name, bundlePath: path),
+                    app.processIdentifier)
+        }
+        guard let match = QuickTogglesSupport.inputMethodTarget(
+                sourceID: InputSourceSelection.currentSourceID(),
+                candidates: running.map(\.candidate)),
+              let runningMatch = running.first(where: { $0.candidate == match }) else {
+            inputMethodTarget = nil
+            return
+        }
+        inputMethodTarget = InputMethodTarget(bundleIdentifier: match.bundleIdentifier,
+                                              name: match.name,
+                                              bundlePath: match.bundlePath,
+                                              pid: runningMatch.pid)
+    }
+
+    private func performRestart(_ action: QuickToggleAction,
+                                inputMethod: InputMethodTarget?) {
+        guard beginRun(action) else { return }
+        workQueue.async {
+            let succeeded: Bool
+            switch action {
+            case .restartDock:
+                succeeded = Self.restartDock()
+            case .restartFinder:
+                succeeded = self.restartFinder()
+            case .restartMenuBar:
+                succeeded = Self.restartMenuBar()
+            case .restartInputMethod:
+                succeeded = Self.restartInputMethod(inputMethod)
+            default:
+                succeeded = false
+            }
+            self.finishRun(action, state: succeeded ? .succeeded : .failed)
+        }
+    }
+
+    /// launchd relaunches the Dock by itself after SIGTERM. The kickstart
+    /// fallback covers a Dock that ignores the signal, which killall reports
+    /// as a failure.
+    private static func restartDock() -> Bool {
+        guard !KillProcessSupport.isProtectedName("Dock") else { return false }
+        if Shell.run("/usr/bin/killall", ["Dock"]).status == 0 { return true }
+        return Shell.run("/bin/launchctl",
+                         ["kickstart", "-k", "gui/\(getuid())/com.apple.Dock"]).status == 0
+    }
+
+    /// Only the bar hosts that exist on this release are touched: killing a
+    /// name that is absent would report a failure for a component the system
+    /// does not use.
+    private static func restartMenuBar() -> Bool {
+        let present = Set(QuickTogglesSupport.menuBarHostNames.filter(processIsRunning))
+        let running = QuickTogglesSupport.runningMenuBarHosts(present)
+        guard !running.isEmpty else { return false }
+        var restarted = 0
+        for name in running {
+            guard !KillProcessSupport.isProtectedName(name) else { continue }
+            if Shell.run("/usr/bin/killall", [name]).status == 0 || !processIsRunning(name) {
+                restarted += 1
+            }
+        }
+        return restarted == running.count
+    }
+
+    /// Polite quit first, then SIGKILL, then reopen the bundle that was
+    /// captured before the kill. The selection preference is untouched.
+    private static func restartInputMethod(_ target: InputMethodTarget?) -> Bool {
+        guard let target,
+              let app = NSRunningApplication(processIdentifier: target.pid),
+              !app.isTerminated,
+              !KillProcessSupport.isProtected(pid: target.pid,
+                                              name: target.name,
+                                              path: target.bundlePath) else { return false }
+        _ = app.terminate()
+        if !waitForExit(pid: target.pid) {
+            guard kill(target.pid, SIGKILL) == 0, waitForExit(pid: target.pid) else { return false }
+        }
+        let url = URL(fileURLWithPath: target.bundlePath)
+        guard FileManager.default.fileExists(atPath: target.bundlePath) else { return false }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = false
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration)
+        return true
+    }
+
+    private static func processIsRunning(_ name: String) -> Bool {
+        Shell.run("/usr/bin/pgrep", ["-x", name]).status == 0
+    }
+
+    /// `kill(pid, 0)` answers ESRCH only after the process is gone; a live
+    /// process, including one we may not signal, keeps it at 0.
+    private static func waitForExit(pid: pid_t, attempts: Int = 20) -> Bool {
+        for _ in 0..<attempts {
+            if kill(pid, 0) != 0 && errno == ESRCH { return true }
+            usleep(100_000)
+        }
+        return false
+    }
+
+    private static func confirmTitle(for action: QuickToggleAction,
+                                     strings: QuickToggleFeatureStrings) -> String {
+        switch action {
+        case .restartDock: return strings.restartDockConfirmTitle
+        case .restartFinder: return strings.restartFinderConfirmTitle
+        case .restartMenuBar: return strings.restartMenuBarConfirmTitle
+        case .restartInputMethod: return strings.restartInputMethodConfirmTitle
+        default: return strings.actionFailed
+        }
+    }
+
+    private static func confirmMessage(for action: QuickToggleAction,
+                                       strings: QuickToggleFeatureStrings) -> String {
+        switch action {
+        case .restartDock: return strings.restartDockConfirmMessage
+        case .restartFinder: return strings.restartFinderConfirmMessage
+        case .restartMenuBar: return strings.restartMenuBarConfirmMessage
+        case .restartInputMethod: return strings.restartInputMethodConfirmMessage
+        default: return ""
+        }
     }
 
     // MARK: - Permission refresh

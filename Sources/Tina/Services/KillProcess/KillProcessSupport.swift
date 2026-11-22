@@ -58,17 +58,24 @@ enum KillProcessSupport {
         return normalized
     }
 
+    /// The process names that are never eligible, whatever the caller passes.
+    static let protectedProcessNames: Set<String> = [
+        "kernel_task", "launchd", "windowserver", "loginwindow",
+        "tina", "tina (developer)", "tinadeveloper"
+    ]
+
+    /// The name half of the protection rule, for callers that only have a
+    /// process name to check before asking launchd or `killall` to act.
+    static func isProtectedName(_ name: String) -> Bool {
+        protectedProcessNames.contains(name.trimmingCharacters(in: .whitespaces).lowercased())
+    }
+
     /// Protects kernel, launchd, vital window/session infrastructure, and the
     /// app's own process from being terminated.
     static func isProtected(pid: pid_t, name: String = "", path: String = "") -> Bool {
         if pid <= 1 || pid == ProcessInfo.processInfo.processIdentifier { return true }
-        let lowerName = name.trimmingCharacters(in: .whitespaces).lowercased()
         let lowerPath = path.trimmingCharacters(in: .whitespaces).lowercased()
-        let protectedNames: Set<String> = [
-            "kernel_task", "launchd", "windowserver", "loginwindow",
-            "tina", "tina (developer)", "tinadeveloper"
-        ]
-        if protectedNames.contains(lowerName) { return true }
+        if isProtectedName(name) { return true }
         if lowerPath.hasSuffix("/windowserver") || lowerPath.hasSuffix("/loginwindow") || lowerPath.hasSuffix("/launchd") {
             return true
         }

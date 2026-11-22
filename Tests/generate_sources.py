@@ -2165,6 +2165,12 @@ def main():
           + "func display(_ item: QuickLauncherItem) -> (String, Bool) { (icon(for: item), isActive(item)) }\n}\n}\n")
     # The panel's tabs and the rows they hold, as shipped. PanelOrderItem is
     # declared once, in QuickLauncherBodies.swift above.
+    # The quick toggle rows are production cases with their storage ids,
+    # feature gates and restart classification, shared by the utilities
+    # contracts instead of copied into a fixture.
+    write("QuickToggleAction.swift", "import Foundation\n"
+          + declaration("Sources/Tina/Services/QuickTools/QuickTogglesService.swift",
+                        "enum QuickToggleAction:"))
     menu_panel = "Sources/Tina/UI/MenuPanel/MenuPanelView.swift"
     write("MenuPanelSectionGates.swift", "import Foundation\n\nextension MenuPanelSectionGateContract {\n"
           + declaration("Sources/Tina/UI/MenuPanel/PanelLayout.swift", "enum PanelSectionID:")

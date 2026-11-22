@@ -141,7 +141,7 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 - **AI agents.** Follow Claude, Codex, OpenCode, GitHub Copilot and Cursor in the Dynamic Island: plan limits and when they reset where available, tokens, API value, models, projects and live work, with a notice when a long task finishes. Codex's banked resets can be used from there too, and each extra Codex account (`CODEX_HOME`) can have a limits card of its own. Copilot uses local CLI/app session logs; its token totals update when shutdown metrics arrive, and aggregate API-value estimates use base rates. Cursor follows local agent transcripts under `~/.cursor/projects/*/agent-transcripts/` for live work and finish notices; plan credits are not read from the network.
 - **Command Bar.** Search apps, windows, files, clipboard history, snippets and app menu commands from one field. Calculate, convert units, find emoji or run saved scripts.
 - **Quick panel.** Open a floating palette of favorite tools with ⌃⌘V.
-- **Quick toggles.** Switch appearance, hide desktop icons, eject disks, empty the Trash, lock the screen and more.
+- **Quick toggles.** Switch appearance, hide desktop icons, eject disks, empty the Trash, lock the screen, and restart the Dock, the Finder, the menu bar or the input method in use when one of them gets stuck. See [system component restarts](docs/COMPONENT-RESTARTS.md).
 - **Quit apps.** See every open app in one list and quit them one by one, all at once or all but the one in front.
 - **Radial menu.** Open a customizable wheel of apps, files, shortcuts and tools around the pointer, with profiles and submenus.
 - **Scratchpad.** Keep autosaved notes in tabs, with Markdown preview and export, in a floating window or Dynamic Island.
@@ -220,6 +220,7 @@ See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions 
 - [Multi-window tiling](docs/TILE-WINDOWS.md), the Rectangle research, layout cycle and verification
 - [Window pinning](docs/WINDOW-PINNING.md), the Topit research, live mirror design and its limits
 - [Key overlay](docs/KEYSTROKE-OVERLAY.md), the recorder's optional key caps, permission and privacy boundaries
+- [System component restarts](docs/COMPONENT-RESTARTS.md), the FixTim research and the Dock, Finder, menu bar and input method restarts
 - [Camera overlay](docs/CAMERA-OVERLAY.md), the presenter bubble and how it is baked into a recording
 - [Privacy](docs/PRIVACY.md), what does and does not leave your Mac
 - [Permissions](docs/PERMISSIONS.md), every macOS permission in plain words
