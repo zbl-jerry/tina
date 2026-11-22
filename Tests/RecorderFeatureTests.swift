@@ -16,6 +16,10 @@ enum RecorderFeatureTests {
         RecorderKeystrokeTests.run(suite)
         RecorderSystemAudioTapLifecycleTests.run(suite)
         RecorderSystemAudioTrustTests.run(suite)
+        // Import contracts cover the copy, not the free space of the machine
+        // running the suite; the low-space refusal is checked on its own.
+        RecorderTakeStore.availableBytesOverride = RecorderSupport.minimumFreeBytesToContinue * 2
+        defer { RecorderTakeStore.availableBytesOverride = nil }
         func pageVisible(_ page: SettingsPage, available: Set<AppFeature>) -> Bool {
             FeatureVisibilitySupport.isPageVisible(page) { available.contains($0) }
         }

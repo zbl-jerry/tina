@@ -8,6 +8,10 @@ import ImageIO
 enum RecorderPresetImageStoreTests {
     static func run(_ suite: TestSuite) {
         let manager = FileManager.default
+        // Saving a preset is about the independent copy, not the free space of
+        // the machine running the suite.
+        RecorderTakeStore.availableBytesOverride = RecorderSupport.minimumFreeBytesToContinue * 2
+        defer { RecorderTakeStore.availableBytesOverride = nil }
         let root = manager.temporaryDirectory.resolvingSymlinksInPath()
             .appendingPathComponent("recorder-preset-test-\(UUID().uuidString)", isDirectory: true)
         defer { try? manager.removeItem(at: root) }
