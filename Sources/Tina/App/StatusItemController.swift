@@ -361,9 +361,13 @@ final class StatusItemController {
             updateAvailable = false
         }
         let micBadgeActive = renderedMicBadgeActive
+        // Read only while the feature is installed, so an unused caption
+        // feature never instantiates its service just to answer this.
+        let captionsListening = AppFeature.captions.isAvailable
+            && CaptionService.shared.isListening
         let optionEnabled = defaults.bool(forKey: DefaultsKey.menuBarHideIconWithMetrics)
         let separateMetrics = defaults.bool(forKey: DefaultsKey.menuBarSeparateMetrics)
-        let signal = updateAvailable || micBadgeActive
+        let signal = updateAvailable || micBadgeActive || captionsListening
         let islandHides = MenuBarSpacingSupport.islandHidesStatusIcon(
             in: defaults, hiddenInFullscreen: islandHiddenInFullscreen) && !signal
         let hidden = islandHides || MenuBarSpacingSupport.shouldHideStatusIcon(
@@ -392,7 +396,7 @@ final class StatusItemController {
         let stateKey = [String(hidden), String(mainItemHidden), String(updateAvailable),
                         String(keepAwakeActive), KeepAwakeIconTint.current.rawValue,
                         KeepAwakeActiveIcon.current.rawValue, BlackHoleGlyph.chosenSymbolName,
-                        String(micBadgeActive)].joined(separator: "|")
+                        String(micBadgeActive), String(captionsListening)].joined(separator: "|")
         guard stateKey != lastIconStateKey else { return }
         lastIconStateKey = stateKey
 
@@ -412,6 +416,8 @@ final class StatusItemController {
         }
         if micBadgeActive {
             button.image = BlackHoleGlyph.micMutedImage(over: stateImage) ?? stateImage
+        } else if captionsListening {
+            button.image = BlackHoleGlyph.captionsListeningImage(over: stateImage) ?? stateImage
         } else {
             button.image = stateImage
         }
@@ -526,7 +532,9 @@ final class StatusItemController {
             } else {
                 updateAvailable = false
             }
-            let signal = updateAvailable || renderedMicBadgeActive
+            let captionsListening = AppFeature.captions.isAvailable
+                && CaptionService.shared.isListening
+            let signal = updateAvailable || renderedMicBadgeActive || captionsListening
             let glyphHidden = (MenuBarSpacingSupport.islandHidesStatusIcon(
                 in: defaults, hiddenInFullscreen: islandHiddenInFullscreen) && !signal)
                 || MenuBarSpacingSupport.shouldHideStatusIcon(
@@ -1033,9 +1041,26 @@ enum BlackHoleGlyph {
     /// is a real color, so the composite can't stay a template image; the
     /// drawing handler runs against the destination appearance, which keeps a
     /// template underlying glyph legible on both light and dark menu bars.
+    /// A captions glyph beside the mark while the Mac is being listened to,
+    /// so the state is visible even when the panel is closed.
+    static func captionsListeningImage(over underlying: NSImage?) -> NSImage? {
+        badgeImage(symbolName: "captions.bubble.fill", tint: .systemBlue, over: underlying)
+    }
+
+    /// A muted microphone beside the mark while the mute indicator option is
+    /// on and the mic is muted.
     static func micMutedImage(over underlying: NSImage?) -> NSImage? {
+        badgeImage(symbolName: "mic.slash.fill", tint: .systemRed, over: underlying)
+    }
+
+    /// One colored symbol beside the mark. The badge is a real color, so the
+    /// composite can't stay a template image; the drawing handler runs against
+    /// the destination appearance, which keeps a template underlying glyph
+    /// legible on both light and dark menu bars.
+    private static func badgeImage(symbolName: String, tint: NSColor,
+                                   over underlying: NSImage?) -> NSImage? {
         guard let underlying else { return nil }
-        guard let badge = NSImage(systemSymbolName: "mic.slash.fill",
+        guard let badge = NSImage(systemSymbolName: symbolName,
                                   accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 12, weight: .semibold)) else { return nil }
         let gap: CGFloat = 2
@@ -1055,7 +1080,7 @@ enum BlackHoleGlyph {
                                    y: (height - badgeSize.height) / 2,
                                    width: badgeSize.width, height: badgeSize.height)
             badge.draw(in: badgeRect, from: .zero, operation: .sourceOver, fraction: 1)
-            NSColor.systemRed.setFill()
+            tint.setFill()
             badgeRect.fill(using: .sourceAtop)
             return true
         }

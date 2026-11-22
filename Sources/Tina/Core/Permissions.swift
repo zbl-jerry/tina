@@ -7,6 +7,7 @@ import AVFoundation
 import Combine
 import CoreGraphics
 import EventKit
+import Speech
 import UserNotifications
 
 /// Central place to check, request and watch the TCC permissions the app uses.
@@ -43,6 +44,10 @@ final class Permissions: ObservableObject {
     /// Optional microphone access, used only while a recording that asked for
     /// it is active.
     @Published private(set) var microphone: MicrophonePermissionState = .unknown
+    /// The per-app Speech Recognition grant the live captions need. The
+    /// system's own Dictation switch is separate and is checked by the
+    /// caption service when listening starts.
+    @Published private(set) var speechRecognition: SpeechPermissionState = .unknown
 
     enum NotificationPermissionState {
         case granted, denied, undetermined, unknown
@@ -54,6 +59,10 @@ final class Permissions: ObservableObject {
 
     enum MicrophonePermissionState {
         case granted, denied, undetermined, unknown
+    }
+
+    enum SpeechPermissionState {
+        case granted, denied, restricted, undetermined, unknown
     }
 
     private var activePermissionTimer: Timer?
@@ -140,6 +149,7 @@ final class Permissions: ObservableObject {
         refreshCameraPermission()
         calendarAccess = EKEventStore.authorizationStatus(for: .event)
         refreshMicrophonePermission()
+        refreshSpeechPermission()
         // Checking Full Disk Access means asking the system about protected
         // folders, and every refused answer costs time. Doing that where the
         // app is starting up holds back the menu bar icon, so it moves off
@@ -175,6 +185,20 @@ final class Permissions: ObservableObject {
         }
         DispatchQueue.main.async {
             if self.microphone != state { self.microphone = state }
+        }
+    }
+
+    private func refreshSpeechPermission() {
+        let state: SpeechPermissionState
+        switch SFSpeechRecognizer.authorizationStatus() {
+        case .authorized: state = .granted
+        case .denied: state = .denied
+        case .restricted: state = .restricted
+        case .notDetermined: state = .undetermined
+        @unknown default: state = .unknown
+        }
+        DispatchQueue.main.async {
+            if self.speechRecognition != state { self.speechRecognition = state }
         }
     }
 
@@ -321,6 +345,30 @@ final class Permissions: ObservableObject {
 
     func openInputMonitoringSettings() {
         open(pane: "Privacy_ListenEvent")
+    }
+
+    /// Shows the system prompt. The completion runs on the main queue with
+    /// the refreshed state, which is also what the user sees in the caption
+    /// settings row.
+    func requestSpeechRecognition(completion: ((SpeechPermissionState) -> Void)? = nil) {
+        SFSpeechRecognizer.requestAuthorization { status in
+            DispatchQueue.main.async {
+                self.refreshSpeechPermission()
+                let state: SpeechPermissionState
+                switch status {
+                case .authorized: state = .granted
+                case .denied: state = .denied
+                case .restricted: state = .restricted
+                case .notDetermined: state = .undetermined
+                @unknown default: state = .unknown
+                }
+                completion?(state)
+            }
+        }
+    }
+
+    func openSpeechRecognitionSettings() {
+        open(pane: "Privacy_SpeechRecognition")
     }
 
     func openFullDiskAccessSettings() {
