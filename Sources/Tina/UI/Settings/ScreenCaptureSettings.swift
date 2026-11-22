@@ -114,13 +114,18 @@ private struct RecentCapturesShortcutRows: View {
             .onChange(of: enabled) { _, _ in
                 service.syncWithPreferences()
             }
-        ShortcutPreferenceRow(role: role, isEnabled: enabled) {
-            service.syncWithPreferences()
-        }
-        if enabled, service.shortcutRegistrationFailed {
-            Text(l10n.s.shortcutUnavailable)
-                .font(.caption)
-                .foregroundStyle(.orange)
+        // A disabled shortcut row is still a row; only show the keys when
+        // this function is actually on, so the page does not collect unused
+        // controls.
+        if enabled {
+            ShortcutPreferenceRow(role: role, isEnabled: true) {
+                service.syncWithPreferences()
+            }
+            if service.shortcutRegistrationFailed {
+                Text(l10n.s.shortcutUnavailable)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
         }
     }
 }
@@ -161,16 +166,19 @@ private struct ToolShortcutRows: View {
             .onChange(of: enabled) { _, _ in
                 service.syncWithPreferences()
             }
-        ShortcutPreferenceRow(role: keys.role, isEnabled: enabled) {
-            service.syncWithPreferences()
-        }
-        Toggle(FeatureStrings.screenshot(l10n.language).showCaptureMenuOnShortcut,
-               isOn: $showsCaptureMenu)
-            .disabled(!enabled)
-        if enabled, service.toolShortcutRegistrationFailures.contains(tool) {
-            Text(l10n.s.shortcutUnavailable)
-                .font(.caption)
-                .foregroundStyle(.orange)
+        // The recorder state is shown only for the shortcut that is on; a row
+        // that cannot act is not allowed to stand in for the function itself.
+        if enabled {
+            ShortcutPreferenceRow(role: keys.role, isEnabled: true) {
+                service.syncWithPreferences()
+            }
+            Toggle(FeatureStrings.screenshot(l10n.language).showCaptureMenuOnShortcut,
+                   isOn: $showsCaptureMenu)
+            if service.toolShortcutRegistrationFailures.contains(tool) {
+                Text(l10n.s.shortcutUnavailable)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
         }
     }
 }

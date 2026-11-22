@@ -83,6 +83,8 @@ final class RecorderExporter {
                                         videoTrack: videoTrack,
                                         pointerURL: take.pointerURL,
                                         keystrokeURL: take.keystrokesURL,
+                                        cameraURL: take.cameraURL,
+                                        cameraLayoutURL: take.cameraLayoutURL,
                                         document: document,
                                         trim: trim,
                                         sourceSize: sourceSize,
@@ -94,6 +96,8 @@ final class RecorderExporter {
                                       videoTrack: videoTrack,
                                       pointerURL: take.pointerURL,
                                       keystrokeURL: take.keystrokesURL,
+                                      cameraURL: take.cameraURL,
+                                      cameraLayoutURL: take.cameraLayoutURL,
                                       document: document,
                                       sourceSize: sourceSize,
                                       to: staged,
@@ -149,6 +153,8 @@ final class RecorderExporter {
                                             videoTrack: videoTrack,
                                             pointerURL: take.pointerURL,
                                             keystrokeURL: take.keystrokesURL,
+                                            cameraURL: take.cameraURL,
+                                            cameraLayoutURL: take.cameraLayoutURL,
                                             document: document,
                                             trim: trim,
                                             sourceSize: sourceSize,
@@ -185,6 +191,8 @@ final class RecorderExporter {
                              videoTrack: AVAssetTrack,
                              pointerURL: URL,
                              keystrokeURL: URL,
+                             cameraURL: URL,
+                             cameraLayoutURL: URL,
                              document: RecorderEditDocument,
                              trim: RecorderSupport.Trim,
                              sourceSize: CGSize,
@@ -194,16 +202,28 @@ final class RecorderExporter {
                              progress: @escaping (Double) -> Void) async -> Failure? {
         let duration = CMTimeGetSeconds((try? await asset.load(.duration)) ?? .zero)
         let track = RecorderPointerTrack.decoded(try? Data(contentsOf: pointerURL))
+        let camera = cameraURL.isFileURL
+            && FileManager.default.fileExists(atPath: cameraURL.path)
+            ? AVURLAsset(url: cameraURL) : nil
+        let cameraTrack = camera == nil
+            ? RecorderCameraTrack()
+            : RecorderCameraTrack.decoded(try? Data(contentsOf: cameraLayoutURL))
         // The trim and the cuts become one continuous asset first, so the
         // reader never has to know that a piece was taken out of the middle.
         let ranges = document.keptRanges(duration: duration)
         let keepsAnyAudio = document.keepsSystemAudio || document.keepsMicrophone
         guard let result = await RecorderComposition.build(from: asset,
+                                                           camera: camera,
                                                            ranges: ranges,
                                                            includesAudio: keepsAnyAudio,
                                                            playbackSpeed: document.exportTiming.speed),
               let timelineVideo = try? await result.asset.loadTracks(withMediaType: .video).first
         else { return .readFailed }
+        var timelineCamera: AVAssetTrack?
+        if let cameraID = result.cameraTrackID {
+            let tracks = (try? await result.asset.loadTracks(withMediaType: .video)) ?? []
+            timelineCamera = tracks.first { $0.trackID == cameraID }
+        }
         let timeline = result.asset
         let timelineDuration = (try? await timeline.load(.duration)) ?? .zero
         let audioTracks = (try? await timeline.loadTracks(withMediaType: .audio)) ?? []
@@ -242,6 +262,7 @@ final class RecorderExporter {
                                              track: track,
                                              keystrokes: RecorderKeystrokeTrack.decoded(
                                                 try? Data(contentsOf: keystrokeURL)),
+                                             camera: cameraTrack,
                                              sourceSize: sourceSize,
                                              frameRate: outputFrameRate,
                                              duration: duration,
@@ -253,6 +274,7 @@ final class RecorderExporter {
                                           quality: document.resolvedQuality)
         guard let composition = await RecorderComposer.videoComposition(
             track: timelineVideo,
+            cameraTrack: timelineCamera,
             asset: timeline,
             duration: timelineDuration,
             frameRate: outputFrameRate,
@@ -268,7 +290,7 @@ final class RecorderExporter {
         writer.shouldOptimizeForNetworkUse = sharingPlan != nil
 
         let videoOutput = AVAssetReaderVideoCompositionOutput(
-            videoTracks: [timelineVideo],
+            videoTracks: timelineCamera.map { [timelineVideo, $0] } ?? [timelineVideo],
             videoSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
         videoOutput.videoComposition = composition
         videoOutput.alwaysCopiesSampleData = false
@@ -558,23 +580,37 @@ final class RecorderExporter {
                            videoTrack: AVAssetTrack,
                            pointerURL: URL,
                            keystrokeURL: URL,
+                           cameraURL: URL,
+                           cameraLayoutURL: URL,
                            document: RecorderEditDocument,
                            sourceSize: CGSize,
                            to destination: URL,
                            progress: @escaping (Double) -> Void) async -> Failure? {
         let fps = document.resolvedGIFFrameRate
         let duration = CMTimeGetSeconds((try? await asset.load(.duration)) ?? .zero)
+        let camera = cameraURL.isFileURL
+            && FileManager.default.fileExists(atPath: cameraURL.path)
+            ? AVURLAsset(url: cameraURL) : nil
+        let cameraTrack = camera == nil
+            ? RecorderCameraTrack()
+            : RecorderCameraTrack.decoded(try? Data(contentsOf: cameraLayoutURL))
         // The GIF is the same finished video, sampled: the trim and the cuts
         // become one continuous asset first, exactly as the video export does,
         // so a piece taken out of the middle is genuinely absent here too and
         // the composer is asked for frames on the clock it draws in.
         let ranges = document.keptRanges(duration: duration)
         guard let result = await RecorderComposition.build(from: asset,
+                                                           camera: camera,
                                                            ranges: ranges,
                                                            includesAudio: false,
                                                            playbackSpeed: document.exportTiming.speed),
               let timelineVideo = try? await result.asset.loadTracks(withMediaType: .video).first
         else { return .readFailed }
+        var timelineCamera: AVAssetTrack?
+        if let cameraID = result.cameraTrackID {
+            let tracks = (try? await result.asset.loadTracks(withMediaType: .video)) ?? []
+            timelineCamera = tracks.first { $0.trackID == cameraID }
+        }
         let timeline = result.asset
         let outputDuration = CMTimeGetSeconds((try? await timeline.load(.duration)) ?? .zero)
         let frameCount = RecorderSupport.gifFrameCount(duration: outputDuration, fps: fps)
@@ -588,6 +624,7 @@ final class RecorderExporter {
                                              track: track,
                                              keystrokes: RecorderKeystrokeTrack.decoded(
                                                 try? Data(contentsOf: keystrokeURL)),
+                                             camera: cameraTrack,
                                              sourceSize: sourceSize,
                                              frameRate: RecorderSupport.sanitizedFrameRate(frameRate),
                                              duration: duration,
@@ -607,7 +644,11 @@ final class RecorderExporter {
         // before applying edits. A raw raster can be narrower than the plan,
         // and AV video composition flattens transparent input over black.
         // Pure resizing also stays after decoding so missing frames are reported.
-        let renderAfterDecode = composer != nil && (plan?.isScaleOnly == true || !canReadDirectly)
+        // A camera sidecar always goes through the composition, because that
+        // is where both picture tracks are drawn together.
+        let hasCamera = timelineCamera != nil
+        let renderAfterDecode = composer != nil && !hasCamera
+            && (plan?.isScaleOnly == true || !canReadDirectly)
         let renderContext = renderAfterDecode ? CIContext(options: [.cacheIntermediates: false]) : nil
         let generator = AVAssetImageGenerator(asset: timeline)
         defer { generator.cancelAllCGImageGeneration() }
@@ -618,6 +659,7 @@ final class RecorderExporter {
         if let composer, !renderAfterDecode {
             guard let composition = await RecorderComposer.videoComposition(
                 track: timelineVideo,
+                cameraTrack: timelineCamera,
                 asset: timeline,
                 duration: (try? await timeline.load(.duration)) ?? .zero,
                 frameRate: RecorderSupport.sanitizedFrameRate(frameRate),
@@ -630,7 +672,10 @@ final class RecorderExporter {
         }
 
         let frameProgress = ProgressThrottle(progress)
-        let canUseFastEncoder = canvas.width * canvas.height >= 512 * 512 && canReadDirectly
+        // The fast path reads the screen track alone; a camera sidecar needs
+        // the composition, so it takes the generator path instead.
+        let canUseFastEncoder = canvas.width * canvas.height >= 512 * 512
+            && canReadDirectly && !hasCamera
 
         func write(useFastEncoder: Bool) async throws -> Failure? {
             if cancelled.isCancelled { return .cancelled }

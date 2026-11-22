@@ -6,7 +6,7 @@ import Foundation
 
 /// The camera bubble's shape. A circle is the usual presenter look; a rounded
 /// square keeps more of a wide camera frame visible.
-enum RecorderCameraShape: String, CaseIterable {
+enum RecorderCameraShape: String, CaseIterable, Codable {
     case circle
     case rounded
 }
@@ -14,7 +14,7 @@ enum RecorderCameraShape: String, CaseIterable {
 /// Where the camera bubble sits and how big it is. One value is shared by the
 /// floating panel, the settings and the frame compositor, so what is dragged
 /// on screen is exactly what lands in the recording.
-struct RecorderCameraLayout: Equatable {
+struct RecorderCameraLayout: Equatable, Codable {
     /// Centre as a fraction of the recorded picture, left to right and top to
     /// bottom, the direction the screen counts in.
     var centerX: Double
@@ -128,6 +128,75 @@ struct RecorderCameraLayout: Equatable {
     private func clamped(_ value: Double, _ lower: Double, _ upper: Double) -> Double {
         guard lower <= upper else { return (lower + upper) / 2 }
         return min(upper, max(lower, value))
+    }
+}
+
+/// One placement, in the recording's own time. The bubble can be dragged and
+/// resized while a recording runs, so the finished picture needs to know where
+/// it was at each moment rather than only where it ended up.
+struct RecorderCameraLayoutEvent: Codable, Equatable {
+    var time: Double
+    var layout: RecorderCameraLayout
+
+    func sanitized(duration: Double) -> RecorderCameraLayoutEvent? {
+        guard time.isFinite else { return nil }
+        var copy = self
+        copy.time = max(0, min(time, duration))
+        copy.layout = layout.sanitized()
+        return copy
+    }
+}
+
+/// Where the bubble sat throughout one recording, written beside the camera
+/// frames. An empty track means the recording was made without the bubble.
+struct RecorderCameraTrack: Codable, Equatable {
+    var events: [RecorderCameraLayoutEvent]
+
+    static let maximumEvents = 2_000
+
+    init(events: [RecorderCameraLayoutEvent] = []) {
+        self.events = events
+    }
+
+    var isEmpty: Bool { events.isEmpty }
+
+    func encoded() -> Data? { try? JSONEncoder().encode(self) }
+
+    static func decoded(_ data: Data?) -> RecorderCameraTrack {
+        guard let data, let value = try? JSONDecoder().decode(Self.self, from: data)
+        else { return RecorderCameraTrack() }
+        return value.normalized(duration: .greatestFiniteMagnitude)
+    }
+
+    func normalized(duration: Double) -> RecorderCameraTrack {
+        let limit = duration.isFinite ? duration : .greatestFiniteMagnitude
+        var copy = self
+        copy.events = events
+            .compactMap { $0.sanitized(duration: limit) }
+            .sorted { $0.time < $1.time }
+            .prefix(Self.maximumEvents)
+            .map { $0 }
+        return copy
+    }
+
+    /// The placement in force at `time`: the latest change at or before it.
+    /// Nil before the first change, so a recording with no bubble draws none.
+    func layout(at time: Double) -> RecorderCameraLayout? {
+        guard time.isFinite, !events.isEmpty else { return nil }
+        var low = 0
+        var high = events.count - 1
+        var candidate: Int?
+        while low <= high {
+            let middle = (low + high) / 2
+            if events[middle].time <= time {
+                candidate = middle
+                low = middle + 1
+            } else {
+                high = middle - 1
+            }
+        }
+        guard let candidate else { return nil }
+        return events[candidate].layout
     }
 }
 

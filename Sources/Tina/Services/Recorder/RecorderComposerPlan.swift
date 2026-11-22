@@ -21,6 +21,7 @@ extension RecorderComposer {
     static func makePlan(document: RecorderEditDocument,
                          track: RecorderPointerTrack,
                          keystrokes: RecorderKeystrokeTrack = RecorderKeystrokeTrack(),
+                         camera: RecorderCameraTrack? = nil,
                          sourceSize: CGSize,
                          frameRate: Int,
                          duration: Double,
@@ -63,8 +64,11 @@ extension RecorderComposer {
         let images = RecorderImageOverlay.normalized(document.images, duration: duration)
         let blurs = RecorderBlurRegion.normalized(document.blurs, duration: duration)
         let pressed = keystrokes.normalized(duration: duration)
+        let cameraTrack = camera?.normalized(duration: duration) ?? RecorderCameraTrack()
+        let showsCamera = !cameraTrack.events.isEmpty
         let hasEdits = showsPointer || !segments.isEmpty || changesCanvas || hasCuts
             || !texts.isEmpty || !images.isEmpty || !blurs.isEmpty || !pressed.isEmpty
+            || showsCamera
         guard hasEdits || scale != 1 else { return nil }
 
         // Everything the pointer track knows is in the RECORDING's own time,
@@ -258,6 +262,16 @@ extension RecorderComposer {
             }
         }
 
+        // The bubble's placement is a lookup like every other overlay: which
+        // drag was in force when this finished frame's source moment was
+        // recorded.
+        var cameraLayouts = [RecorderCameraLayout?](repeating: nil, count: frames)
+        if showsCamera {
+            for index in 0..<frames {
+                cameraLayouts[index] = cameraTrack.layout(at: sourceTimes[index])
+            }
+        }
+
         var textOpacity: [[Double]] = []
         if !texts.isEmpty {
             textOpacity = texts.map { overlay in
@@ -332,7 +346,9 @@ extension RecorderComposer {
                     keystrokeSprites: keystrokeSprites,
                     keystrokeActive: keystrokeActive,
                     keystrokeOpacity: keystrokeOpacity,
-                    keystrokeOrigins: keystrokeOrigins)
+                    keystrokeOrigins: keystrokeOrigins,
+                    showsCamera: showsCamera,
+                    cameraLayouts: cameraLayouts)
     }
 
     /// Where a point inside the recorded picture lands on the finished canvas:

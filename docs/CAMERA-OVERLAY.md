@@ -35,21 +35,24 @@ afterwards.
 - While recording, a live camera bubble floats inside the recorded area. Drag
   it to move it; scroll over it to resize it. Its position and size are kept
   for the next recording.
-- The bubble is composited into the recorded frames themselves: the saved
-  video, the editor preview, GIF exports and temporary links all show it. It
-  cannot be removed after recording. This is the MVP trade-off the issue asked
-  for.
+- Camera frames are recorded beside the master, and the editor's composer
+  draws the bubble **after** the automatic zoom and the aspect fit. The editor
+  preview, every video and GIF export and temporary links show it at its
+  recorded position and size within the picture, and a zoom can neither
+  magnify nor crop it away. A recording saved straight to disk with **Open the
+  editor after recording** off stays the untouched master, like the pointer,
+  captions and the key overlay.
 - If camera access is denied, no camera is connected or another app holds the
   camera, the screen is recorded as before and a notice says the bubble was
   left out. Recording never fails because of the camera.
 - The bubble is one of Tina's own panels and is excluded from the capture, so
-  it never appears twice (once floating and once baked in).
+  it never appears twice.
 
 Deliberately not in this version:
 
 - Recording an iPhone or iPad as the camera.
-- A separate, editable camera track, or removing/moving the bubble after the
-  recording has ended.
+- Removing, moving or resizing the bubble after the recording has ended. The
+  camera sidecar is an implementation detail, not an editable track.
 - Green screen, background replacement, filters or camera audio as its own
   track (the microphone setting still decides whether your voice is recorded).
 - Drawing the bubble on screenshots, or in any capture other than screen
@@ -60,13 +63,14 @@ Deliberately not in this version:
 ### Capture graph
 
 ```text
-SCStream (screen) ─────────────┐
-                              ├─▶ RecorderSession video path ─▶ RecorderWriter ─▶ take.mov
-AVCaptureVideoDataOutput ─────┘        (composite, same PTS)         (encode)
+SCStream (screen) ─────────────────────────────▶ take.mov (screen + sound)
         ▲
-        └── AVCaptureVideoPreviewLayer ─▶ floating bubble (excluded from SCStream)
+AVCaptureVideoDataOutput ─▶ AVCaptureVideoPreviewLayer ─▶ floating bubble (excluded)
+        │
+        └──────────────────▶ RecorderCameraTrackWriter ─▶ camera.mov
+layout changes ───────────────────────────────────────▶ camera.json
 
-pointer / typing samplers ─────▶ sidecar files (unchanged)
+pointer / typing / key samplers ──────────────────────▶ sidecar files
 ```
 
 `RecorderCameraCapture` owns one `AVCaptureSession` with a
@@ -75,12 +79,14 @@ so the camera is opened once. Video settings are BGRA at the session's `.high`
 preset, which is more than enough for a bubble that is at most half of the
 recording's shorter side.
 
-The capture engine still writes the screen untouched. Compositing happens on
-the writer's serial queue, just before the encoder: the newest camera frame is
-drawn over the screen pixel buffer, the sample's timing is preserved, and the
-result goes to `AVAssetWriterInput`. Nothing else in the recorder, editor,
-exporter, GIF writer or sharing path changes, because they all read the same
-master file.
+The master carries only the screen and its sound. A second small writer
+(`RecorderCameraTrackWriter`) records the camera beside it, and a layout
+timeline records where the bubble was at each moment. Keeping the bubble out
+of the master is what lets the editor draw it after its own zoom and crop:
+the compositor receives the screen frame and the camera frame for the same
+moment, draws the screen with every edit, then places the bubble on the
+finished card. Old takes without the sidecar keep the bubble that was baked
+into their master.
 
 ### Geometry
 
@@ -94,37 +100,37 @@ the compositor:
 - `shape`, `mirrored`, `showsShadow`.
 
 The floating bubble is positioned from the region's `anchorRect` in Cocoa
-points; the compositor uses the same normalized centre in recording pixels.
-Dragging clamps the bubble inside the recorded area so a bubble can never be
-half outside the video. The geometry is unit-tested independently of any
-camera.
+points; the composer uses the same normalized centre against the card that
+holds the recording. Dragging clamps the bubble inside the recorded area so a
+bubble can never be half outside the video. Each drag is written into the
+take's layout timeline, and a finished frame looks up the placement that was
+in force when that moment was recorded. The geometry is unit-tested
+independently of any camera.
 
 ### Rendering
 
-`RecorderCameraCompositor` uses one `CIContext`. Per frame it:
+`RecorderCameraCompositor` builds the bubble once per size and shape, and both
+the live path and the composer share that drawing. Per frame it:
 
 1. aspect-fills the camera image into a square (cropping the overflow),
 2. flips it horizontally when Mirror is on,
 3. masks it with a circle or a rounded square,
 4. draws a blurred, slightly offset shadow underneath when Shadow is on,
-5. composites the result over the screen frame and renders into a pooled,
-   IOSurface-backed BGRA buffer.
+5. composites the result over the finished card, after the zoom and the fit.
 
 Masks and shadows are generated once per size/shape and cached, so a steady
 recording does no path work per frame. The camera image is already on the GPU
-as a `CVPixelBuffer`; the only per-frame CPU work is creating the output buffer
-and the sample-buffer wrapper.
+as a `CVPixelBuffer`; the composer hands the same `CIImage` it received from
+the camera track to the shared drawing.
 
 ### Timing, pause and stop
 
-The composited sample keeps the screen sample's presentation timestamp and
-duration, so the writer's pause clock, retiming and audio alignment behave
-exactly as before. While a recording is paused the writer drops video anyway,
-so the session skips compositing until it resumes; the bubble in the finished
-video freezes with the screen, and the floating mirror keeps showing the live
-camera. On stop the writer writes the last video sample once more at the stop
-time; that sample is the composited one, so the bubble stays in the final held
-frame.
+Camera samples run through the same pause clock as the screen, and the first
+written camera frame is held at zero like the screen's first frame, so both
+tracks stay aligned after trims, pauses and cuts. While a recording is paused
+the camera track drops frames too; the floating mirror keeps showing the live
+camera. On stop the camera writer appends its last frame once more at the stop
+time, so the bubble stays in the final held frame just as the screen does.
 
 ### Permissions and failure
 
@@ -141,11 +147,12 @@ frame.
 
 ### Performance
 
-The extra work is one camera pipeline (720p, late frames dropped) and one Core
-Image composite per delivered screen frame. The screen stream is variable-rate,
-so a still screen costs nothing; compositing is skipped while the recording is
-paused or the encoder is behind. The composite is GPU work with cached masks
-and shadows.
+Recording pays for one extra camera pipeline (720p, late frames dropped) and
+one small H.264 sidecar. Export and preview pay for one more camera composited
+over the finished card, with the masks and shadows cached. A recording with no
+other edits still goes through the composer when the camera is on, because
+the bubble has to be drawn after the fit; that is one Core Image composite per
+rendered frame, on the same path that already draws the pointer and keys.
 
 **Not benchmarked:** this change ships without measured frame-rate or CPU
 figures. The design keeps the per-frame work bounded, but a 4K/60 recording
@@ -155,14 +162,18 @@ with the bubble on still needs manual performance verification.
 
 - The bubble is fixed once the recording ends. Removing it means recording
   again.
+- A recording saved without the editor is the untouched master, so it has no
+  bubble. This matches the pointer, captions, blurs and key overlay; open the
+  editor (the default) or export from it to get the camera.
 - The floating panel is anchored to where the region was picked. Recording a
-  window and then moving that window during the recording keeps the baked
-  bubble in its corner of the video, but the floating panel stays where the
-  window was: it is a placement control, not a live follower.
-- There is one bubble, one camera and one shape; no separate camera track, no
-  camera-only audio and no green screen.
+  window and then moving that window during the recording keeps the bubble in
+  its corner of the video, but the floating panel stays where the window was:
+  it is a placement control, not a live follower.
+- There is one bubble, one camera and one shape; the camera track is private,
+  has no audio and cannot be replaced with green screen.
 - An interrupted camera (unplugged, taken by another app) hides the panel and
-  stops the bubble from that point on; the frames already written keep it.
+  stops the bubble from that point on; the frames already recorded keep it.
+  The camera track can have gaps, and the composer draws nothing there.
 - Camera access is optional and never blocks recording.
 
 ## Settings and backup
@@ -184,21 +195,31 @@ Settings backup:
 The camera device's unique ID is a per-machine detail but is harmless in a
 backup: an unknown ID falls back to the first available camera.
 
+`camera.mov` and the placement timeline live only in the take's private folder
+(the folder is `0700` and both files are marked `0600`). They are never copied
+into the edit document, a backup, a log or the exported file's metadata, and
+they are deleted with the take.
+
 ## Verification
 
-Verified by the implementing session on 2026-11-21:
+Verified for the sidecar change on 2026-11-22:
 
-- `./build.sh --test` — the full suite passes, including the new
+- `./build.sh --test` — 125,243 checks pass, including
   `RecorderCameraOverlayTests`: layout geometry (clamping, aspect, drag/resize
-  normalization, corner radius), registered defaults, settings-backup keys and
-  the preference round-trip. The suite also drives the real compositor with
+  normalization, corner radius), the placement timeline (ordering, clamping,
+  lookup, save/reopen), registered defaults, settings-backup keys and the
+  preference round-trip. The suite also drives the real compositor with
   synthetic screen and camera buffers and checks the pixels: the screen
   outside the bubble is untouched, the camera lands in the square, a circle
   leaves its corner showing the screen while a rounded square does not,
   mirroring swaps the camera's halves, and the rebuilt sample buffer keeps its
-  presentation time and duration. The `recorder` group alone also passes.
+  presentation time and duration. The composer test renders a zoomed picture
+  with a bottom-right bubble and confirms the bubble survives the zoom.
+  `RecorderExportRenderingTests` writes a real camera sidecar, composes it with
+  a real master, and exports both a video and a GIF, then reads the bubble back
+  out of each file. `RecorderKeystrokeTests` checks the live row is placed
+  inside a recorded window.
 - `./build.sh --dev` — the developer app builds.
-- `./build/TinaDeveloper --selftest` — `SELFTEST OK`.
 
 Not verified:
 

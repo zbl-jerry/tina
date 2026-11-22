@@ -63,13 +63,6 @@ final class RecorderWriter {
     /// reported as a failure instead of leaving an unplayable file behind.
     private(set) var videoFrameCount = 0
 
-    /// Whether the encoder can take another frame right now. The recorder
-    /// asks before spending a camera composite on a frame the writer would
-    /// drop for being early.
-    var isReadyForVideo: Bool {
-        videoInput.isReadyForMoreMediaData
-    }
-
     var url: URL { writer.outputURL }
 
     init?(url: URL,

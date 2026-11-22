@@ -108,11 +108,11 @@ on is running.
 
 **Why it comes up.** macOS asks before any app can show the camera image.
 
-**What uses it.** Camera preview, either in its floating mirror or inside the notch. The camera starts only from an explicit action and stops when the preview closes, its notch section is hidden, the feature is disabled or the Mac locks.
+**What uses it.** Camera preview, either in its floating mirror or inside the notch, and the screen recorder's optional camera bubble. The camera starts only from an explicit action and stops when the preview closes, its notch section is hidden, the feature is disabled or the Mac locks. With the bubble on, the recorder also keeps a private camera sidecar beside the recording for the editor to draw from.
 
-**If you say no.** The preview window explains the state and offers the System Settings shortcut. Everything else in the app carries on as normal.
+**If you say no.** The preview window explains the state and offers the System Settings shortcut. Recording still works without the bubble. Everything else in the app carries on as normal.
 
-**Optional.** Yes. The image goes straight to the local preview. This feature does not save or upload camera frames. Visible notch content can still appear in a screenshot or recording when you include the notch in captures.
+**Optional.** Yes. The preview image goes straight to the local output. The recorder's camera frames stay in the recording's private, temporary folder, are deleted with the recording and are written into a video only when you export or share one. Visible notch content can still appear in a screenshot or recording when you include the notch in captures.
 
 ## Calendars
 

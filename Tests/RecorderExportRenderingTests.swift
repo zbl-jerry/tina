@@ -102,6 +102,7 @@ enum RecorderExportRenderingTests {
         try await gifQuality(suite, folder: folder)
         try await gifCaptionScale(suite, folder: folder)
         try await composedEdges(suite, take: take)
+        try await cameraSidecarExport(suite, folder: folder)
         try await orientedImports(suite, take: take)
         try await gifOrientation(suite, folder: folder)
         // The last case ends protection in the removed interval. The frame
@@ -1280,6 +1281,158 @@ enum RecorderExportRenderingTests {
         }
         let mean = samples.reduce(0, +) / Double(samples.count)
         return sqrt(samples.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(samples.count))
+    }
+
+    /// A recording made with the camera bubble on carries a second picture
+    /// track. The export must flatten it into one file and draw the bubble
+    /// after the zoom. This drives the real sidecar writer, composition,
+    /// custom compositor, reader and encoder, so a break anywhere in that
+    /// chain surfaces here rather than only in a manual recording.
+    private static func cameraSidecarExport(_ suite: TestSuite, folder: URL) async throws {
+        let takeFolder = folder.appendingPathComponent("camera-take")
+        try FileManager.default.createDirectory(at: takeFolder, withIntermediateDirectories: true)
+        let take = RecorderTakeStore.Take(id: UUID(), folder: takeFolder)
+        try await writePhaseVideo(to: take.videoURL, seconds: 2, width: 320, height: 180)
+        try await writeCameraSidecar(to: take.cameraURL, seconds: 2, width: 320, height: 180,
+                                     color: (255, 0, 255, 255))
+
+        let layout = RecorderCameraLayout(centerX: 0.5, centerY: 0.5, size: 0.3,
+                                          shape: .circle, mirrored: false,
+                                          showsShadow: false)
+        let cameraTrack = RecorderCameraTrack(events: [
+            RecorderCameraLayoutEvent(time: 0, layout: layout),
+        ])
+        guard let cameraData = cameraTrack.encoded() else {
+            throw FixtureFailure.writeFailed
+        }
+        try cameraData.write(to: take.cameraLayoutURL)
+
+        var document = RecorderEditDocument()
+        document.showsPointer = false
+        document.zoomEnabled = true
+        document.zoomSegments = [RecorderTimeline.ZoomSegment(start: 0, end: 2, amount: 2,
+                                                              focusX: 0.15, focusY: 0.15)]
+        let output = folder.appendingPathComponent("camera-overlay.mp4")
+        let failure = await RecorderExporter().export(take: take, document: document,
+                                                      output: .video, to: output,
+                                                      progress: { _ in })
+        suite.expect(failure == nil, "a recording with a camera sidecar exports")
+
+        let exported = AVURLAsset(url: output)
+        let tracks = (try? await exported.loadTracks(withMediaType: .video)) ?? []
+        suite.expect(tracks.count == 1,
+                     "the exported file flattens the camera into one picture track")
+
+        let generator = AVAssetImageGenerator(asset: exported)
+        generator.appliesPreferredTrackTransform = true
+        generator.requestedTimeToleranceBefore = .zero
+        generator.requestedTimeToleranceAfter = .zero
+        let image = try await generator.image(at: CMTime(value: 30, timescale: 60)).image
+        let width = image.width
+        let height = image.height
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        CIContext().render(CIImage(cgImage: image), toBitmap: &bytes, rowBytes: width * 4,
+                           bounds: CGRect(origin: .zero, size: CGSize(width: width, height: height)),
+                           format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+        var bubblePixels = 0
+        for offset in stride(from: 0, to: bytes.count, by: 4) {
+            if bytes[offset] > 150, bytes[offset + 1] < 100, bytes[offset + 2] > 150 {
+                bubblePixels += 1
+            }
+        }
+        suite.expect(bubblePixels > 400,
+                     "the camera bubble survives the zoom and reaches the exported frame")
+
+        // GIF goes through AVAssetImageGenerator rather than the export
+        // reader, so its two-track path is worth checking separately.
+        let gifURL = folder.appendingPathComponent("camera-overlay.gif")
+        let gifFailure = await RecorderExporter().export(take: take, document: document,
+                                                         output: .gif, to: gifURL,
+                                                         progress: { _ in })
+        suite.expect(gifFailure == nil, "a recording with a camera sidecar exports a GIF")
+        if let source = CGImageSourceCreateWithURL(gifURL as CFURL, nil),
+           let gif = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+               kCGImageSourceCreateThumbnailFromImageAlways: true,
+           ] as CFDictionary) {
+            let gifWidth = gif.width
+            let gifHeight = gif.height
+            var gifBytes = [UInt8](repeating: 0, count: gifWidth * gifHeight * 4)
+            CIContext().render(CIImage(cgImage: gif), toBitmap: &gifBytes, rowBytes: gifWidth * 4,
+                               bounds: CGRect(origin: .zero,
+                                              size: CGSize(width: gifWidth, height: gifHeight)),
+                               format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+            var gifBubblePixels = 0
+            for offset in stride(from: 0, to: gifBytes.count, by: 4) {
+                if gifBytes[offset] > 150, gifBytes[offset + 1] < 100,
+                   gifBytes[offset + 2] > 150 {
+                    gifBubblePixels += 1
+                }
+            }
+            suite.expect(gifBubblePixels > 200,
+                         "the camera bubble reaches the first GIF frame too")
+        } else {
+            suite.expect(false, "the camera GIF reads back")
+        }
+    }
+
+    private static func writeCameraSidecar(to url: URL, seconds: Int,
+                                           width: Int, height: Int,
+                                           color: (UInt8, UInt8, UInt8, UInt8)) async throws {
+        try? FileManager.default.removeItem(at: url)
+        let pauseClock = RecorderPauseClock()
+        pauseClock.begin(at: 0)
+        let writer = RecorderCameraTrackWriter(url: url, pauseClock: pauseClock)
+
+        var format: CMVideoFormatDescription?
+        guard CMVideoFormatDescriptionCreate(allocator: kCFAllocatorDefault,
+                                             codecType: kCVPixelFormatType_32BGRA,
+                                             width: Int32(width), height: Int32(height),
+                                             extensions: nil,
+                                             formatDescriptionOut: &format) == noErr,
+              let format else { throw FixtureFailure.writeFailed }
+        for frame in 0..<(seconds * 30) {
+            guard let pixel = solidBuffer(width: width, height: height, color: color) else {
+                throw FixtureFailure.writeFailed
+            }
+            var timing = CMSampleTimingInfo(
+                duration: CMTime(value: 1, timescale: 30),
+                presentationTimeStamp: CMTime(value: Int64(frame), timescale: 30),
+                decodeTimeStamp: .invalid)
+            var sample: CMSampleBuffer?
+            guard CMSampleBufferCreateReadyWithImageBuffer(
+                allocator: kCFAllocatorDefault, imageBuffer: pixel,
+                formatDescription: format, sampleTiming: &timing,
+                sampleBufferOut: &sample) == noErr,
+                  let sample else { throw FixtureFailure.writeFailed }
+            writer.append(sample)
+        }
+        guard await writer.finish(at: CMTime(seconds: Double(seconds), preferredTimescale: 600))
+        else { throw FixtureFailure.writeFailed }
+    }
+
+    private static func solidBuffer(width: Int, height: Int,
+                                    color: (UInt8, UInt8, UInt8, UInt8)) -> CVPixelBuffer? {
+        var buffer: CVPixelBuffer?
+        let attributes: [String: Any] = [kCVPixelBufferIOSurfacePropertiesKey as String: [:]]
+        guard CVPixelBufferCreate(kCFAllocatorDefault, width, height,
+                                  kCVPixelFormatType_32BGRA,
+                                  attributes as CFDictionary, &buffer) == kCVReturnSuccess,
+              let buffer else { return nil }
+        CVPixelBufferLockBaseAddress(buffer, [])
+        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
+        guard let base = CVPixelBufferGetBaseAddress(buffer) else { return nil }
+        let rowBytes = CVPixelBufferGetBytesPerRow(buffer)
+        for row in 0..<height {
+            let pixels = base.advanced(by: row * rowBytes).assumingMemoryBound(to: UInt8.self)
+            for column in 0..<width {
+                let pixel = pixels.advanced(by: column * 4)
+                pixel[0] = color.2
+                pixel[1] = color.1
+                pixel[2] = color.0
+                pixel[3] = color.3
+            }
+        }
+        return buffer
     }
 
     private static func writePhaseVideo(to url: URL, seconds: Int = 2,

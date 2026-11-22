@@ -4,39 +4,14 @@
 import AVFoundation
 import CoreVideo
 
-/// The newest camera image, kept between the camera queue and the writer
-/// queue. Retaining the buffer is enough: AVCapture does not recycle a buffer
-/// its client still holds.
-final class RecorderCameraFrameStore: @unchecked Sendable {
-    private let lock = NSLock()
-    private var buffer: CVPixelBuffer?
-
-    func store(_ newBuffer: CVPixelBuffer?) {
-        lock.lock()
-        buffer = newBuffer
-        lock.unlock()
-    }
-
-    func latest() -> CVPixelBuffer? {
-        lock.lock()
-        defer { lock.unlock() }
-        return buffer
-    }
-
-    func clear() {
-        store(nil)
-    }
-}
-
 /// Captures the camera for a recording. One session feeds both the bubble's
-/// preview layer and the frame store the writer composites from, so the camera
+/// preview layer and the sidecar track the composer draws from, so the camera
 /// is opened once. Late frames are dropped rather than queued: the recording
 /// wants the newest face, not every face it missed.
 final class RecorderCameraCapture: NSObject, @unchecked Sendable {
 
     private let session = AVCaptureSession()
     private let output = AVCaptureVideoDataOutput()
-    private let frames = RecorderCameraFrameStore()
     private let queue = DispatchQueue(label: "com.tina.recorder.camera",
                                       qos: .userInitiated)
     private var configured = false
@@ -47,14 +22,13 @@ final class RecorderCameraCapture: NSObject, @unchecked Sendable {
     /// Called once when the device or session goes away mid-recording. The
     /// recording keeps going without the bubble.
     var onInterruption: (() -> Void)?
+    /// Every delivered frame, on the capture queue, for the sidecar track the
+    /// composer later draws the bubble from.
+    var onFrame: ((CMSampleBuffer) -> Void)?
 
     /// The session the floating bubble shows. It is the same one delivering
-    /// frames to the writer.
+    /// frames to the sidecar track.
     var previewSession: AVCaptureSession { session }
-
-    func latestFrame() -> CVPixelBuffer? {
-        frames.latest()
-    }
 
     // MARK: - Devices
 
@@ -103,7 +77,6 @@ final class RecorderCameraCapture: NSObject, @unchecked Sendable {
                 interruptionLock.withLock { stopped = true }
                 if session.isRunning { session.stopRunning() }
                 removeObservers()
-                frames.clear()
                 continuation.resume()
             }
         }
@@ -134,7 +107,6 @@ final class RecorderCameraCapture: NSObject, @unchecked Sendable {
             return true
         }
         guard shouldReport else { return }
-        frames.clear()
         onInterruption?()
     }
 
@@ -185,7 +157,7 @@ extension RecorderCameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput,
                        didOutput sampleBuffer: CMSampleBuffer,
                        from connection: AVCaptureConnection) {
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        frames.store(pixelBuffer)
+        guard CMSampleBufferGetImageBuffer(sampleBuffer) != nil else { return }
+        onFrame?(sampleBuffer)
     }
 }

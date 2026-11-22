@@ -62,6 +62,8 @@ enum RecorderComposition {
     struct Result {
         let asset: AVMutableComposition
         let audioTrackIDs: [RecorderAudioSource: CMPersistentTrackID]
+        /// Present only when the take has a camera sidecar track.
+        let cameraTrackID: CMPersistentTrackID?
         let duration: CMTime
     }
 
@@ -91,6 +93,7 @@ enum RecorderComposition {
     }
 
     static func build(from asset: AVAsset,
+                      camera: AVAsset? = nil,
                       ranges: [ClosedRange<Double>],
                       includesAudio: Bool,
                       playbackSpeed: Double = 1) async -> Result? {
@@ -101,6 +104,24 @@ enum RecorderComposition {
                                                       preferredTrackID: kCMPersistentTrackID_Invalid)
         else { return nil }
         video.preferredTransform = (try? await sourceVideo.load(.preferredTransform)) ?? .identity
+
+        // The camera is a picture-only sidecar. It is copied through the same
+        // trim and cuts, and scaled with everything else by the speed pass at
+        // the end, so its frames stay aligned with the screen without ever
+        // being part of the master.
+        var cameraSource: AVAssetTrack?
+        if let camera {
+            cameraSource = try? await camera.loadTracks(withMediaType: .video).first
+        }
+        let cameraTrack = cameraSource.flatMap { from in
+            composition.addMutableTrack(withMediaType: .video,
+                                        preferredTrackID: kCMPersistentTrackID_Invalid)
+                .map { (from: from, to: $0) }
+        }
+        if let cameraTrack {
+            cameraTrack.to.preferredTransform =
+                (try? await cameraTrack.from.load(.preferredTransform)) ?? .identity
+        }
 
         let sourceAudio = includesAudio ? await RecorderAudioSource.tracks(in: asset) : [:]
         var audio: [(source: RecorderAudioSource, from: AVAssetTrack,
@@ -128,6 +149,13 @@ enum RecorderComposition {
                 // failing the whole export; the rest of the recording is still
                 // worth having.
                 continue
+            }
+            if let cameraTrack {
+                // A camera that stopped early leaves a gap; the picture is
+                // still complete without it.
+                try? cameraTrack.to.insertTimeRange(window,
+                                                   of: cameraTrack.from,
+                                                   at: cursor)
             }
             for pair in audio {
                 let overlap = CMTimeRangeGetIntersection(window,
@@ -157,6 +185,7 @@ enum RecorderComposition {
                       audioTrackIDs: Dictionary(uniqueKeysWithValues: audio.map {
                           ($0.source, $0.to.trackID)
                       }),
+                      cameraTrackID: cameraTrack?.to.trackID,
                       duration: cursor)
     }
 }

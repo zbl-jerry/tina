@@ -31,6 +31,10 @@ This one powers the scroll direction inverter, Window Layout, the switcher, Dock
 
 This one feeds window titles and thumbnails in the switcher and Dock Preview. If previews fall back to app icons or Dock Preview stays unavailable, switch Tina on in System Settings, Privacy and Security, Screen Recording. macOS may ask you to quit and reopen the app after you grant it.
 
+### Input Monitoring
+
+This is needed only by the recorder's optional key overlay. Turn the switch on in the recorder settings and Tina asks for the grant; if the keys still do not appear while recording, check System Settings, Privacy and Security, Input Monitoring. A local build whose signature changed can leave an old, switched-on Tina entry that no longer trusts the app: remove the entry with the minus button, grant it again, then quit and reopen Tina.
+
 ### System Audio Recording
 
 This permission is used by the mixer, the optional live equalizer and system audio capture for recordings. If a feature asks for it, open System Settings, Privacy and Security, Screen and System Audio Recording, and switch Tina on. See the [permissions guide](PERMISSIONS.md#system-audio-recording) for what each feature does with the audio.

@@ -199,8 +199,13 @@ enum ScreenshotSupport {
                                                     standaloneScreenshot: Bool,
                                                     requiresDraggedRegion: Bool,
                                                     scrollingCaptureEnabled: Bool) -> Bool {
-        let isScreenshot = standaloneScreenshot || selectedTool == .screenshot
-        return isScreenshot && !requiresDraggedRegion && !scrollingCaptureEnabled
+        // Recording a whole display is as ordinary as screenshotting one. It
+        // used to be reachable only through Return, which nothing on screen
+        // said; the same control now names it for both tools.
+        let wholeScreenTool = standaloneScreenshot
+            || selectedTool == .screenshot
+            || selectedTool == .recording
+        return wholeScreenTool && !requiresDraggedRegion && !scrollingCaptureEnabled
     }
 
     static func fullScreenCaptureControlIsVisible(isAvailable: Bool,
