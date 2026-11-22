@@ -11,6 +11,9 @@ here before the version in `Resources/Info.plist` is bumped.
 
 ## [Unreleased]
 
+### Added
+- Quick toggles can restart the Dock, the Finder, the menu bar or the third-party input method in use. Each row confirms first, explains what disappears for a moment, and reports whether the component came back. The input method row stays disabled with a reason when no third-party input method is running, and every action follows the Kill Process protection rules with no new permission or helper.
+
 ### Fixed
 - Update checks ask the repository the app is built from, so they no longer fail against a renamed repository. A response GitHub rejects now reports its HTTP status instead of a placeholder.
 - The post-update What's New window reads the changelog bundled with the app again, so it lists the changes made in every version between the previous install and the current one.
