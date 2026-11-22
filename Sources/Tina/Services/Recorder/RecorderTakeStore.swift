@@ -36,6 +36,10 @@ final class RecorderTakeStore: @unchecked Sendable {
 
     private let manager = FileManager.default
 
+    /// Tests pin the volume's free space so import contracts do not depend on
+    /// the disk the suite happens to run on.
+    static var availableBytesOverride: Int64?
+
     private init() {}
 
     // MARK: - Location
@@ -141,6 +145,7 @@ final class RecorderTakeStore: @unchecked Sendable {
     }
 
     private func freeBytes(at url: URL) -> Int64 {
+        if let availableBytesOverride = Self.availableBytesOverride { return availableBytesOverride }
         let values = try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
         return values?.volumeAvailableCapacityForImportantUsage ?? 0
     }
