@@ -9,12 +9,18 @@ window reads the entries between the version a person updated from and the
 version they are running, so every release needs a dated `## [version]` section
 here before the version in `Resources/Info.plist` is bumped.
 
-## [Unreleased]
+## [3.7.0] - 2026-11-22
 
 ### Added
 - Window pinning: keep any window visible above other apps as a live, resizable mirror. Pinned windows follow their source, pause while minimized, on another Space or fully covered, and hand control back to the real window on click or hover. The feature is installed from the Hub, uses Screen Recording and Accessibility, and its settings join Settings backup.
 - Live captions: turn the sound your Mac is playing into on-screen captions with on-device Speech recognition, a draggable click-through caption bar, a menu bar indicator and a global shortcut. Sessions are saved locally and can be exported as SRT, Markdown or plain text, copied, or removed, and captions stop cleanly when a screen recording starts because the two cannot share the system audio tap.
 - Quick toggles can restart the Dock, the Finder, the menu bar or the third-party input method in use. Each row confirms first, explains what disappears for a moment, and reports whether the component came back. The input method row stays disabled with a reason when no third-party input method is running, and every action follows the Kill Process protection rules with no new permission or helper.
+- Dynamic Island AI Agents now follow Cursor's live turns, project names and completion notices by reading its local agent transcripts, with no network requests and no plan credits read.
+
+### Changed
+- Tina no longer builds services for features that are turned off when it launches, so startup does less work without changing what is available. Display recovery for screens a previous run left off still runs before the rest of launch.
+- Window gestures and edge snapping share one pointer tap, so a drag that needs both keeps an in-progress gesture and cancels a pending snap correctly when the drag is handed to macOS.
+- Microphone mute can follow an unmute made from a call app when the opt-in option in Settings → Quick panel is turned on. Mute enforcement stays the default.
 
 ### Fixed
 - Update checks ask the repository the app is built from, so they no longer fail against a renamed repository. A response GitHub rejects now reports its HTTP status instead of a placeholder.
@@ -22,6 +28,11 @@ here before the version in `Resources/Info.plist` is bumped.
 - Screen recording keeps the camera bubble in the editor preview and in every video, GIF and shared export by drawing it after the automatic zoom instead of baking it into the recording.
 - The live key row stays inside the recorded window or area, the key switch asks for Input Monitoring when it is turned on, and a missing grant is reported when recording starts instead of silently omitting the keys.
 - The screen-capture chooser offers full-screen recording, and a shortcut's recorder row is hidden while that shortcut is turned off.
+- Fan control keeps a verified curve through a GPU power-down, retries a refused fan write while every fan still holds its target, and returns all fans to system control when a safe configuration cannot be verified. The panel reports a curve it could not restore.
+- Clipboard history prefers the text in a copy that also carries rich text, so copied spreadsheet cells keep their text and separators instead of becoming a preview image. Image and file copies are unchanged.
+- Low disk space alerts repeat at most once every six hours per volume, with one earlier alert when free space drops below half the limit.
+- Super Key waits for a keyboard after login or wake instead of treating the missing mapping as refused, and captures F18 only once the mapping is written and read back.
+- The window switcher hands ⌘Tab back to macOS while an exclusive full-screen game covers the display, and resumes suppression when the game leaves full screen.
 
 ## [3.6.0] - 2026-11-21
 
