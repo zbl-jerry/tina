@@ -575,6 +575,7 @@ if (( TEST )); then
         Sources/Tina/Services/Switcher/SwitcherModels.swift
         Sources/Tina/Services/Switcher/WindowServerCaptureQueue.swift
         Sources/Tina/Services/Switcher/SwitcherSupport.swift
+        Sources/Tina/Services/Switcher/SwitcherExclusiveFullscreenWatch.swift
         Sources/Tina/Services/Switcher/SpaceHopSupport.swift
         Sources/Tina/Services/Switcher/WindowUseOrder.swift
         Sources/Tina/Services/Switcher/WindowEnumeratorAccessibilityPrefetch.swift
