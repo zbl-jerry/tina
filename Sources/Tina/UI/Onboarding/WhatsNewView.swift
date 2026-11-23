@@ -348,7 +348,7 @@ struct ReleaseNotesContent: View {
     private func releaseSection(_ section: ReleaseNoteSection) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             if !section.title.isEmpty {
-                Text(section.title.uppercased())
+                Text(ReleaseNoteLocalization.sectionTitle(section.title, language: l10n.language).uppercased())
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.secondary)
                     .tracking(1.2)
@@ -363,7 +363,7 @@ struct ReleaseNotesContent: View {
     private func releaseItem(_ item: ReleaseNoteItem, sectionTitle: String) -> some View {
         switch item {
         case let .paragraph(text):
-            Text(text)
+            Text(ReleaseNoteLocalization.text(text, language: l10n.language))
                 .font(.system(size: 12.8))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -373,7 +373,7 @@ struct ReleaseNotesContent: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 18, alignment: .center)
-                Text(text)
+                Text(ReleaseNoteLocalization.text(text, language: l10n.language))
                     .font(.system(size: 12.5))
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)

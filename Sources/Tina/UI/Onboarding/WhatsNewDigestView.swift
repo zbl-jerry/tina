@@ -182,7 +182,7 @@ struct WhatsNewDigestView: View {
                     }
                 }
                 if let summary = digest.summary {
-                    Text(summary)
+                    Text(ReleaseNoteLocalization.text(summary, language: l10n.language))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -271,7 +271,7 @@ private struct WhatsNewFeaturePage: View {
     }
 
     private func changeRow(_ change: ReleaseChange) -> some View {
-        let parts = change.parts
+        let parts = change.parts(language: l10n.language)
         return HStack(alignment: .firstTextBaseline, spacing: 8) {
             if change.kind == .new {
                 Image(systemName: "plus.circle.fill")

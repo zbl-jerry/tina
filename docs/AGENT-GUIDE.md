@@ -45,6 +45,9 @@ and contribution rules live in [CONTRIBUTING.md](../CONTRIBUTING.md) and
   build bundles the file and the post-update What's New window reads it, so a
   bundle version without an entry fails `./build.sh --test` and a missing file
   fails `./build.sh`.
+- Chinese readers see each entry in Chinese; every other language reads the
+  English file. Add the Simplified and Traditional readings for each new entry
+  to `ReleaseNoteLocalizations.swift`; the tests fail when an entry has none.
 - Build `./build.sh`, run `./build/Tina --selftest`, then `./Tools/make-dmg.sh`
   for `dist/Tina-<version>.dmg`.
 - Tag `v<version>` and create the GitHub release from `dev`; include the
