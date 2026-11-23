@@ -337,6 +337,7 @@ if (( TEST )); then
         Sources/Tina/Services/Notch/NotchBrowserArtworkSupport.swift
         Sources/Tina/UI/Notch/NotchEqualizerBars.swift
         Sources/Tina/UI/Notch/NotchScrollEdgeFade.swift
+        Sources/Tina/UI/Notch/NotchAgentComponents.swift
         Sources/Tina/UI/Notch/NotchAgentAnimationView.swift
         Sources/Tina/UI/WindowVisibilityReader.swift
         Sources/Tina/Services/Notch/NotchMusicAutomationSupport.swift
@@ -476,6 +477,7 @@ if (( TEST )); then
         Sources/Tina/Services/Homebrew/HomebrewSupport.swift
         Sources/Tina/Services/Homebrew/HomebrewEnvironment.swift
         Sources/Tina/Services/Homebrew/HomebrewManager.swift
+        Sources/Tina/UI/MenuPanel/PanelHomebrewFilterPicker.swift
         Sources/Tina/UI/HomebrewOperationStatusView.swift
         Sources/Tina/Services/AppUpdates/AppUpdatesSupport.swift
         Sources/Tina/Services/AppUpdates/AppUpdateFeedSupport.swift
@@ -534,8 +536,9 @@ if (( TEST )); then
         Sources/Tina/Services/QuickTools/QuickToolsSupport.swift
         Sources/Tina/Services/CommandBar/CommandBarSupport.swift
         Sources/Tina/Services/CommandBar/CommandBarPreferences.swift
-        Sources/Tina/Services/CommandBar/CommandBarMath.swift
-        Sources/Tina/Services/CommandBar/CommandBarUnits.swift
+        Sources/Tina/Services/CommandBar/CommandBarUnitCatalog.swift
+        Sources/Tina/Services/CommandBar/CommandBarExpressions.swift
+        Sources/Tina/Services/CommandBar/CommandBarCalculator.swift
         Sources/Tina/Services/CommandBar/CommandBarColors.swift
         Sources/Tina/Services/CommandBar/CommandBarEmoji.swift
         Sources/Tina/Services/CommandBar/CommandBarLinks.swift

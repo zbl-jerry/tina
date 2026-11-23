@@ -231,6 +231,7 @@ struct MetricsTests {
                 CleanerScanFlowTests.run(suite)
                 CleanerLayoutTests.run(suite)
             }),
+            ("homebrew-filter", { PanelHomebrewFilterPickerTests.run(suite) }),
             ("uninstaller", {
                 HomebrewOwnershipTests.run(suite)
                 HomebrewOperationLogRetentionTests.run(suite)
