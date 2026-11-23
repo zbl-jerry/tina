@@ -42,19 +42,26 @@ struct ReleaseChange: Hashable {
     var isAppWide: Bool { features.isEmpty || alsoAppWide }
 
     /// The entry without its closing "Settings → …" path, and that path, so
-    /// the window can show where an option lives on a line of its own. A path
-    /// inside a sentence stays where it is.
-    var parts: (text: String, settingsPath: String?) {
-        Self.splitSettingsPath(text)
+    /// the window can show where an option lives on a line of its own, in the
+    /// reader's language. A path inside a sentence stays where it is.
+    func parts(language: AppLanguage) -> (text: String, settingsPath: String?) {
+        Self.splitSettingsPath(ReleaseNoteLocalization.text(text, language: language))
     }
 
+    /// The path marker as the changelog writes it in English, and as its
+    /// Chinese readings write it.
+    private static let settingsPathMarkers = ["Settings →", "设置 →", "設定 →"]
+
     static func splitSettingsPath(_ text: String) -> (text: String, settingsPath: String?) {
-        guard let start = text.range(of: "Settings →", options: .backwards) else { return (text, nil) }
-        let before = text[..<start.lowerBound].trimmingCharacters(in: .whitespaces)
-        guard !before.isEmpty, before.hasSuffix(".") else { return (text, nil) }
-        var path = text[start.lowerBound...].trimmingCharacters(in: .whitespaces)
-        if path.hasSuffix(".") { path.removeLast() }
-        return (before, path)
+        for marker in settingsPathMarkers {
+            guard let start = text.range(of: marker, options: .backwards) else { continue }
+            let before = text[..<start.lowerBound].trimmingCharacters(in: .whitespaces)
+            guard !before.isEmpty, before.hasSuffix(".") || before.hasSuffix("。") else { continue }
+            var path = text[start.lowerBound...].trimmingCharacters(in: .whitespaces)
+            while path.hasSuffix(".") || path.hasSuffix("。") { path.removeLast() }
+            return (before, path)
+        }
+        return (text, nil)
     }
 }
 

@@ -453,6 +453,7 @@ if (( TEST )); then
         Sources/Tina/Core/ReleaseNotes.swift
         Sources/Tina/Core/ReleaseDigest.swift
         Sources/Tina/Core/ReleaseChangeAliases.swift
+        Sources/Tina/Core/ReleaseNoteLocalizations.swift
         Sources/Tina/Core/WhatsNewStrings.swift
         Sources/Tina/Core/URLCleaning.swift
         Sources/Tina/Services/URLCleanerLinkMetadata.swift

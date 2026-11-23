@@ -12,6 +12,7 @@ enum ReleaseDigestTests {
         checkVersionRanges(suite)
         checkDigest(suite)
         checkBundledChangelog(suite)
+        checkLocalization(suite)
         checkClassifier(suite)
         checkPending(suite)
         checkNewFeatures(suite)
@@ -44,6 +45,12 @@ enum ReleaseDigestTests {
         let alone = "Settings → Features no longer jumps."
         suite.expect(ReleaseChange.splitSettingsPath(alone).text == alone,
                      "an entry that starts with Settings keeps its text")
+        let simplified = ReleaseChange.splitSettingsPath("静音跟随通话 App。设置 → 快捷面板")
+        suite.expect(simplified.text == "静音跟随通话 App。" && simplified.settingsPath == "设置 → 快捷面板",
+                     "a translated closing Settings path moves to its own line")
+        let traditional = ReleaseChange.splitSettingsPath("靜音跟隨通話 App。設定 → 快速面板")
+        suite.expect(traditional.text == "靜音跟隨通話 App。" && traditional.settingsPath == "設定 → 快速面板",
+                     "a traditional Chinese closing path moves to its own line")
     }
 
     private static func checkVersionRanges(_ suite: TestSuite) {
@@ -183,6 +190,57 @@ enum ReleaseDigestTests {
         let build = try? String(contentsOfFile: "build.sh", encoding: .utf8)
         suite.expect(build?.contains("Contents/Resources/CHANGELOG.md") == true,
                      "the build copies the changelog into the app bundle")
+    }
+
+    /// Chinese readers see the changelog in Chinese; every other language
+    /// reads the English file as it ships. The catalog is keyed by the English
+    /// entry so a release that forgets a translation fails here, and a removed
+    /// entry cannot leave a translation that would never be shown.
+    private static func checkLocalization(_ suite: TestSuite) {
+        suite.expect(FeatureStrings.whatsNew(.zhHans).chooseFeatureHint == "选择左侧的功能以查看其中的变化。",
+                     "the Simplified Chinese overview hint points at the sidebar")
+        for language in [AppLanguage.zhTW, .zhHK] {
+            suite.expect(FeatureStrings.whatsNew(language).chooseFeatureHint.contains("左側"),
+                         "\(language.rawValue) points at the sidebar too")
+        }
+
+        guard let changelog = try? String(contentsOfFile: "CHANGELOG.md", encoding: .utf8) else {
+            suite.expect(false, "CHANGELOG.md exists at the repository root")
+            return
+        }
+        var versions = ReleaseNotes.allVersions(changelog: changelog)
+        if changelog.contains("## [Unreleased]") { versions.insert("Unreleased", at: 0) }
+        var entries = Set<String>()
+        for version in versions {
+            for section in ReleaseNotes.notes(for: version, changelog: changelog).sections {
+                for item in section.items {
+                    switch item {
+                    case let .bullet(text), let .paragraph(text): entries.insert(text)
+                    case .image: continue
+                    }
+                }
+            }
+        }
+        suite.expect(!entries.isEmpty, "the shipped changelog has entries to translate")
+        for language in [AppLanguage.zhHans, .zhTW, .zhHK] {
+            let keys = ReleaseNoteLocalization.translatedKeys(for: language)
+            let missing = entries.subtracting(keys)
+            suite.expect(missing.isEmpty,
+                         "\(language.rawValue) translates every changelog entry; missing \(missing.sorted())")
+            let stale = keys.subtracting(entries)
+            suite.expect(stale.isEmpty,
+                         "\(language.rawValue) translates only entries still in the changelog; stale \(stale.sorted())")
+            suite.expect(entries.allSatisfy { ReleaseNoteLocalization.text($0, language: language) != $0 },
+                         "\(language.rawValue) holds a reading for every entry")
+        }
+        for language in AppLanguage.allCases where ![.zhHans, .zhTW, .zhHK].contains(language) {
+            suite.expect(entries.allSatisfy { ReleaseNoteLocalization.text($0, language: language) == $0 },
+                         "\(language.rawValue) reads the English changelog")
+        }
+        suite.expect(ReleaseNoteLocalization.sectionTitle("Added", language: .zhHans) == "新增"
+                        && ReleaseNoteLocalization.sectionTitle("Fixed", language: .zhTW) == "修正"
+                        && ReleaseNoteLocalization.sectionTitle("Added", language: .enUS) == "Added",
+                     "release-note headings follow the reading language")
     }
 
     private static func checkClassifier(_ suite: TestSuite) {

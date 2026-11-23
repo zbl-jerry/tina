@@ -205,7 +205,7 @@ extension FeatureStrings {
                 kindChanged: "变更",
                 kindFixed: "修复",
                 updated: "已更新",
-                chooseFeatureHint: "选择一个功能以查看其中的变化。",
+                chooseFeatureHint: "选择左侧的功能以查看其中的变化。",
                 skipPreviewCheckbox: "更新前不显示新功能",
                 showPreviewToggle: "更新前显示新功能",
                 showPreviewCaption: "每次更新后仍会显示已安装功能的变化。")
@@ -219,7 +219,7 @@ extension FeatureStrings {
                 kindChanged: "變更",
                 kindFixed: "修正",
                 updated: "已更新",
-                chooseFeatureHint: "選擇一個功能以查看其中的變化。",
+                chooseFeatureHint: "選擇左側的功能以查看其中的變化。",
                 skipPreviewCheckbox: "更新前不顯示新功能",
                 showPreviewToggle: "更新前顯示新功能",
                 showPreviewCaption: "每次更新後仍會顯示已安裝功能的變化。")
