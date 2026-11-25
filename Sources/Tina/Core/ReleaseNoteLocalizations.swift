@@ -52,6 +52,16 @@ enum ReleaseNoteLocalization {
     }
 
     private static let zhHans: [String: String] = [
+        // 3.7.4
+        "The window switcher keeps the window you focused before the shortcut: it resolves a newly focused window before individual switching, honors focus outside its inventory, and keeps the focused source while switching app groups or while unrelated windows are discovered. Shortcuts stay live during an inventory refresh, and the all-window selection refreshes after a window is created.": "窗口切换器会保留按下快捷键前聚焦的窗口：在逐窗口切换前先解析新聚焦的窗口，接受不在清单内的焦点，并在切换 App 组或发现其他无关窗口时保留聚焦来源。清单刷新期间快捷键保持可用，创建窗口后全窗口选择会随之刷新。",
+        "Microphone mute reports muted only after each adjustable input reads zero gain. Monitor speakers show mute only when the monitor confirms it, and mute controls are offered only on connections that can safely restore sound. The volume feedback sound stays on the output that was playing when the slider moved.": "麦克风静音只有在每个可调输入都读到零增益后才会报告已静音。显示器扬声器只有在显示器确认静音时才显示静音，并且只在能安全恢复声音的连接上提供静音控制。音量反馈音仍从滑块移动时正在播放的输出发出。",
+        "Fan Control tracks hardware recovery that is still pending, shows why a safety stop happened, and keeps Apply disabled until system control is confirmed. A saved curve resumes only after a verified local stop, and the helper reserves its removal before unregistering so a new Apply cannot slip in.": "风扇控制会跟踪尚未完成的硬件恢复，说明安全停止的原因，并在确认系统控制之前保持「应用」不可用。只有在本地停止得到验证后才会恢复已保存的曲线，辅助程序在注销前先预留移除，因此新的「应用」请求无法插入。",
+        "Command Bar unit conversions keep compact compound results, carry a rounded quantity into the larger unit, and accept the uppercase conversion connector.": "命令栏单位换算会保留紧凑的复合结果，把四舍五入后的数量带入更大单位，并接受大写的换算连接词。",
+        "Screenshots keep Undo available while a caption is being edited, so a mistyped caption can be undone without closing the editor.": "编辑说明文字时截图仍可使用撤销，输错的说明可以直接撤销而不必关闭编辑器。",
+        "Cleaner rechecks a login item before removal and leaves its plist in place when the executable cannot be confirmed gone or when moving it would require an administrator password.": "清理工具会在移除前再次检查登录项；如果无法确认可执行文件已不存在，或移动它需要管理员密码，就保留该 plist。",
+        "Dynamic Island checks the space beside it again when a menu bar measurement is incomplete, instead of trusting a partial reading.": "菜单栏测量不完整时，Dynamic Island 会重新检查其旁边的可用空间，而不是采信部分读数。",
+        "AI Agents includes GPT-6.2 usage in API cost estimates, prices specialized models correctly, and reads split Cursor responses from their response metadata so trend costs are qualified.": "AI Agents 在 API 费用估算中包含 GPT-6.2 的用量，正确计算专用模型的单价，并从响应元数据读取被拆分的 Cursor 响应，使趋势中的费用带有相应限定。",
+
         // 3.7.3
         "Microphone mute keeps its listeners across normal input changes, registers them again after the audio service restarts, and holds a requested mute on a device until that device comes back.": "静音麦克风会在正常的输入设备变化后保留监听，在音频服务重启后重新注册，并在设备重新出现前保持对该设备的静音请求。",
         "The window switcher waits until an interrupted session can be dismissed before it filters keys and clicks again after macOS pauses its input tap. Suspending the feature or installing a newer switcher supersedes a stale restart.": "窗口切换器在 macOS 暂停其输入监听后会等待被中断的会话可以关闭，然后再恢复过滤按键和点击。暂停该功能或安装更新的切换器会取代已经过时的重启。",
@@ -108,6 +118,16 @@ enum ReleaseNoteLocalization {
     ]
 
     private static let zhHant: [String: String] = [
+        // 3.7.4
+        "The window switcher keeps the window you focused before the shortcut: it resolves a newly focused window before individual switching, honors focus outside its inventory, and keeps the focused source while switching app groups or while unrelated windows are discovered. Shortcuts stay live during an inventory refresh, and the all-window selection refreshes after a window is created.": "視窗切換器會保留按下快速鍵前聚焦的視窗：在逐視窗切換前先解析新聚焦的視窗，接受不在清單內的焦點，並在切換 App 群組或發現其他無關視窗時保留聚焦來源。清單重新整理期間快速鍵保持可用，建立視窗後全視窗選取會隨之重新整理。",
+        "Microphone mute reports muted only after each adjustable input reads zero gain. Monitor speakers show mute only when the monitor confirms it, and mute controls are offered only on connections that can safely restore sound. The volume feedback sound stays on the output that was playing when the slider moved.": "麥克風靜音只有在每個可調輸入都讀到零增益後才會回報已靜音。顯示器揚聲器只有在顯示器確認靜音時才顯示靜音，並且只在能安全恢復聲音的連線上提供靜音控制。音量回饋音仍從滑桿移動時正在播放的輸出發出。",
+        "Fan Control tracks hardware recovery that is still pending, shows why a safety stop happened, and keeps Apply disabled until system control is confirmed. A saved curve resumes only after a verified local stop, and the helper reserves its removal before unregistering so a new Apply cannot slip in.": "風扇控制會追蹤尚未完成的硬體恢復，說明安全停止的原因，並在確認系統控制之前保持「套用」不可用。只有在本機停止獲得驗證後才會恢復已儲存的曲線，輔助程式在登出前先保留移除，因此新的「套用」請求無法插入。",
+        "Command Bar unit conversions keep compact compound results, carry a rounded quantity into the larger unit, and accept the uppercase conversion connector.": "命令列單位換算會保留精簡的複合結果，把四捨五入後的數量帶入較大單位，並接受大寫的換算連接詞。",
+        "Screenshots keep Undo available while a caption is being edited, so a mistyped caption can be undone without closing the editor.": "編輯說明文字時截圖仍可使用還原，輸入錯誤的說明可以直接還原而不必關閉編輯器。",
+        "Cleaner rechecks a login item before removal and leaves its plist in place when the executable cannot be confirmed gone or when moving it would require an administrator password.": "清理工具會在移除前再次檢查登入項目；如果無法確認執行檔已不存在，或移動它需要管理員密碼，就保留該 plist。",
+        "Dynamic Island checks the space beside it again when a menu bar measurement is incomplete, instead of trusting a partial reading.": "選單列測量不完整時，Dynamic Island 會重新檢查其旁邊的可用空間，而不是採信部分讀數。",
+        "AI Agents includes GPT-6.2 usage in API cost estimates, prices specialized models correctly, and reads split Cursor responses from their response metadata so trend costs are qualified.": "AI Agents 在 API 費用估算中包含 GPT-6.2 的用量，正確計算專用模型的單價，並從回應中繼資料讀取被拆分的 Cursor 回應，使趨勢中的費用帶有相應限定。",
+
         // 3.7.3
         "Microphone mute keeps its listeners across normal input changes, registers them again after the audio service restarts, and holds a requested mute on a device until that device comes back.": "靜音麥克風會在正常的輸入裝置變化後保留監聽，在音訊服務重新啟動後重新註冊，並在裝置重新出現前保持對該裝置的靜音請求。",
         "The window switcher waits until an interrupted session can be dismissed before it filters keys and clicks again after macOS pauses its input tap. Suspending the feature or installing a newer switcher supersedes a stale restart.": "視窗切換器在 macOS 暫停其輸入監聽後會等待被中斷的工作階段可以關閉，然後再恢復過濾按鍵和點擊。暫停該功能或安裝較新的切換器會取代已經過時的重啟。",
