@@ -9,6 +9,18 @@ window reads the entries between the version a person updated from and the
 version they are running, so every release needs a dated `## [version]` section
 here before the version in `Resources/Info.plist` is bumped.
 
+## [3.7.4] - 2026-11-26
+
+### Fixed
+- The window switcher keeps the window you focused before the shortcut: it resolves a newly focused window before individual switching, honors focus outside its inventory, and keeps the focused source while switching app groups or while unrelated windows are discovered. Shortcuts stay live during an inventory refresh, and the all-window selection refreshes after a window is created.
+- Microphone mute reports muted only after each adjustable input reads zero gain. Monitor speakers show mute only when the monitor confirms it, and mute controls are offered only on connections that can safely restore sound. The volume feedback sound stays on the output that was playing when the slider moved.
+- Fan Control tracks hardware recovery that is still pending, shows why a safety stop happened, and keeps Apply disabled until system control is confirmed. A saved curve resumes only after a verified local stop, and the helper reserves its removal before unregistering so a new Apply cannot slip in.
+- Command Bar unit conversions keep compact compound results, carry a rounded quantity into the larger unit, and accept the uppercase conversion connector.
+- Screenshots keep Undo available while a caption is being edited, so a mistyped caption can be undone without closing the editor.
+- Cleaner rechecks a login item before removal and leaves its plist in place when the executable cannot be confirmed gone or when moving it would require an administrator password.
+- Dynamic Island checks the space beside it again when a menu bar measurement is incomplete, instead of trusting a partial reading.
+- AI Agents includes GPT-6.2 usage in API cost estimates, prices specialized models correctly, and reads split Cursor responses from their response metadata so trend costs are qualified.
+
 ## [3.7.3] - 2026-11-23
 
 ### Fixed
