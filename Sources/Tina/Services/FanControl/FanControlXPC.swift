@@ -38,6 +38,8 @@ enum FanControlIdentifiers {
     func chargeLimitStatus(withReply reply: @escaping (Data) -> Void)
     func applyChargeLimit(_ configuration: Data, withReply reply: @escaping (Data) -> Void)
     func restoreCharging(withReply reply: @escaping (Data) -> Void)
+    func restoreOwnedControl(withReply reply: @escaping (Data) -> Void)
+    func prepareForUnregister(withReply reply: @escaping (Data) -> Void)
 }
 
 enum FanControlIPC {
