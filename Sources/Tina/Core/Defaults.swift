@@ -467,6 +467,11 @@ enum DefaultsKey {
     static let panelToggleLockScreen = "panelToggleLockScreen"
     static let panelToggleDisplayOff = "panelToggleDisplayOff"
     static let panelToggleScreenSaver = "panelToggleScreenSaver"
+    // System preference switches (issue #29).
+    static let panelToggleDockAutoHide = "panelToggleDockAutoHide"
+    static let panelToggleDockLock = "panelToggleDockLock"
+    static let panelToggleStageManager = "panelToggleStageManager"
+    static let panelToggleMenuBarAutoHide = "panelToggleMenuBarAutoHide"
 
     // System monitor — live metrics shown next to the menu bar icon (opt-in).
     static let menuBarCPU = "menuBarCPU"
@@ -1875,6 +1880,10 @@ enum Defaults {
         DefaultsKey.panelToggleLockScreen: true,
         DefaultsKey.panelToggleDisplayOff: true,
         DefaultsKey.panelToggleScreenSaver: true,
+        DefaultsKey.panelToggleDockAutoHide: true,
+        DefaultsKey.panelToggleDockLock: true,
+        DefaultsKey.panelToggleStageManager: true,
+        DefaultsKey.panelToggleMenuBarAutoHide: true,
         // Menu bar metrics start off (the icon stays clean) and are opt-in.
         // The panel shows every monitoring block by default; users hide what
         // they don't want.

@@ -87,6 +87,10 @@ struct QuickTogglesList: View {
     @AppStorage(DefaultsKey.panelToggleLockScreen) private var showLockScreen = true
     @AppStorage(DefaultsKey.panelToggleDisplayOff) private var showDisplayOff = true
     @AppStorage(DefaultsKey.panelToggleScreenSaver) private var showScreenSaver = true
+    @AppStorage(DefaultsKey.panelToggleDockAutoHide) private var showDockAutoHide = true
+    @AppStorage(DefaultsKey.panelToggleDockLock) private var showDockLock = true
+    @AppStorage(DefaultsKey.panelToggleStageManager) private var showStageManager = true
+    @AppStorage(DefaultsKey.panelToggleMenuBarAutoHide) private var showMenuBarAutoHide = true
     @AppStorage(DefaultsKey.panelToggleOrder) private var toggleOrderRaw = ""
 
     let editing: Bool
@@ -125,7 +129,9 @@ struct QuickTogglesList: View {
                     DefaultsKey.panelToggleRestartMenuBar, DefaultsKey.panelToggleRestartInputMethod,
                     DefaultsKey.panelToggleEjectDisks, DefaultsKey.panelToggleHiddenFiles,
                     DefaultsKey.panelToggleDesktopIcons, DefaultsKey.panelToggleLockScreen,
-                    DefaultsKey.panelToggleDisplayOff, DefaultsKey.panelToggleScreenSaver] {
+                    DefaultsKey.panelToggleDisplayOff, DefaultsKey.panelToggleScreenSaver,
+                    DefaultsKey.panelToggleDockAutoHide, DefaultsKey.panelToggleDockLock,
+                    DefaultsKey.panelToggleStageManager, DefaultsKey.panelToggleMenuBarAutoHide] {
             defaults.set(true, forKey: key)
         }
     }
@@ -174,6 +180,10 @@ struct QuickTogglesList: View {
         case .lockScreen: return $showLockScreen
         case .displayOff: return $showDisplayOff
         case .screenSaver: return $showScreenSaver
+        case .dockAutoHide: return $showDockAutoHide
+        case .dockLock: return $showDockLock
+        case .stageManager: return $showStageManager
+        case .menuBarAutoHide: return $showMenuBarAutoHide
         }
     }
 
@@ -342,6 +352,26 @@ struct QuickTogglesList: View {
                                         QuickTogglesService.shared.startScreenSaver()
                                     }
                                 })
+        case .dockAutoHide:
+            systemSwitchRow(item, title: strings.dockAutoHideTitle,
+                            caption: strings.dockAutoHideCaption,
+                            systemImage: "dock.rectangle",
+                            isOn: { toggles.dockAutoHideEnabled })
+        case .dockLock:
+            systemSwitchRow(item, title: strings.dockLockTitle,
+                            caption: strings.dockLockCaption,
+                            systemImage: "lock.square",
+                            isOn: { toggles.dockLockEnabled })
+        case .stageManager:
+            systemSwitchRow(item, title: strings.stageManagerTitle,
+                            caption: strings.stageManagerCaption,
+                            systemImage: "rectangle.3.group",
+                            isOn: { toggles.stageManagerEnabled })
+        case .menuBarAutoHide:
+            systemSwitchRow(item, title: strings.menuBarAutoHideTitle,
+                            caption: strings.menuBarAutoHideCaption,
+                            systemImage: "menubar.rectangle",
+                            isOn: { toggles.menuBarAutoHideEnabled })
         }
     }
 
@@ -365,6 +395,28 @@ struct QuickTogglesList: View {
                             action: {
                                 QuickTogglesService.shared.requestRestart(item)
                             })
+    }
+
+    /// One of the four system preference switches (issue #29). The toggle is
+    /// bound to a fresh read of the preference; flipping it runs the write and
+    /// relaunch off the main thread. The value changes when the service bumps
+    /// its revision, never before the system took it.
+    private func systemSwitchRow(_ item: QuickToggleAction,
+                                 title: String,
+                                 caption idle: String,
+                                 systemImage: String,
+                                 isOn: @escaping () -> Bool) -> some View {
+        PanelToggleRow(title: title,
+                       caption: caption(for: item, idle: idle),
+                       systemImage: systemImage,
+                       isOn: Binding(get: isOn,
+                                     set: { _ in QuickTogglesService.shared.toggleSystemSwitch(item) }),
+                       isEditing: editing,
+                       showsDragHandle: true,
+                       visibility: visibilityBinding(item),
+                       isActive: item.relaunchesComponent && toggles.state(for: item) == .running,
+                       activeText: FeatureStrings.quickToggles(l10n.language).restartInProgress,
+                       needsAttention: toggles.state(for: item) == .failed)
     }
 
     private func reportsState(_ item: QuickToggleAction) -> Bool {
@@ -392,7 +444,7 @@ struct QuickTogglesList: View {
         case .needsPermission:
             return "\(l10n.s.permissionRequired): \(permissionName(item))"
         case .running:
-            return item.restartsSystemComponent ? strings.restartInProgress : idle
+            return item.relaunchesComponent ? strings.restartInProgress : idle
         case .none: return idle
         }
     }
