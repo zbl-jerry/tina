@@ -393,6 +393,7 @@ private struct MenuBarMetricTile: View {
     @AppStorage private var shown: Bool
     @AppStorage(DefaultsKey.menuBarMemoryStyle) private var memoryStyle = "percent"
     @AppStorage(DefaultsKey.menuBarNetworkUploadFirst) private var uploadFirst = false
+    @AppStorage(DefaultsKey.menuBarWiFiSignal) private var wifiSignal = false
     @AppStorage(DiskMenuBarStyle.defaultsKey) private var diskStyle = DiskMenuBarStyle.percent
 
     init(metric: MenuBarMetric) {
@@ -412,6 +413,7 @@ private struct MenuBarMetricTile: View {
             return Defaults.sanitizedMenuBarMemoryStyle(memoryStyle) != "percent"
                 ? l10n.s.monitorMemoryPressureDot : FeatureStrings.mouseClickDebounce(l10n.language).moreOptions
         case .network: return uploadFirst ? "↑ ↓" : "↓ ↑"
+        case .wifi: return wifiSignal ? l10n.s.monitorWiFiSignalStrength : ""
         case .diskUsage:
             switch diskStyle {
             case DiskMenuBarStyle.free: return l10n.s.diskMenuBarAvailableSpace
@@ -435,6 +437,10 @@ private struct MenuBarMetricTile: View {
             return AnyView(MonitorTokenOption(symbol: "arrow.up.arrow.down",
                                                  title: l10n.s.monitorNetworkUploadFirst,
                                                  isOn: $uploadFirst))
+        case .wifi:
+            return AnyView(MonitorTokenOption(symbol: "wifi",
+                                                 title: l10n.s.monitorWiFiSignalStrength,
+                                                 isOn: $wifiSignal))
         case .diskUsage:
             return AnyView(Picker(l10n.s.diskMenuBarStyleLabel, selection: $diskStyle) {
                 Text(l10n.s.diskMenuBarUsedPercentage).tag(DiskMenuBarStyle.percent)

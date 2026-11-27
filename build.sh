@@ -606,6 +606,7 @@ if (( TEST )); then
         Sources/Tina/Services/Metrics/PeripheralBatterySupport.swift
         Sources/Tina/Services/Metrics/DiskSupport.swift
         Sources/Tina/Services/Metrics/MonitorSamplingPolicy.swift
+        Sources/Tina/Services/Metrics/MenuBarStatusSupport.swift
         Sources/Tina/Services/Metrics/USBDeviceSampler.swift
         Sources/Tina/Services/Metrics/CPUCoreSampler.swift
         Sources/Tina/Services/Metrics/MaxCapacityProbe.swift

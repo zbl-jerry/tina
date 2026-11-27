@@ -702,7 +702,7 @@ final class StatusItemController {
                                      primary: .battery,
                                      temperature: .batteryTemperature,
                                      primaryTitle: strings.batteryLabel)
-            case .memory, .network, .diskUsage, .diskActivity, .batteryTime, .peripheralBattery, .power,
+            case .memory, .network, .wifi, .volume, .diskUsage, .diskActivity, .batteryTime, .peripheralBattery, .power,
                  .fanSpeed, .connectedDevices:
                 let id = metric.rawValue
                 guard emittedIDs.insert(id).inserted else { continue }

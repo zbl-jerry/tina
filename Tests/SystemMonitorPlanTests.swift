@@ -130,5 +130,28 @@ enum SystemMonitorPlanTests {
         suite.expect(monitor.currentPlan(defaults: defaults).needPeripheralBattery,
                      "the island's Battery detail still lists peripherals with the Power row hidden")
         monitor.notchDetailNeeds = .none
+
+        // The Wi-Fi and volume tokens are menu-bar only: only their pinned
+        // switches (and their hub families) can make their samplers run.
+        defaults.set(true, forKey: AppFeature.monitorNetwork.availabilityKey)
+        defaults.set(true, forKey: AppFeature.mixer.availabilityKey)
+        defaults.set(false, forKey: DefaultsKey.menuBarWiFi)
+        defaults.set(false, forKey: DefaultsKey.menuBarVolume)
+        suite.expect(!monitor.currentPlan(defaults: defaults).needWiFi
+                     && !monitor.currentPlan(defaults: defaults).needVolume,
+                     "no panel or island surface reads the Wi-Fi or volume tokens while they are off")
+        defaults.set(true, forKey: DefaultsKey.menuBarWiFi)
+        suite.expect(monitor.currentPlan(defaults: defaults).needWiFi,
+                     "a pinned Wi-Fi token alone starts its sampler")
+        defaults.set(false, forKey: AppFeature.monitorNetwork.availabilityKey)
+        suite.expect(!monitor.currentPlan(defaults: defaults).needWiFi,
+                     "an uninstalled Network monitor stops the Wi-Fi sampler even when pinned")
+        defaults.set(true, forKey: AppFeature.monitorNetwork.availabilityKey)
+        defaults.set(true, forKey: DefaultsKey.menuBarVolume)
+        suite.expect(monitor.currentPlan(defaults: defaults).needVolume,
+                     "a pinned volume token alone starts its sampler")
+        defaults.set(false, forKey: AppFeature.mixer.availabilityKey)
+        suite.expect(!monitor.currentPlan(defaults: defaults).needVolume,
+                     "an uninstalled mixer stops the volume sampler even when pinned")
     }
 }

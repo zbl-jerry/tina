@@ -945,6 +945,9 @@ struct Strings {
     let monitorShowCPU: String
     let monitorShowMemory: String
     let monitorShowNetwork: String
+    let monitorShowWiFi: String
+    let monitorShowVolume: String
+    let monitorWiFiSignalStrength: String
     let monitorShowPowerLabel: String
     let monitorIntervalLabel: String
     let monitorInterval1: String
@@ -2122,6 +2125,9 @@ extension Strings {
         monitorShowCPU: "CPU",
         monitorShowMemory: "Memória",
         monitorShowNetwork: "Rede",
+        monitorShowWiFi: "Wi-Fi",
+        monitorShowVolume: "Volume de saída",
+        monitorWiFiSignalStrength: "Mostrar intensidade do sinal",
         monitorShowPowerLabel: "Energia",
         monitorIntervalLabel: "Atualizar a cada",
         monitorInterval1: "1 segundo",
@@ -3285,6 +3291,9 @@ extension Strings {
         monitorShowCPU: "CPU",
         monitorShowMemory: "Memory",
         monitorShowNetwork: "Network",
+        monitorShowWiFi: "Wi-Fi",
+        monitorShowVolume: "Output volume",
+        monitorWiFiSignalStrength: "Show signal strength",
         monitorShowPowerLabel: "Power",
         monitorIntervalLabel: "Update every",
         monitorInterval1: "1 second",
