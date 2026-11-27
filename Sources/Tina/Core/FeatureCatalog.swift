@@ -30,6 +30,7 @@ enum AppFeature: String, CaseIterable {
          cleaner, uninstaller, homebrew, appUpdates, screenshot, cameraPreview, radialMenu, scratchpad,
          commandBar, screenRecorder, wallpaper, killProcess, portManager, hostsProfiles,
          totpAuthenticator, launchpad, macSettings
+         totpAuthenticator, launchpad, launchItems
     // Dynamic Island, then its extensions
     case notch, notchCalendar, notchNotifications, notchGestures, notchTimer, notchAccessories, notchLyrics,
          notchQueue, notchLiveEqualizer, notchDownloads, notchAgents, notchWatch, notchMascot
@@ -87,6 +88,7 @@ extension AppFeature {
         // companion and Launchpad use no permission at all.
         case .screenOCR, .cleaningMode, .screenshot, .commandBar, .screenRecorder, .wallpaper, .notchWatch,
              .notchMascot, .launchpad, .nightWarmth, .autoInputSource, .totpAuthenticator, .macSettings,
+             .notchMascot, .launchpad, .nightWarmth, .autoInputSource, .totpAuthenticator, .launchItems,
              // Speech Recognition has no cheap poll; the portal refreshes it
              // when it appears, and the service asks at start.
              .captions:
@@ -125,6 +127,7 @@ extension AppFeature {
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .radialMenu,
              .scratchpad, .commandBar, .screenRecorder, .wallpaper, .killProcess, .portManager,
              .hostsProfiles, .totpAuthenticator, .macSettings:
+             .hostsProfiles, .totpAuthenticator, .launchItems:
             return .tools
         case .notch, .notchCalendar, .notchNotifications, .notchGestures, .notchTimer, .notchAccessories,
              .notchLyrics, .notchQueue, .notchLiveEqualizer, .notchDownloads, .notchAgents, .notchWatch,
@@ -223,6 +226,7 @@ extension AppFeature {
         case .totpAuthenticator: return "lock.rotation"
         case .launchpad: return "square.grid.3x3.fill"
         case .macSettings: return "slider.horizontal.3"
+        case .launchItems: return "power"
         case .monitorCPU: return "cpu"
         case .monitorGPU: return "rectangle.connected.to.line.below"
         case .monitorMemory: return "memorychip"
@@ -320,6 +324,7 @@ extension AppFeature {
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .scratchpad,
              .commandBar, .screenRecorder, .wallpaper, .killProcess, .portManager, .hostsProfiles,
              .totpAuthenticator, .launchpad, .macSettings,
+             .totpAuthenticator, .launchpad, .launchItems,
              .monitorCPU, .monitorGPU, .monitorMemory, .monitorNetwork, .monitorDisk, .monitorPower,
              .connectedDevices, .fanControl:
             return []
@@ -428,6 +433,7 @@ extension AppFeature {
              .scratchpad, .wallpaper, .monitorGPU, .monitorNetwork, .connectedDevices, .fanControl,
              .chargeLimit, .killProcess,
              .portManager, .hostsProfiles, .totpAuthenticator, .launchpad, .autoInputSource, .macSettings,
+             .portManager, .hostsProfiles, .totpAuthenticator, .launchpad, .autoInputSource, .launchItems,
              // Each app gets the ordinary quit request it would from its own menu.
              .quitApps:
             return []
@@ -442,6 +448,7 @@ extension AppFeature {
         case .keepAwake, .brightness, .radialMenu, .quickToggles, .cleaner,
              .uninstaller, .homebrew, .appUpdates, .mixer, .cameraPreview,
              .micMute, .musicBlock, .notchWatch, .launchpad, .macSettings:
+             .micMute, .musicBlock, .notchWatch, .launchpad, .launchItems:
             return []
         default:
             return permissions.filter { $0 == .accessibility || $0 == .screenRecording }
@@ -531,6 +538,7 @@ extension AppFeature {
              .wallpaper, .killProcess, .portManager, .hostsProfiles, .totpAuthenticator,
              .fanControl, .notchMascot, .spacesOrder, .quitApps,
              .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource, .macSettings,
+             .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource, .launchItems,
              .windowPinning, .captions:
             return false
         }

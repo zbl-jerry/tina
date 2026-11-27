@@ -232,6 +232,7 @@ struct MetricsTests {
                 LocalizationFeatureContractTests.run(suite)
             }),
             ("cleaner", {
+                LaunchItemsTests.run(suite)
                 CleanerEligibilityTests.run(suite)
                 CleanerLastRunContract.run(suite)
                 CleanerScanFlowTests.run(suite)

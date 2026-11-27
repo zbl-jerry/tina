@@ -9,6 +9,7 @@ import Foundation
 enum SettingsPage: Hashable {
     case general, features, energy, monitor
     case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, windowPinning, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, macSettings, notch, notchMascot
+    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, windowPinning, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, launchItems, notch, notchMascot
     case shortcuts, advanced, about, releaseNotes, support
 }
 
@@ -426,6 +427,7 @@ extension AppFeature {
         case .totpAuthenticator: return FeatureSettingsDestination(.totpAuthenticator)
         case .launchpad: return FeatureSettingsDestination(.launchpad)
         case .macSettings: return FeatureSettingsDestination(.macSettings)
+        case .launchItems: return FeatureSettingsDestination(.launchItems)
         case .homebrew: return FeatureSettingsDestination(.homebrew)
         case .appUpdates: return FeatureSettingsDestination(.appUpdates)
         case .screenshot:
@@ -503,6 +505,7 @@ enum FeatureVisibilitySupport {
         case .totpAuthenticator: return [.totpAuthenticator]
         case .launchpad: return [.launchpad]
         case .macSettings: return [.macSettings]
+        case .launchItems: return [.launchItems]
         case .keyDebounce: return [.keyboardDebounce]
         case .superKey: return [.superKey]
         case .layoutFix: return [.layoutFix]

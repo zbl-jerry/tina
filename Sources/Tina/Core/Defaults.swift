@@ -340,6 +340,9 @@ enum DefaultsKey {
     static let cleanerLastAutoFreed = "cleanerLastAutoFreed"            // Int bytes
     static let cleanerLastAutoFailed = "cleanerLastAutoFailed"          // Int items left in place
     static let cleanerScreenshotAgeDays = "cleanerScreenshotAgeDays"    // Int, 0 = off
+    /// Labels of user LaunchAgents stopped from Tina. Kept so the list can
+    /// say why an agent is not running; never used to re-enable anything.
+    static let launchItemsDisabledLabels = "launchItemsDisabledLabels"
     static let cleanerArchiveAgeDays = "cleanerArchiveAgeDays"          // Int, 0 = off
     // Confirmed WhatsApp downloads in the top level of ~/Downloads.
     static let whatsAppDownloadsEnabled = "whatsAppDownloadsEnabled"
@@ -1622,6 +1625,7 @@ enum Defaults {
         DefaultsKey.cleanerLastAutoFreed: 0,
         DefaultsKey.cleanerLastAutoFailed: 0,
         DefaultsKey.cleanerScreenshotAgeDays: CleanerPolicy.defaultScreenshotAgeDays,
+        DefaultsKey.launchItemsDisabledLabels: [String](),
         DefaultsKey.cleanerArchiveAgeDays: CleanerPolicy.defaultArchiveAgeDays,
         DefaultsKey.whatsAppDownloadsEnabled: false,
         DefaultsKey.whatsAppDownloadsAutomaticEnabled: false,

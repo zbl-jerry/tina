@@ -152,6 +152,8 @@ enum ReleaseChangeAliases {
         case .hostsProfiles: return ["hosts profiles", "hosts profile", "hosts file", "hosts entries"]
         case .macSettings: return ["mac settings", "settings snapshot", "dock settings", "finder settings",
             "keyboard repeat"]
+        case .launchItems: return ["launch items", "launch agents", "login items",
+            "background agents", "startup items"]
         case .autoInputSource: return ["auto input source", "input source", "input sources",
             "input method", "input methods", "keyboard layout", "language input"]
         case .totpAuthenticator: return ["totp", "authenticator", "verification code",

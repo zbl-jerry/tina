@@ -160,6 +160,7 @@ extension AppFeature {
              .cameraPreview, .scratchpad, .commandBar, .screenRecorder, .wallpaper, .fanControl,
              .diskImageInstaller, .killProcess, .portManager, .hostsProfiles, .totpAuthenticator,
              .launchpad, .autoInputSource, .captions, .macSettings:
+             .launchpad, .autoInputSource, .captions, .launchItems:
             return .idle
         case .appUpdates:
             // The list is on demand; only a background schedule keeps a timer.
