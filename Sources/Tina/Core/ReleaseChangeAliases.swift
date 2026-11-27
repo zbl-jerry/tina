@@ -156,6 +156,8 @@ enum ReleaseChangeAliases {
             "key mapping"]
         case .usageStats: return ["usage statistics", "screen time", "app usage", "key stats",
             "input counts"]
+        case .appRepair: return ["app repair", "damaged app", "quarantine", "app will not open",
+            "cannot be opened", "signature"]
         case .macSettings: return ["mac settings", "settings snapshot", "dock settings", "finder settings",
             "keyboard repeat"]
         case .launchItems: return ["launch items", "launch agents", "login items",
