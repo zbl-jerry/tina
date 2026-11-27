@@ -645,6 +645,7 @@ if (( TEST )); then
         Sources/Tina/Core/SecureInputSupport.swift
         Sources/Tina/Services/ShortcutRegistrationAudit.swift
         Sources/Tina/Services/Cleaner/SystemDataSummary.swift
+        Sources/Tina/Services/Cleaner/CleanerRunHistory.swift
         Tests/*.swift
         build/generated-tests/*.swift
     )

@@ -196,7 +196,7 @@ final class JunkCleaner: ObservableObject {
     /// `escalate: false` leaves whatever the Trash move refused in place
     /// instead of handing it to Finder, which is an administrator password
     /// prompt. No default: each caller says whether someone is there to answer.
-    func cleanSelected(escalate: Bool) {
+    func cleanSelected(escalate: Bool, origin: CleanerRunOrigin = .manual) {
         let chosen = items.filter(\.include)
         guard !chosen.isEmpty else { return }
         phase = .cleaning
@@ -206,13 +206,21 @@ final class JunkCleaner: ObservableObject {
             var freed: Int64 = 0
             var failed = 0
             var stubborn: [Item] = []
+            var entries: [CleanerRunEntry] = []
 
             // Emptying the Trash MUST come first: the row means the Trash as
             // it was scanned. Running it after the moves would silently wipe
             // the very items this clean just made recoverable, which reads
             // as "nothing ever went to the Trash".
             for item in chosen where item.category == .trash {
-                if Self.emptyTrash() { freed += item.size } else { failed += 1 }
+                let emptied = Self.emptyTrash()
+                if emptied {
+                    freed += item.size
+                } else {
+                    failed += 1
+                }
+                entries.append(Self.runEntry(item,
+                                             outcome: emptied ? .emptied : .failed))
             }
 
             // Emptying the Trash may have waited for Finder. Read ownership after it returns.
@@ -220,11 +228,16 @@ final class JunkCleaner: ObservableObject {
             for item in chosen where item.category != .trash {
                 guard canRemove(item) else {
                     failed += 1
+                    entries.append(Self.runEntry(item, outcome: .skipped))
                     continue
                 }
                 do {
-                    try fm.trashItem(at: item.url, resultingItemURL: nil)
+                    var resultingURL: NSURL?
+                    try fm.trashItem(at: item.url, resultingItemURL: &resultingURL)
                     freed += item.size
+                    entries.append(Self.runEntry(item,
+                                                 outcome: .trashed,
+                                                 trashPath: resultingURL?.path))
                 } catch {
                     stubborn.append(item)
                 }
@@ -232,6 +245,7 @@ final class JunkCleaner: ObservableObject {
 
             // Finder may wait for an administrator password after receiving the URLs.
             // A login item can regain its owner during that wait, so leave its plist in place.
+            var removedViaFinder: Set<String> = []
             let candidates = escalate ? stubborn.filter { $0.category != .loginItems && canRemove($0) } : []
             if !candidates.isEmpty, AppleScriptRunner.consentToAutomate(bundleID: "com.apple.finder") {
                 // An owner may have been installed while the consent prompt was open.
@@ -240,18 +254,39 @@ final class JunkCleaner: ObservableObject {
                     Self.trashViaFinder(stillSafe.map(\.url))
                 }
                 let removed = stillSafe.filter { UninstallerSupport.isConfirmedAbsent(at: $0.url) }
+                removedViaFinder = Set(removed.map(\.url.path))
                 freed += removed.reduce(0) { $0 + $1.size }
                 failed += stubborn.count - removed.count
             } else {
                 failed += stubborn.count
+            }
+            for item in stubborn {
+                entries.append(Self.runEntry(item,
+                                             outcome: removedViaFinder.contains(item.url.path)
+                                                 ? .trashed : .failed))
             }
 
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.phase == .cleaning else { return }
                 self.items = []
                 self.phase = .done(freed: freed, failed: failed)
+                CleanerRunHistory.shared.record(CleanerRun(id: UUID(),
+                                                           date: Date(),
+                                                           origin: origin,
+                                                           entries: entries))
             }
         }
+    }
+
+    private static func runEntry(_ item: Item,
+                                 outcome: CleanerRunOutcome,
+                                 trashPath: String? = nil) -> CleanerRunEntry {
+        CleanerRunEntry(path: item.url.path,
+                        category: item.category.historyKey,
+                        detail: item.detail,
+                        size: item.size,
+                        outcome: outcome,
+                        trashPath: trashPath)
     }
 
     /// Exact match guard against ever removing a critical root, even if a
