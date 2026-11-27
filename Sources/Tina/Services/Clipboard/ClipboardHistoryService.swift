@@ -1357,10 +1357,14 @@ final class ClipboardHistoryService: ObservableObject {
             registeredShortcut = shortcut
             shortcutRegistrationFailed = false
             SystemShortcutTakeover.claim(DefaultsKey.clipboardHistoryShortcut, shortcut: shortcut)
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.clipboardHistoryShortcut, failed: false)
         } else {
             hotKeyRef = nil
             registeredShortcut = nil
             shortcutRegistrationFailed = true
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.clipboardHistoryShortcut, failed: true) { [weak self] in
+                self?.syncWithPreferences()
+            }
         }
     }
 
@@ -1377,6 +1381,7 @@ final class ClipboardHistoryService: ObservableObject {
         hotKeyRef = nil
         registeredShortcut = nil
         shortcutRegistrationFailed = false
+        ShortcutRegistrationAudit.shared.clear(key: DefaultsKey.clipboardHistoryShortcut)
     }
 
     // MARK: - Quick window

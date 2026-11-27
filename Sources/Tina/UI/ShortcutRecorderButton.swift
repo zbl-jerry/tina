@@ -314,6 +314,8 @@ struct ShortcutPreferenceRow: View {
     private let contextLabel: String?
     private let statusText: String?
     private let statusIsActive: Bool
+    private let registrationFailed: Bool
+    private let macOSConflict: Bool
     private let showsSuperKeyAlternative: Bool
     private let superKeyModifiers: GlobalShortcutModifiers
     private let includeInactiveConflicts: Bool
@@ -332,6 +334,8 @@ struct ShortcutPreferenceRow: View {
          contextLabel: String? = nil,
          statusText: String? = nil,
          statusIsActive: Bool = false,
+         registrationFailed: Bool = false,
+         macOSConflict: Bool = false,
          showsSuperKeyAlternative: Bool = false,
          superKeyModifiers: GlobalShortcutModifiers = .validMask,
          includeInactiveConflicts: Bool = false,
@@ -345,6 +349,8 @@ struct ShortcutPreferenceRow: View {
         self.contextLabel = contextLabel
         self.statusText = statusText
         self.statusIsActive = statusIsActive
+        self.registrationFailed = registrationFailed
+        self.macOSConflict = macOSConflict
         self.showsSuperKeyAlternative = showsSuperKeyAlternative
         self.superKeyModifiers = superKeyModifiers
         self.includeInactiveConflicts = includeInactiveConflicts
@@ -415,6 +421,16 @@ struct ShortcutPreferenceRow: View {
                 }
             }
 
+            if registrationFailed {
+                Text(l10n.s.shortcutUnavailable)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+            if macOSConflict {
+                Text(String(format: l10n.s.shortcutConflictFormat, "macOS"))
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
             if let errorText {
                 Text(errorText)
                     .font(.caption)

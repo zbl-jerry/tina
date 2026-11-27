@@ -72,10 +72,14 @@ final class HotkeyManager: ObservableObject {
             registeredShortcut = shortcut
             registrationFailed = false
             SystemShortcutTakeover.claim(DefaultsKey.keepAwakeShortcut, shortcut: shortcut)
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.keepAwakeShortcut, failed: false)
         } else {
             hotKeyRef = nil
             registeredShortcut = nil
             registrationFailed = true
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.keepAwakeShortcut, failed: true) { [weak self] in
+                self?.syncWithPreferences()
+            }
         }
     }
 
@@ -87,5 +91,6 @@ final class HotkeyManager: ObservableObject {
         }
         registeredShortcut = nil
         registrationFailed = false
+        ShortcutRegistrationAudit.shared.clear(key: DefaultsKey.keepAwakeShortcut)
     }
 }
