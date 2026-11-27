@@ -239,6 +239,13 @@ final class FeatureRuntime: ObservableObject {
     /// permission it depends on) changes. Most on-demand tools have no binding;
     /// Media only binds so uninstalling it can cancel work already in flight.
     private static let bindings: [AppFeature: () -> Void] = [
+        .usageStats: {
+            if UserDefaults.standard.bool(forKey: DefaultsKey.usageStatsEnabled) {
+                UsageStatsService.shared.start()
+            } else {
+                UsageStatsService.shared.stop()
+            }
+        },
         .inputRemapping: {
             let defaults = UserDefaults.standard
             guard defaults.bool(forKey: DefaultsKey.inputRemapEnabled) else {
