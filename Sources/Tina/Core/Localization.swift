@@ -1205,6 +1205,9 @@ struct Strings {
     let cleanerScreenshotsCaptionFormat: String
     let cleanerScreenshotsSettingCaption: String
     let cleanerScreenshotsAfterFormat: String
+    let cleanerArchivesTitle: String
+    let cleanerArchivesAfterFormat: String
+    let cleanerArchivesCaption: String
     let cleanerNothingFound: String
     let cleanerClean: String
     let cleanerDoneNote: String
@@ -2355,6 +2358,9 @@ extension Strings {
         cleanerScreenshotsCaptionFormat: "Capturas de tela que você não abre há %d dias e que ainda têm o nome e a pasta que o macOS deu. As que você renomeou ou moveu nunca aparecem aqui.",
         cleanerScreenshotsSettingCaption: "A varredura lista, desmarcadas e com o tamanho total, as capturas de tela que você não abre há esse tempo.",
         cleanerScreenshotsAfterFormat: "Após %d dias",
+        cleanerArchivesTitle: "Arquivos de versão",
+        cleanerArchivesAfterFormat: "Com mais de %d dias",
+        cleanerArchivesCaption: "Os arquivos de versão do Xcode mais antigos são listados um a um e nunca marcados por padrão.",
         cleanerNothingFound: "Nada para limpar. Seu Mac está em ordem.",
         cleanerClean: "Limpar",
         cleanerDoneNote: "Os itens foram para a Lixeira e podem ser recuperados de lá.",
@@ -3506,6 +3512,9 @@ extension Strings {
         cleanerScreenshotsCaptionFormat: "Screenshots you have not opened in %d days that still have the name and folder macOS gave them. Ones you renamed or moved never show up here.",
         cleanerScreenshotsSettingCaption: "The scan lists the screenshots you have not opened for this long, unchecked, with their total size.",
         cleanerScreenshotsAfterFormat: "After %d days",
+        cleanerArchivesTitle: "Release archives",
+        cleanerArchivesAfterFormat: "Older than %d days",
+        cleanerArchivesCaption: "Xcode release archives older than this are listed one by one and never pre-checked.",
         cleanerNothingFound: "Nothing to clean. Your Mac is tidy.",
         cleanerClean: "Clean",
         cleanerDoneNote: "Items went to the Trash and can be recovered from there.",

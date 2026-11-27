@@ -88,6 +88,8 @@ struct CleanerView: View {
     @AppStorage(DefaultsKey.cleanerScheduleNotify) private var scheduleNotify = true
     @AppStorage(DefaultsKey.cleanerScreenshotAgeDays)
     private var screenshotAgeDays = CleanerPolicy.defaultScreenshotAgeDays
+    @AppStorage(DefaultsKey.cleanerArchiveAgeDays)
+    private var archiveAgeDays = CleanerPolicy.defaultArchiveAgeDays
     @ObservedObject private var scheduler = CleanerScheduler.shared
     @ObservedObject private var whatsAppScheduler = WhatsAppDownloadScheduler.shared
     @AppStorage(DefaultsKey.whatsAppDownloadsEnabled) private var whatsAppEnabled = false
@@ -263,6 +265,7 @@ struct CleanerView: View {
                 .buttonStyle(.borderedProminent)
             scheduleCard
             screenshotsCard
+            archivesCard
             if !compact, !whatsAppEnabled { whatsAppOptInCard }
             // The Settings page has its own full tool for these downloads;
             // the panel gets this one-line home so the feature is findable
@@ -313,6 +316,52 @@ struct CleanerView: View {
             }
             if !compact {
                 Text(l10n.s.cleanerScreenshotsSettingCaption)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(11)
+        .frame(maxWidth: 380)
+        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.primary.opacity(0.05)))
+    }
+
+    // MARK: Release archives
+
+    /// Off plus the offered ages, and a stored value that came from a restore
+    /// and is not one of them.
+    private var archiveAgeChoices: [Int] {
+        var choices = CleanerPolicy.archiveAgeChoices
+        let current = CleanerPolicy.sanitizedArchiveAgeDays(archiveAgeDays)
+        if current > 0, !choices.contains(current) {
+            choices.append(current)
+            choices.sort()
+        }
+        return [0] + choices
+    }
+
+    /// Xcode archives are release output, so they are listed one by one and
+    /// only past this age. Off hides them entirely.
+    private var archivesCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: "archivebox").foregroundStyle(.secondary)
+                Text(l10n.s.cleanerArchivesTitle)
+                    .font(.system(size: 12, weight: .medium))
+                Spacer()
+                Picker("", selection: $archiveAgeDays) {
+                    ForEach(archiveAgeChoices, id: \.self) { days in
+                        Text(days == 0
+                             ? l10n.s.cleanerScheduleOff
+                             : String(format: l10n.s.cleanerArchivesAfterFormat, days))
+                            .tag(days)
+                    }
+                }
+                .labelsHidden()
+                .fixedSize()
+            }
+            if !compact {
+                Text(l10n.s.cleanerArchivesCaption)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -960,11 +1009,11 @@ struct CleanerView: View {
     private func groupBinding(_ group: DisplayGroup) -> Binding<Bool> {
         Binding(
             get: {
-                let group_items = items(for: group)
+                let group_items = items(for: group).filter(\.groupSelectable)
                 return !group_items.isEmpty && group_items.allSatisfy(\.include)
             },
             set: { include in
-                for item in items(for: group) {
+                for item in items(for: group) where item.groupSelectable {
                     cleaner.setInclude(include, for: item.id)
                 }
             }

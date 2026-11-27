@@ -49,18 +49,23 @@ final class JunkCleaner: ObservableObject {
         /// Recommended items start selected and live in the safe section of
         /// the interface; the rest wait unchecked under optional.
         let recommended: Bool
+        /// Whether the group checkbox may select this item. Release archives
+        /// are excluded: selecting "Developer" must never take a build the
+        /// user did not open and tick themselves.
+        let groupSelectable: Bool
         var include: Bool
 
         var name: String { url.lastPathComponent }
 
         init(url: URL, category: CleanerSupport.Category, size: Int64,
-             detail: String, recommended: Bool) {
+             detail: String, recommended: Bool, groupSelectable: Bool = true) {
             self.url = url
             self.category = category
             self.size = size
             self.detail = detail
             self.fileIdentity = UninstallerSupport.fileIdentity(at: url)
             self.recommended = recommended
+            self.groupSelectable = groupSelectable
             self.include = recommended
         }
 
@@ -631,16 +636,43 @@ final class JunkCleaner: ObservableObject {
     private static func scanDeveloperJunk() -> [Item] {
         let fm = FileManager.default
         var found: [Item] = []
-        for path in CleanerPolicy.developerJunkPaths {
+        for path in CleanerPolicy.developerJunkPaths where path != CleanerPolicy.xcodeArchivePath {
             let url = URL(fileURLWithPath: NSHomeDirectory() + path)
             guard fm.fileExists(atPath: url.path) else { continue }
             let size = directorySize(of: url, fm: fm)
             guard size > 0 else { continue }
             found.append(Item(url: url, category: .developer, size: size,
                               detail: url.lastPathComponent,
-                              recommended: CleanerPolicy.precheckDeveloper))
+                              recommended: CleanerPolicy.developerIsPrechecked(path)))
         }
+        found += scanXcodeArchives(fm: fm)
         return sorted(found)
+    }
+
+    /// One item per release archive older than the chosen age, so a clean never
+    /// takes a bundle the user did not select. A missing or unreadable folder
+    /// simply offers nothing.
+    private static func scanXcodeArchives(fm: FileManager) -> [Item] {
+        let ageDays = CleanerPolicy.sanitizedArchiveAgeDays(
+            UserDefaults.standard.object(forKey: DefaultsKey.cleanerArchiveAgeDays) as? Int
+                ?? CleanerPolicy.defaultArchiveAgeDays)
+        guard ageDays > 0 else { return [] }
+        let root = NSHomeDirectory() + CleanerPolicy.xcodeArchivePath
+        guard let entries = try? fm.contentsOfDirectory(atPath: root) else { return [] }
+        let cutoff = Date().addingTimeInterval(-Double(ageDays) * 86_400)
+        var found: [Item] = []
+        for entry in entries where entry.hasSuffix(".xcarchive") {
+            let url = URL(fileURLWithPath: root).appendingPathComponent(entry)
+            guard let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .isDirectoryKey]),
+                  values.isDirectory == true,
+                  let modified = values.contentModificationDate,
+                  modified < cutoff else { continue }
+            let size = directorySize(of: url, fm: fm)
+            guard size > 0 else { continue }
+            found.append(Item(url: url, category: .developer, size: size,
+                              detail: entry, recommended: false, groupSelectable: false))
+        }
+        return found
     }
 
     /// Old iPhone and iPad backups under MobileSync: with caches, the other

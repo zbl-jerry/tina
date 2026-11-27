@@ -558,10 +558,32 @@ enum CleanerEligibilityTests {
                          "container metadata protects the actual owner and keeps unrelated leftovers eligible")
 
             runScreenshotRules(suite)
+            runDeveloperPolicy(suite)
             try runScreenshotScan(suite, root: root)
             try checkAudioPlugins(suite, home: root)
         } catch {
             suite.expect(false, "cleaner eligibility fixture failed: \(error)")
         }
+    }
+
+    /// Release archives are the developer's output, not a cache: they are
+    /// scanned separately and never start checked. Everything else under the
+    /// developer paths rebuilds on the next build.
+    private static func runDeveloperPolicy(_ suite: TestSuite) {
+        suite.expect(CleanerPolicy.developerIsPrechecked("/Library/Developer/Xcode/DerivedData"),
+                     "rebuildable developer data starts checked")
+        suite.expect(CleanerPolicy.developerIsPrechecked("/Library/Caches/org.swift.swiftpm"),
+                     "the SwiftPM cache starts checked")
+        suite.expect(!CleanerPolicy.developerIsPrechecked(CleanerPolicy.xcodeArchivePath),
+                     "release archives never start checked")
+        suite.expect(!CleanerPolicy.developerJunkPaths.contains(CleanerPolicy.xcodeArchivePath),
+                     "archives are scanned one bundle at a time, not as a folder")
+        suite.expect(CleanerPolicy.sanitizedArchiveAgeDays(90) == 90,
+                     "an offered archive age survives sanitizing")
+        suite.expect(CleanerPolicy.sanitizedArchiveAgeDays(0) == 0
+                     && CleanerPolicy.sanitizedArchiveAgeDays(-5) == 0,
+                     "zero and negative archive ages turn the listing off")
+        suite.expect(CleanerPolicy.sanitizedArchiveAgeDays(99_999) == 3_650,
+                     "an extreme archive age is capped")
     }
 }
