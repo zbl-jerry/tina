@@ -386,22 +386,25 @@ enum FeatureCatalogTests {
 
         // MARK: Features hub catalog
 
-        suite.expect(AppFeature.allCases.count == 90, "feature catalog has 90 features")
+        suite.expect(AppFeature.allCases.count == 91, "feature catalog has 91 features")
         suite.expect(Set(AppFeature.allCases.map(\.rawValue)).count == AppFeature.allCases.count,
                "feature ids are unique")
         suite.expect(AppFeature.allCases.map(\.rawValue) == [
-            "switcher", "dockPreview", "dockClick", "windowMaximizer", "windowLayout", "windowPinning", "autoQuit", "spacesOrder",
-            "scrollInverter", "scrollHorizontal", "scrollZoom", "focusFollowsMouse", "smoothScroll", "linearScroll", "scrollSpeed", "mouseAcceleration", "mouseNavigation", "mouseButtonShortcuts", "middleClick",
-            "mouseClickDebounce", "keyboardDebounce", "textSnippets", "layoutFix", "superKey", "autoInputSource", "quitWindowProtection",
-            "clipboardHistory", "pastePlain", "finderCutPaste", "finderRename", "shelf", "urlCleaner",
-            "diskImageInstaller",
-            "mixer", "soundOutputSwitcher", "audioPriority", "micMute", "musicBlock", "captions",
-            "keepAwake", "brightness", "extraBrightness", "nightWarmth", "bluetoothSleep", "chargeLimit",
-            "quickLauncher", "quickToggles", "quitApps", "colorPicker", "screenOCR", "cleaningMode", "mediaTools",
-            "cleaner", "uninstaller", "homebrew", "appUpdates", "screenshot", "cameraPreview",
-            "radialMenu", "scratchpad", "commandBar", "screenRecorder", "wallpaper", "killProcess", "portManager", "hostsProfiles", "totpAuthenticator", "launchpad", "macSettings", "notch", "notchCalendar", "notchNotifications", "notchGestures", "notchTimer", "notchAccessories", "notchLyrics", "notchQueue", "notchLiveEqualizer", "notchDownloads", "notchAgents", "notchWatch", "notchMascot",
-            "monitorCPU", "monitorGPU", "monitorMemory", "monitorNetwork", "monitorDisk", "monitorPower",
-            "connectedDevices", "fanControl",
+            "switcher", "dockPreview", "dockClick", "windowMaximizer", "windowLayout", "windowPinning", "autoQuit",
+            "spacesOrder", "scrollInverter", "scrollHorizontal", "scrollZoom", "focusFollowsMouse", "smoothScroll",
+            "linearScroll", "scrollSpeed", "mouseAcceleration", "mouseNavigation", "mouseButtonShortcuts",
+            "middleClick", "mouseClickDebounce", "keyboardDebounce", "textSnippets", "layoutFix", "superKey",
+            "autoInputSource", "quitWindowProtection", "clipboardHistory", "pastePlain", "finderCutPaste",
+            "finderRename", "shelf", "urlCleaner", "diskImageInstaller", "mixer", "soundOutputSwitcher",
+            "audioPriority", "micMute", "musicBlock", "captions", "keepAwake", "brightness", "extraBrightness",
+            "nightWarmth", "bluetoothSleep", "chargeLimit", "quickLauncher", "quickToggles", "quitApps",
+            "colorPicker", "screenOCR", "cleaningMode", "mediaTools", "cleaner", "uninstaller", "homebrew",
+            "appUpdates", "screenshot", "cameraPreview", "radialMenu", "scratchpad", "commandBar", "screenRecorder",
+            "wallpaper", "killProcess", "portManager", "hostsProfiles", "totpAuthenticator", "launchpad",
+            "macSettings", "launchItems", "notch", "notchCalendar", "notchNotifications", "notchGestures",
+            "notchTimer", "notchAccessories", "notchLyrics", "notchQueue", "notchLiveEqualizer", "notchDownloads",
+            "notchAgents", "notchWatch", "notchMascot", "monitorCPU", "monitorGPU", "monitorMemory",
+            "monitorNetwork", "monitorDisk", "monitorPower", "connectedDevices", "fanControl"
         ], "feature ids are stable (they persist inside availability keys)")
         suite.expect(MouseAccelerationSupport.validatedRegistryID(nil) == nil
                 && MouseAccelerationSupport.validatedRegistryID(0) == nil
