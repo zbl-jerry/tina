@@ -1228,6 +1228,7 @@ extension AppFeature {
         case .totpAuthenticator: return FeatureStrings.totpAuthenticator(language).title
         case .launchpad: return FeatureStrings.launchpad(language).pageTitle
         case .macSettings: return FeatureStrings.macSettings(language).title
+        case .usageStats: return FeatureStrings.usageStats(language).title
         case .inputRemapping: return FeatureStrings.inputRemap(language).title
         case .launchItems: return FeatureStrings.launchItems(language).title
         case .homebrew: return s.homebrewName
@@ -1334,6 +1335,7 @@ extension AppFeature {
             return FeatureStrings.totpAuthenticator(L10n.shared.language).hubDescription
         case .launchpad: return FeatureStrings.launchpad(L10n.shared.language).hubDescription
         case .macSettings: return FeatureStrings.macSettings(L10n.shared.language).hubDescription
+        case .usageStats: return FeatureStrings.usageStats(L10n.shared.language).hubDescription
         case .inputRemapping: return FeatureStrings.inputRemap(L10n.shared.language).hubDescription
         case .launchItems: return FeatureStrings.launchItems(L10n.shared.language).hubDescription
         case .homebrew: return hub.descHomebrew

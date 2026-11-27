@@ -340,6 +340,8 @@ enum DefaultsKey {
     static let cleanerLastAutoFreed = "cleanerLastAutoFreed"            // Int bytes
     static let cleanerLastAutoFailed = "cleanerLastAutoFailed"          // Int items left in place
     static let cleanerScreenshotAgeDays = "cleanerScreenshotAgeDays"    // Int, 0 = off
+    static let usageStatsRetentionDays = "usageStatsRetentionDays"      // 7 | 30 | 90
+    static let usageStatsEnabled = "usageStatsEnabled"
     static let inputRemapEnabled = "inputRemapEnabled"
     static let inputRemapRules = "inputRemapRules"                      // Data (JSON rules)
     /// Labels of user LaunchAgents stopped from Tina. Kept so the list can
@@ -1627,6 +1629,8 @@ enum Defaults {
         DefaultsKey.cleanerLastAutoFreed: 0,
         DefaultsKey.cleanerLastAutoFailed: 0,
         DefaultsKey.cleanerScreenshotAgeDays: CleanerPolicy.defaultScreenshotAgeDays,
+        DefaultsKey.usageStatsRetentionDays: 30,
+        DefaultsKey.usageStatsEnabled: false,
         DefaultsKey.inputRemapEnabled: false,
         DefaultsKey.inputRemapRules: Data(),
         DefaultsKey.launchItemsDisabledLabels: [String](),

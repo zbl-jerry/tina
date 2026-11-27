@@ -154,6 +154,8 @@ enum ReleaseChangeAliases {
             "key mapping"]
         case .inputRemapping: return ["input remapping", "key remap", "remap keys", "keyboard remap",
             "key mapping"]
+        case .usageStats: return ["usage statistics", "screen time", "app usage", "key stats",
+            "input counts"]
         case .macSettings: return ["mac settings", "settings snapshot", "dock settings", "finder settings",
             "keyboard repeat"]
         case .launchItems: return ["launch items", "launch agents", "login items",
