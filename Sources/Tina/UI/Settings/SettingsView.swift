@@ -610,6 +610,7 @@ struct SettingsView: View {
         case .totpAuthenticator: TOTPAuthenticatorSettings()
         case .launchpad: LaunchpadSettings()
         case .macSettings: MacSettingsSettings()
+        case .appRepair: AppRepairSettings()
         case .usageStats: UsageStatsSettings()
         case .inputRemapping: InputRemapSettings()
         case .launchItems: LaunchItemsSettings()

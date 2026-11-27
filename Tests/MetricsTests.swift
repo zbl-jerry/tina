@@ -50,6 +50,7 @@ struct MetricsTests {
             ("app-management", {
                 AppManagementFeatureTests.run(suite)
                 DiskImageHomebrewTests.run(suite)
+                AppRepairTests.run(suite)
             }),
             ("window-layout", { WindowLayoutFeatureTests.run(suite) }),
             ("window-tiling", { WindowTilingTests.run(suite) }),
