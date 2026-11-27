@@ -99,6 +99,8 @@ struct CleanerView: View {
     @AppStorage(DefaultsKey.whatsAppDownloadsLastCleanupBytes) private var whatsAppLastBytes = 0
     @AppStorage(DefaultsKey.whatsAppDownloadsLastCleanupFailed) private var whatsAppLastFailed = 0
     @State private var notificationsDenied = false
+    @StateObject private var systemData = SystemDataScanner()
+    @State private var showsSystemData = false
     /// The panel hosted card starts folded; the Settings page shows it open.
     @State private var scheduleExpanded = false
     @State private var whatsAppExpanded = false
@@ -108,6 +110,9 @@ struct CleanerView: View {
     var body: some View {
         content
             .frame(maxWidth: .infinity)
+            .sheet(isPresented: $showsSystemData) {
+                SystemDataView(scanner: systemData)
+            }
     }
 
     @ViewBuilder
@@ -266,6 +271,7 @@ struct CleanerView: View {
             scheduleCard
             screenshotsCard
             archivesCard
+            systemDataCard
             if !compact, !whatsAppEnabled { whatsAppOptInCard }
             // The Settings page has its own full tool for these downloads;
             // the panel gets this one-line home so the feature is findable
@@ -370,6 +376,30 @@ struct CleanerView: View {
         .padding(11)
         .frame(maxWidth: 380)
         .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.primary.opacity(0.05)))
+    }
+
+    // MARK: System Data
+
+    /// Opens the read-only size breakdown of what macOS calls System Data.
+    private var systemDataCard: some View {
+        Button {
+            showsSystemData = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "internaldrive").foregroundStyle(.secondary)
+                Text(l10n.s.cleanerSystemDataTitle)
+                    .font(.system(size: 12, weight: .medium))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(11)
+            .frame(maxWidth: 380)
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(Color.primary.opacity(0.05)))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: WhatsApp downloads (panel surface)

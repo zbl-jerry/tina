@@ -644,6 +644,7 @@ if (( TEST )); then
         Sources/Tina/Services/ManagedDownloads/WhatsAppDownloadSupport.swift
         Sources/Tina/Core/SecureInputSupport.swift
         Sources/Tina/Services/ShortcutRegistrationAudit.swift
+        Sources/Tina/Services/Cleaner/SystemDataSummary.swift
         Tests/*.swift
         build/generated-tests/*.swift
     )
