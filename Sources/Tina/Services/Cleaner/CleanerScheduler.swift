@@ -141,7 +141,7 @@ final class CleanerScheduler: ObservableObject {
                     // The scan pre checks exactly the safe groups; an
                     // automatic run takes that selection as is.
                     if cleaner.selectedCount > 0 {
-                        cleaner.cleanSelected(escalate: false)
+                        cleaner.cleanSelected(escalate: false, origin: .automatic)
                     } else {
                         self.finishRun(freed: 0, failed: 0)
                     }

@@ -1220,6 +1220,13 @@ struct Strings {
     let cleanerArchivesTitle: String
     let cleanerArchivesAfterFormat: String
     let cleanerArchivesCaption: String
+    let cleanerHistoryTitle: String
+    let cleanerHistoryEmpty: String
+    let cleanerHistoryManual: String
+    let cleanerHistoryAutomatic: String
+    let cleanerHistorySummaryFormat: String
+    let cleanerHistoryShowInFinder: String
+    let cleanerHistoryClear: String
     let cleanerNothingFound: String
     let cleanerClean: String
     let cleanerDoneNote: String
@@ -2385,6 +2392,13 @@ extension Strings {
         cleanerArchivesTitle: "Arquivos de versão",
         cleanerArchivesAfterFormat: "Com mais de %d dias",
         cleanerArchivesCaption: "Os arquivos de versão do Xcode mais antigos são listados um a um e nunca marcados por padrão.",
+        cleanerHistoryTitle: "Limpezas recentes",
+        cleanerHistoryEmpty: "Ainda não há limpezas registradas.",
+        cleanerHistoryManual: "Manual",
+        cleanerHistoryAutomatic: "Agendada",
+        cleanerHistorySummaryFormat: "%1$@ liberados · %2$d restantes",
+        cleanerHistoryShowInFinder: "Mostrar no Finder",
+        cleanerHistoryClear: "Limpar histórico",
         cleanerNothingFound: "Nada para limpar. Seu Mac está em ordem.",
         cleanerClean: "Limpar",
         cleanerDoneNote: "Os itens foram para a Lixeira e podem ser recuperados de lá.",
@@ -3551,6 +3565,13 @@ extension Strings {
         cleanerArchivesTitle: "Release archives",
         cleanerArchivesAfterFormat: "Older than %d days",
         cleanerArchivesCaption: "Xcode release archives older than this are listed one by one and never pre-checked.",
+        cleanerHistoryTitle: "Recent cleanups",
+        cleanerHistoryEmpty: "No cleanups recorded yet.",
+        cleanerHistoryManual: "Manual",
+        cleanerHistoryAutomatic: "Scheduled",
+        cleanerHistorySummaryFormat: "%1$@ freed · %2$d left behind",
+        cleanerHistoryShowInFinder: "Show in Finder",
+        cleanerHistoryClear: "Clear History",
         cleanerNothingFound: "Nothing to clean. Your Mac is tidy.",
         cleanerClean: "Clean",
         cleanerDoneNote: "Items went to the Trash and can be recovered from there.",

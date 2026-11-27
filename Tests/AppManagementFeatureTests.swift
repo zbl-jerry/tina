@@ -1223,10 +1223,10 @@ enum AppManagementFeatureTests {
         let schedulerCode = compact("Sources/Tina/Services/Cleaner/CleanerScheduler.swift")
         let cleanerViewCode = compact("Sources/Tina/UI/Cleaner/CleanerView.swift")
         suite.expect(schedulerCode.components(separatedBy: "cleanSelected(").count == 2
-               && schedulerCode.contains("cleanSelected(escalate:false)")
+               && schedulerCode.contains("cleanSelected(escalate:false,origin:.automatic)")
                && schedulerCode.contains("notifyIfWanted(freed:freed,failed:failed)"),
                "the scheduled clean never escalates and reports what it left in place")
-        suite.expect(junkCleanerSource.contains("func cleanSelected(escalate: Bool) {")
+        suite.expect(junkCleanerSource.contains("func cleanSelected(escalate: Bool, origin: CleanerRunOrigin = .manual) {")
                && cleanerViewCode.components(separatedBy: "cleanSelected(").count == 2
                && cleanerViewCode.contains("cleanSelected(escalate:true)"),
                "cleanSelected has no default escalation and the manual clean still asks")

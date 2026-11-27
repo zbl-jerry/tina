@@ -101,6 +101,8 @@ struct CleanerView: View {
     @State private var notificationsDenied = false
     @StateObject private var systemData = SystemDataScanner()
     @State private var showsSystemData = false
+    @ObservedObject private var history = CleanerRunHistory.shared
+    @State private var showsHistory = false
     /// The panel hosted card starts folded; the Settings page shows it open.
     @State private var scheduleExpanded = false
     @State private var whatsAppExpanded = false
@@ -112,6 +114,9 @@ struct CleanerView: View {
             .frame(maxWidth: .infinity)
             .sheet(isPresented: $showsSystemData) {
                 SystemDataView(scanner: systemData)
+            }
+            .sheet(isPresented: $showsHistory) {
+                CleanerHistoryView(history: history)
             }
     }
 
@@ -272,6 +277,7 @@ struct CleanerView: View {
             screenshotsCard
             archivesCard
             systemDataCard
+            historyCard
             if !compact, !whatsAppEnabled { whatsAppOptInCard }
             // The Settings page has its own full tool for these downloads;
             // the panel gets this one-line home so the feature is findable
@@ -390,6 +396,36 @@ struct CleanerView: View {
                 Text(l10n.s.cleanerSystemDataTitle)
                     .font(.system(size: 12, weight: .medium))
                 Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(11)
+            .frame(maxWidth: 380)
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(Color.primary.opacity(0.05)))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Recent cleanups
+
+    /// The record of the last cleans: what moved, where it went and what was
+    /// left behind. Read-only; the Trash is the only restore path.
+    private var historyCard: some View {
+        Button {
+            showsHistory = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "clock.arrow.circlepath").foregroundStyle(.secondary)
+                Text(l10n.s.cleanerHistoryTitle)
+                    .font(.system(size: 12, weight: .medium))
+                Spacer()
+                if let latest = history.runs.first {
+                    Text(Self.byteString(latest.freed))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
                 Image(systemName: "chevron.right")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
