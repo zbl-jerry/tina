@@ -436,10 +436,14 @@ final class ShelfService: ObservableObject {
             registeredShortcut = shortcut
             hotkeyRegistrationFailed = false
             SystemShortcutTakeover.claim(DefaultsKey.shelfShortcut, shortcut: shortcut)
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.shelfShortcut, failed: false)
         } else {
             hotKeyRef = nil
             registeredShortcut = nil
             hotkeyRegistrationFailed = true
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.shelfShortcut, failed: true) { [weak self] in
+                self?.syncWithPreferences()
+            }
         }
     }
 
@@ -456,6 +460,7 @@ final class ShelfService: ObservableObject {
         hotKeyRef = nil
         registeredShortcut = nil
         hotkeyRegistrationFailed = false
+        ShortcutRegistrationAudit.shared.clear(key: DefaultsKey.shelfShortcut)
     }
 
     private func startDragMonitor() {

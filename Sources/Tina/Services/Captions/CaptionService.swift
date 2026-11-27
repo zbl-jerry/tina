@@ -609,10 +609,14 @@ final class CaptionService: ObservableObject, @unchecked Sendable {
             registeredShortcut = shortcut
             registrationFailed = false
             SystemShortcutTakeover.claim(DefaultsKey.captionsShortcut, shortcut: shortcut)
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.captionsShortcut, failed: false)
         } else {
             hotKeyRef = nil
             registeredShortcut = nil
             registrationFailed = true
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.captionsShortcut, failed: true) { [weak self] in
+                self?.syncWithPreferences()
+            }
         }
     }
 
@@ -629,5 +633,6 @@ final class CaptionService: ObservableObject, @unchecked Sendable {
         hotKeyRef = nil
         registeredShortcut = nil
         registrationFailed = false
+        ShortcutRegistrationAudit.shared.clear(key: DefaultsKey.captionsShortcut)
     }
 }

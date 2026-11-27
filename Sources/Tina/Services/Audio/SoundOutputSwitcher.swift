@@ -88,10 +88,14 @@ final class SoundOutputSwitcher: ObservableObject {
             registeredShortcut = shortcut
             registrationFailed = false
             SystemShortcutTakeover.claim(DefaultsKey.soundOutputSwitcherShortcut, shortcut: shortcut)
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.soundOutputSwitcherShortcut, failed: false)
         } else {
             hotKeyRef = nil
             registeredShortcut = nil
             registrationFailed = true
+            ShortcutRegistrationAudit.shared.report(key: DefaultsKey.soundOutputSwitcherShortcut, failed: true) { [weak self] in
+                self?.syncWithPreferences()
+            }
         }
     }
 
@@ -109,5 +113,6 @@ final class SoundOutputSwitcher: ObservableObject {
         registeredShortcut = nil
         registrationFailed = false
         lastSwitchFailed = false
+        ShortcutRegistrationAudit.shared.clear(key: DefaultsKey.soundOutputSwitcherShortcut)
     }
 }

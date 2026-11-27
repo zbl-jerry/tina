@@ -148,7 +148,10 @@ struct MetricsTests {
                 StartupGatingTests.run(suite)
             }),
             ("window-pinning", { WindowPinningTests.run(suite) }),
-            ("shortcut-clearing", { ShortcutClearingTests.run(suite) }),
+            ("shortcut-clearing", {
+                ShortcutClearingTests.run(suite)
+                ShortcutRegistrationAuditTests.run(suite)
+            }),
             ("utilities", {
                 UtilitiesFeatureTests.run(suite)
                 TextSnippetExpansionTests.run(suite)

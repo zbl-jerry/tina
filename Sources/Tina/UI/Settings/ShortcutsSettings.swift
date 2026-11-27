@@ -11,12 +11,17 @@ struct ShortcutsSettings: View {
     @ObservedObject private var features = FeatureRuntime.shared
     @ObservedObject private var superKey = SuperKeyService.shared
     @ObservedObject private var router = SettingsRouter.shared
+    @ObservedObject private var audit = ShortcutRegistrationAudit.shared
     @AppStorage(DefaultsKey.keyboardBrightnessShortcutsEnabled) private var keyboardBrightnessShortcutsEnabled = false
     @AppStorage(DefaultsKey.keepAwakeShortcut) private var keepAwakeShortcut = GlobalShortcut.keepAwakeDefault.storageValue
     @AppStorage(DefaultsKey.snippetLibraryShortcut) private var snippetLibraryShortcut = GlobalShortcut.snippetLibraryDefault.storageValue
     /// Keyed by group too: brightness has a row in two groups, and each opens on its own.
     @State private var expandedFeatures: [FeatureGroup: Set<AppFeature>] = [.tools: [.screenshot]]
     @State private var showsAppShortcuts = false
+    /// Roles whose assigned shortcut collides with a live macOS shortcut and
+    /// is not taken over. Recomputed when the page appears or a row changes,
+    /// never while the list renders: the check reads private system tables.
+    @State private var macOSConflicts: Set<String> = []
 
     private var text: ShortcutSettingsStrings { FeatureStrings.shortcuts(l10n.language) }
     private var hub: FeatureHubStrings { FeatureStrings.hub(l10n.language) }
@@ -29,6 +34,13 @@ struct ShortcutsSettings: View {
 
     private var captureRoles: [GlobalShortcutRole] {
         GlobalShortcutRole.captureRoles(in: availableRoles)
+    }
+
+    /// Roles whose latest registration attempt failed. Only roles the page is
+    /// showing count, so a hidden or uninstalled feature never inflates the
+    /// banner.
+    private var failedRoles: [GlobalShortcutRole] {
+        availableRoles.filter { audit.isFailed($0.storageKey) }
     }
 
     private var visibleGroups: [FeatureGroup] {
@@ -44,6 +56,18 @@ struct ShortcutsSettings: View {
                 Text(l10n.s.shortcutsPageCaption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            if !failedRoles.isEmpty {
+                Section {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Label(String(format: text.unavailableCountFormat, failedRoles.count),
+                              systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button(text.retry) { audit.retryAll() }
+                    }
+                }
             }
 
             ForEach(visibleGroups, id: \.self) { group in
@@ -73,7 +97,10 @@ struct ShortcutsSettings: View {
             }
         }
         .formStyle(.grouped)
-        .onAppear { revealKeyboardBrightnessShortcuts() }
+        .onAppear {
+            revealKeyboardBrightnessShortcuts()
+            refreshMacOSConflicts()
+        }
         .onChange(of: router.requestID) { _, _ in revealKeyboardBrightnessShortcuts() }
         .sheet(isPresented: $showsAppShortcuts) {
             CommandBarAppShortcutsView()
@@ -233,6 +260,8 @@ struct ShortcutsSettings: View {
             contextLabel: showsFeatureContext && title != featureTitle ? featureTitle : nil,
             statusText: active ? text.active : text.inactive,
             statusIsActive: active,
+            registrationFailed: audit.isFailed(role.storageKey),
+            macOSConflict: macOSConflicts.contains(role.storageKey),
             showsSuperKeyAlternative: superKey.isRunning,
             superKeyModifiers: superKey.modifiers,
             includeInactiveConflicts: true,
@@ -243,6 +272,7 @@ struct ShortcutsSettings: View {
             },
             onChange: {
                 FeatureRuntime.shared.sync(role.availabilityFeatures)
+                refreshMacOSConflicts()
             }
         )
     }
@@ -272,14 +302,33 @@ struct ShortcutsSettings: View {
         }
     }
 
-    private func hasAssignedShortcut(_ role: GlobalShortcutRole) -> Bool {
+    private func assignedShortcut(_ role: GlobalShortcutRole) -> GlobalShortcut? {
         role.assignedShortcut(storedValue: { key in
             switch key {
             case DefaultsKey.keepAwakeShortcut: return keepAwakeShortcut
             case DefaultsKey.snippetLibraryShortcut: return snippetLibraryShortcut
             default: return UserDefaults.standard.string(forKey: key)
             }
-        }) != nil
+        })
+    }
+
+    private func hasAssignedShortcut(_ role: GlobalShortcutRole) -> Bool {
+        assignedShortcut(role) != nil
+    }
+
+    /// A saved combination can start colliding with a macOS shortcut after a
+    /// system update, long after the recorder accepted it. Takeover is the
+    /// user's decision at the recorder, so a taken-over combination is not
+    /// reported here.
+    private func refreshMacOSConflicts() {
+        macOSConflicts = Set(availableRoles.compactMap { role in
+            guard !SystemShortcutTakeover.isTakenOver(role.storageKey),
+                  let shortcut = assignedShortcut(role),
+                  SystemShortcutTakeover.conflictsWithMacOS(shortcut, for: role) else {
+                return nil
+            }
+            return role.storageKey
+        })
     }
 
     private func groupTitle(_ group: FeatureGroup) -> String {
