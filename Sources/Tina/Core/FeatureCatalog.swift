@@ -29,7 +29,7 @@ enum AppFeature: String, CaseIterable {
     case quickLauncher, quickToggles, quitApps, colorPicker, screenOCR, cleaningMode, mediaTools,
          cleaner, uninstaller, homebrew, appUpdates, screenshot, cameraPreview, radialMenu, scratchpad,
          commandBar, screenRecorder, wallpaper, killProcess, portManager, hostsProfiles,
-         totpAuthenticator, launchpad, macSettings, launchItems
+         totpAuthenticator, launchpad, macSettings, launchItems, inputRemapping
     // Dynamic Island, then its extensions
     case notch, notchCalendar, notchNotifications, notchGestures, notchTimer, notchAccessories, notchLyrics,
          notchQueue, notchLiveEqualizer, notchDownloads, notchAgents, notchWatch, notchMascot
@@ -87,7 +87,7 @@ extension AppFeature {
         // companion and Launchpad use no permission at all.
         case .screenOCR, .cleaningMode, .screenshot, .commandBar, .screenRecorder, .wallpaper, .notchWatch,
              .notchMascot, .launchpad, .nightWarmth, .autoInputSource, .totpAuthenticator, .macSettings,
-             .notchMascot, .launchpad, .nightWarmth, .autoInputSource, .totpAuthenticator, .launchItems,
+             .notchMascot, .launchpad, .nightWarmth, .autoInputSource, .totpAuthenticator, .launchItems, .inputRemapping,
              // Speech Recognition has no cheap poll; the portal refreshes it
              // when it appears, and the service asks at start.
              .captions:
@@ -125,7 +125,7 @@ extension AppFeature {
         case .quickLauncher, .quickToggles, .quitApps, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .radialMenu,
              .scratchpad, .commandBar, .screenRecorder, .wallpaper, .killProcess, .portManager,
-             .hostsProfiles, .totpAuthenticator, .macSettings, .launchItems:
+             .hostsProfiles, .totpAuthenticator, .macSettings, .launchItems, .inputRemapping:
             return .tools
         case .notch, .notchCalendar, .notchNotifications, .notchGestures, .notchTimer, .notchAccessories,
              .notchLyrics, .notchQueue, .notchLiveEqualizer, .notchDownloads, .notchAgents, .notchWatch,
@@ -225,6 +225,7 @@ extension AppFeature {
         case .launchpad: return "square.grid.3x3.fill"
         case .macSettings: return "slider.horizontal.3"
         case .launchItems: return "power"
+        case .inputRemapping: return "keyboard.badge.ellipsis"
         case .monitorCPU: return "cpu"
         case .monitorGPU: return "rectangle.connected.to.line.below"
         case .monitorMemory: return "memorychip"
@@ -322,7 +323,7 @@ extension AppFeature {
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .scratchpad,
              .commandBar, .screenRecorder, .wallpaper, .killProcess, .portManager, .hostsProfiles,
              .totpAuthenticator, .launchpad, .macSettings,
-             .totpAuthenticator, .launchpad, .launchItems,
+             .totpAuthenticator, .launchpad, .launchItems, .inputRemapping,
              .monitorCPU, .monitorGPU, .monitorMemory, .monitorNetwork, .monitorDisk, .monitorPower,
              .connectedDevices, .fanControl:
             return []
@@ -431,7 +432,7 @@ extension AppFeature {
              .scratchpad, .wallpaper, .monitorGPU, .monitorNetwork, .connectedDevices, .fanControl,
              .chargeLimit, .killProcess,
              .portManager, .hostsProfiles, .totpAuthenticator, .launchpad, .autoInputSource, .macSettings,
-             .portManager, .hostsProfiles, .totpAuthenticator, .launchpad, .autoInputSource, .launchItems,
+             .portManager, .hostsProfiles, .totpAuthenticator, .launchpad, .autoInputSource, .launchItems, .inputRemapping,
              // Each app gets the ordinary quit request it would from its own menu.
              .quitApps:
             return []
@@ -445,7 +446,7 @@ extension AppFeature {
         switch self {
         case .keepAwake, .brightness, .radialMenu, .quickToggles, .cleaner,
              .uninstaller, .homebrew, .appUpdates, .mixer, .cameraPreview,
-             .micMute, .musicBlock, .notchWatch, .launchpad, .macSettings, .launchItems:
+             .micMute, .musicBlock, .notchWatch, .launchpad, .macSettings, .launchItems, .inputRemapping:
             return []
         default:
             return permissions.filter { $0 == .accessibility || $0 == .screenRecording }
@@ -535,7 +536,7 @@ extension AppFeature {
              .wallpaper, .killProcess, .portManager, .hostsProfiles, .totpAuthenticator,
              .fanControl, .notchMascot, .spacesOrder, .quitApps,
              .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource, .macSettings,
-             .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource, .launchItems,
+             .layoutFix, .launchpad, .nightWarmth, .chargeLimit, .autoInputSource, .launchItems, .inputRemapping,
              .windowPinning, .captions:
             return false
         }

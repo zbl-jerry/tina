@@ -150,6 +150,10 @@ enum ReleaseChangeAliases {
         case .killProcess: return ["kill process", "force kill", "process tree"]
         case .portManager: return ["port manager"]
         case .hostsProfiles: return ["hosts profiles", "hosts profile", "hosts file", "hosts entries"]
+        case .inputRemapping: return ["input remapping", "key remap", "remap keys", "keyboard remap",
+            "key mapping"]
+        case .inputRemapping: return ["input remapping", "key remap", "remap keys", "keyboard remap",
+            "key mapping"]
         case .macSettings: return ["mac settings", "settings snapshot", "dock settings", "finder settings",
             "keyboard repeat"]
         case .launchItems: return ["launch items", "launch agents", "login items",
