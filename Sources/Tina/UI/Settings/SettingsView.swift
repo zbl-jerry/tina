@@ -609,6 +609,7 @@ struct SettingsView: View {
         case .autoInputSource: AutoInputSourceSettings()
         case .totpAuthenticator: TOTPAuthenticatorSettings()
         case .launchpad: LaunchpadSettings()
+        case .macSettings: MacSettingsSettings()
         case .urlCleaner: URLCleanerSettings()
         case .cleaner: CleanerSettings()
         case .homebrew: HomebrewSettings()
