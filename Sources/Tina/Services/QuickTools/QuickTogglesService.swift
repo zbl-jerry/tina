@@ -13,7 +13,8 @@ enum QuickToggleAction: String, PanelOrderItem, Identifiable {
     // (issue #36) follow the other maintenance actions.
     case darkMode, keyboardLight, micMute, emptyTrash, quitAllApps,
          restartDock, restartFinder, restartMenuBar, restartInputMethod,
-         ejectDisks, hiddenFiles, desktopIcons, lockScreen, displayOff, screenSaver
+         ejectDisks, hiddenFiles, desktopIcons, lockScreen, displayOff, screenSaver,
+         dockAutoHide, dockLock, stageManager, menuBarAutoHide
 
     var id: String { rawValue }
 
@@ -32,6 +33,24 @@ enum QuickToggleAction: String, PanelOrderItem, Identifiable {
         case .restartDock, .restartFinder, .restartMenuBar, .restartInputMethod: return true
         default: return false
         }
+    }
+
+    /// The system preference this row switches, or nil for the action rows.
+    var systemSwitch: QuickTogglesSupport.SystemSwitch? {
+        switch self {
+        case .dockAutoHide: return .dockAutoHide
+        case .dockLock: return .dockLock
+        case .stageManager: return .stageManager
+        case .menuBarAutoHide: return .menuBarAutoHide
+        default: return nil
+        }
+    }
+
+    /// Rows whose new value only shows after the owning component relaunches:
+    /// the explicit restarts and the switches that write Dock or menu bar
+    /// preferences. Stage Manager applies without one.
+    var relaunchesComponent: Bool {
+        restartsSystemComponent || systemSwitch?.restartTarget != nil
     }
 }
 
@@ -67,6 +86,9 @@ final class QuickTogglesService: ObservableObject {
     @Published private(set) var shortcutRegistrationFailed = false
     @Published private(set) var othersShortcutRegistrationFailed = false
     @Published private(set) var quitAllExceptions: [String] = []
+    /// Bumped after a system switch writes, so every row re-reads its
+    /// preference. The values themselves are never cached.
+    @Published private(set) var systemSwitchRevision = 0
 
     private let workQueue = DispatchQueue(label: "com.tina.utils.quick-toggles", qos: .userInitiated)
     private let hotkey = QuickToolHotkey(id: 63)
@@ -117,6 +139,25 @@ final class QuickTogglesService: ObservableObject {
 
     var desktopIconsShown: Bool {
         finderFlag(QuickTogglesSupport.createDesktopKey, default: true)
+    }
+
+    // System switches (issue #29). Each read goes to the preferences store, so
+    // the row never shows a guessed value.
+
+    var dockAutoHideEnabled: Bool {
+        systemSwitchState(.dockAutoHide)
+    }
+
+    var dockLockEnabled: Bool {
+        systemSwitchState(.dockLock)
+    }
+
+    var stageManagerEnabled: Bool {
+        systemSwitchState(.stageManager)
+    }
+
+    var menuBarAutoHideEnabled: Bool {
+        systemSwitchState(.menuBarAutoHide)
     }
 
     func ejectableVolumeCount() -> Int {
@@ -264,6 +305,75 @@ final class QuickTogglesService: ObservableObject {
         toggleFinderFlag(.desktopIcons,
                          key: QuickTogglesSupport.createDesktopKey,
                          to: !desktopIconsShown)
+    }
+
+    // MARK: - System switches (issue #29)
+
+    /// Flips one Dock, Stage Manager or menu bar preference. The current value
+    /// is read fresh, written and read back; the Dock and the menu bar then
+    /// relaunch because they only read their preferences at launch. A failed
+    /// write, a missing menu bar host or a failed relaunch reports the failure
+    /// and puts the previous value back, so the row never claims a change the
+    /// system did not take.
+    func toggleSystemSwitch(_ action: QuickToggleAction) {
+        guard available, let systemSwitch = action.systemSwitch,
+              beginRun(action) else { return }
+        let plan = QuickTogglesSupport.plan(for: systemSwitch,
+                                            enabled: !systemSwitchState(systemSwitch))
+        workQueue.async {
+            var applied = Self.apply(plan)
+            if applied, let target = plan.restartTarget {
+                switch target {
+                case .dock: applied = Self.restartDock()
+                case .menuBar: applied = Self.restartMenuBar()
+                }
+                if !applied {
+                    // The running component kept the old value, so the stored
+                    // one goes back to match what the user sees.
+                    _ = Self.apply(QuickTogglesSupport.plan(for: systemSwitch,
+                                                            enabled: !plan.value))
+                }
+            }
+            if applied, let notification = plan.notification {
+                DistributedNotificationCenter.default().postNotificationName(
+                    Notification.Name(notification),
+                    object: nil,
+                    userInfo: nil,
+                    deliverImmediately: true)
+            }
+            self.finishRun(action, state: applied ? nil : .failed)
+            DispatchQueue.main.async { self.systemSwitchRevision += 1 }
+        }
+    }
+
+    /// Writes one preference and reads it back. `CFPreferencesSynchronize`
+    /// alone cannot tell a denied write from a stored one, so the read-back is
+    /// the contract; a value that did not stick is a failure.
+    private static func apply(_ plan: QuickTogglesSupport.SystemSwitchPlan) -> Bool {
+        let domain = plan.domain as CFString
+        CFPreferencesSetValue(plan.key as CFString,
+                              plan.value as CFBoolean,
+                              domain,
+                              kCFPreferencesCurrentUser,
+                              kCFPreferencesAnyHost)
+        guard CFPreferencesSynchronize(domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost) else {
+            return false
+        }
+        let stored = CFPreferencesCopyValue(plan.key as CFString,
+                                            domain,
+                                            kCFPreferencesCurrentUser,
+                                            kCFPreferencesAnyHost)
+        // A missing value answers the opposite of what was written, so a read
+        // that does not come back is a failure, not the default.
+        return QuickTogglesSupport.preferenceFlag(stored, default: !plan.value) == plan.value
+    }
+
+    private func systemSwitchState(_ systemSwitch: QuickTogglesSupport.SystemSwitch) -> Bool {
+        let value = CFPreferencesCopyValue(systemSwitch.key as CFString,
+                                           systemSwitch.domain as CFString,
+                                           kCFPreferencesCurrentUser,
+                                           kCFPreferencesAnyHost)
+        return QuickTogglesSupport.switchState(systemSwitch, value: value)
     }
 
     // MARK: - Disks

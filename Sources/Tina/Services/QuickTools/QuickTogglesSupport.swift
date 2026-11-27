@@ -25,6 +25,13 @@ enum QuickTogglesSupport {
     /// Finder preferences reach us as real booleans, numbers or the legacy
     /// "YES"/"TRUE"/"1" strings; anything unreadable means the given default.
     static func finderFlag(_ value: Any?, default defaultValue: Bool) -> Bool {
+        preferenceFlag(value, default: defaultValue)
+    }
+
+    /// The preference store hands back the same three shapes for the Dock,
+    /// WindowManager and global domains; a missing or unreadable value means
+    /// the given default.
+    static func preferenceFlag(_ value: Any?, default defaultValue: Bool) -> Bool {
         switch value {
         case let flag as Bool:
             return flag
@@ -39,6 +46,89 @@ enum QuickTogglesSupport {
         default:
             return defaultValue
         }
+    }
+
+    // MARK: - System switches (issue #29)
+
+    static let dockDomain = "com.apple.dock"
+    static let dockAutoHideKey = "autohide"
+    static let dockContentsImmutableKey = "contents-immutable"
+    static let windowManagerDomain = "com.apple.WindowManager"
+    static let stageManagerEnabledKey = "GloballyEnabled"
+    static let menuBarAutoHideKey = "_HIHideMenuBar"
+
+    /// Stage Manager applies a written value when it hears this notification;
+    /// the Dock and the menu bar read their preferences once, at launch.
+    static let stageManagerChangedNotification = "com.apple.WindowManager.GloballyEnabled.changed"
+
+    /// The component that has to relaunch before a stored preference shows.
+    enum SystemComponent: String, Equatable {
+        case dock, menuBar
+    }
+
+    /// One of the four system switches: the preference it owns and how the
+    /// running system is told about a new value.
+    enum SystemSwitch: String, CaseIterable, Equatable {
+        case dockAutoHide, dockLock, stageManager, menuBarAutoHide
+
+        var domain: String {
+            switch self {
+            case .dockAutoHide, .dockLock: return QuickTogglesSupport.dockDomain
+            case .stageManager: return QuickTogglesSupport.windowManagerDomain
+            case .menuBarAutoHide: return kCFPreferencesAnyApplication as String
+            }
+        }
+
+        var key: String {
+            switch self {
+            case .dockAutoHide: return QuickTogglesSupport.dockAutoHideKey
+            case .dockLock: return QuickTogglesSupport.dockContentsImmutableKey
+            case .stageManager: return QuickTogglesSupport.stageManagerEnabledKey
+            case .menuBarAutoHide: return QuickTogglesSupport.menuBarAutoHideKey
+            }
+        }
+
+        /// The component that only reads this preference at launch. Stage
+        /// Manager applies without a relaunch, so it has no target.
+        var restartTarget: SystemComponent? {
+            switch self {
+            case .dockAutoHide, .dockLock: return .dock
+            case .menuBarAutoHide: return .menuBar
+            case .stageManager: return nil
+            }
+        }
+
+        /// The distributed notification that applies the value at once, for
+        /// the switch that needs no relaunch.
+        var notification: String? {
+            self == .stageManager ? QuickTogglesSupport.stageManagerChangedNotification : nil
+        }
+
+        /// macOS keeps each of these off until the user turns it on.
+        var defaultValue: Bool { false }
+    }
+
+    /// The complete write for one switch: the preference and the way the
+    /// running system picks it up.
+    struct SystemSwitchPlan: Equatable {
+        let domain: String
+        let key: String
+        let value: Bool
+        let restartTarget: SystemComponent?
+        let notification: String?
+    }
+
+    static func plan(for systemSwitch: SystemSwitch, enabled: Bool) -> SystemSwitchPlan {
+        SystemSwitchPlan(domain: systemSwitch.domain,
+                         key: systemSwitch.key,
+                         value: enabled,
+                         restartTarget: systemSwitch.restartTarget,
+                         notification: systemSwitch.notification)
+    }
+
+    /// The row's on/off state from the stored value.
+    static func switchState(_ systemSwitch: SystemSwitch, value: Any?) -> Bool {
+        preferenceFlag(value, default: systemSwitch.defaultValue)
     }
 
     /// Which mounted volumes "Eject all disks" offers. The system flags

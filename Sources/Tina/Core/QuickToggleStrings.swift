@@ -64,6 +64,16 @@ struct QuickToggleFeatureStrings {
     let restartInProgress: String
     let restartSucceeded: String
     let restartConfirmButton: String
+    // System switches (issue #29). The Dock and menu bar captions say the
+    // owning component restarts; Stage Manager applies at once.
+    let dockAutoHideTitle: String
+    let dockAutoHideCaption: String
+    let dockLockTitle: String
+    let dockLockCaption: String
+    let stageManagerTitle: String
+    let stageManagerCaption: String
+    let menuBarAutoHideTitle: String
+    let menuBarAutoHideCaption: String
 }
 
 extension FeatureStrings {
@@ -145,7 +155,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "No third-party input method is running.",
         restartInProgress: "Restarting…",
         restartSucceeded: "Restarted.",
-        restartConfirmButton: "Restart"
+        restartConfirmButton: "Restart",
+        dockAutoHideTitle: "Auto-hide the Dock",
+        dockAutoHideCaption: "Hides the Dock until the pointer reaches its edge. The Dock restarts to apply it.",
+        dockLockTitle: "Lock Dock contents",
+        dockLockCaption: "Stops icons from being added, moved or removed. The Dock restarts to apply it.",
+        stageManagerTitle: "Stage Manager",
+        stageManagerCaption: "Shows the front window centered and the others to the side. Applies right away.",
+        menuBarAutoHideTitle: "Auto-hide the menu bar",
+        menuBarAutoHideCaption: "Hides the menu bar until the pointer reaches the top. The menu bar restarts to apply it."
     )
 
     static let ptBR = QuickToggleFeatureStrings(
@@ -204,7 +222,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Nenhum método de entrada de terceiros está em execução.",
         restartInProgress: "Reiniciando…",
         restartSucceeded: "Reiniciado.",
-        restartConfirmButton: "Reiniciar"
+        restartConfirmButton: "Reiniciar",
+        dockAutoHideTitle: "Ocultar o Dock automaticamente",
+        dockAutoHideCaption: "Oculta o Dock até o ponteiro chegar à borda. O Dock é reiniciado para aplicar.",
+        dockLockTitle: "Bloquear o conteúdo do Dock",
+        dockLockCaption: "Impede adicionar, mover ou remover ícones. O Dock é reiniciado para aplicar.",
+        stageManagerTitle: "Palco",
+        stageManagerCaption: "Mostra a janela em primeiro plano centralizada e as outras ao lado. Aplica na hora.",
+        menuBarAutoHideTitle: "Ocultar a barra de menus automaticamente",
+        menuBarAutoHideCaption: "Oculta a barra de menus até o ponteiro chegar ao topo. A barra de menus é reiniciada para aplicar."
     )
 
     static let tr = QuickToggleFeatureStrings(
@@ -263,7 +289,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Çalışan üçüncü taraf giriş yöntemi yok.",
         restartInProgress: "Yeniden başlatılıyor…",
         restartSucceeded: "Yeniden başlatıldı.",
-        restartConfirmButton: "Yeniden başlat"
+        restartConfirmButton: "Yeniden başlat",
+        dockAutoHideTitle: "Dock’u otomatik gizle",
+        dockAutoHideCaption: "İmleç kenara gelene kadar Dock’u gizler. Uygulamak için Dock yeniden başlatılır.",
+        dockLockTitle: "Dock içeriğini kilitle",
+        dockLockCaption: "Simgelerin eklenmesini, taşınmasını veya kaldırılmasını engeller. Uygulamak için Dock yeniden başlatılır.",
+        stageManagerTitle: "Sahne Yöneticisi",
+        stageManagerCaption: "Öndeki pencereyi ortada, diğerlerini yanda gösterir. Hemen uygulanır.",
+        menuBarAutoHideTitle: "Menü çubuğunu otomatik gizle",
+        menuBarAutoHideCaption: "İmleç üste gelene kadar menü çubuğunu gizler. Uygulamak için menü çubuğu yeniden başlatılır."
     )
 
     static let ru = QuickToggleFeatureStrings(
@@ -322,7 +356,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Сторонний способ ввода не запущен.",
         restartInProgress: "Перезапуск…",
         restartSucceeded: "Перезапущено.",
-        restartConfirmButton: "Перезапустить"
+        restartConfirmButton: "Перезапустить",
+        dockAutoHideTitle: "Автоскрытие Dock",
+        dockAutoHideCaption: "Скрывает Dock, пока указатель не окажется у края. Для применения Dock перезапускается.",
+        dockLockTitle: "Заблокировать содержимое Dock",
+        dockLockCaption: "Запрещает добавлять, перемещать и удалять значки. Для применения Dock перезапускается.",
+        stageManagerTitle: "Stage Manager",
+        stageManagerCaption: "Показывает активное окно по центру, а остальные сбоку. Применяется сразу.",
+        menuBarAutoHideTitle: "Автоскрытие строки меню",
+        menuBarAutoHideCaption: "Скрывает строку меню, пока указатель не окажется вверху. Для применения строка меню перезапускается."
     )
 
     static let es = QuickToggleFeatureStrings(
@@ -381,7 +423,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "No hay ningún método de entrada de terceros en ejecución.",
         restartInProgress: "Reiniciando…",
         restartSucceeded: "Reiniciado.",
-        restartConfirmButton: "Reiniciar"
+        restartConfirmButton: "Reiniciar",
+        dockAutoHideTitle: "Ocultar el Dock automáticamente",
+        dockAutoHideCaption: "Oculta el Dock hasta que el puntero llega al borde. El Dock se reinicia para aplicarlo.",
+        dockLockTitle: "Bloquear el contenido del Dock",
+        dockLockCaption: "Impide añadir, mover o quitar iconos. El Dock se reinicia para aplicarlo.",
+        stageManagerTitle: "Stage Manager",
+        stageManagerCaption: "Muestra la ventana frontal centrada y las demás a un lado. Se aplica al instante.",
+        menuBarAutoHideTitle: "Ocultar la barra de menús automáticamente",
+        menuBarAutoHideCaption: "Oculta la barra de menús hasta que el puntero llega arriba. La barra de menús se reinicia para aplicarlo."
     )
 
     static let sk = QuickToggleFeatureStrings(
@@ -440,7 +490,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Nie je spustená žiadna vstupná metóda tretej strany.",
         restartInProgress: "Reštartuje sa…",
         restartSucceeded: "Reštartované.",
-        restartConfirmButton: "Reštartovať"
+        restartConfirmButton: "Reštartovať",
+        dockAutoHideTitle: "Automaticky skryť Dock",
+        dockAutoHideCaption: "Skryje Dock, kým ukazovateľ nedosiahne okraj. Na uplatnenie sa Dock reštartuje.",
+        dockLockTitle: "Zamknúť obsah Docku",
+        dockLockCaption: "Zabráni pridávaniu, presúvaniu a odstraňovaniu ikon. Na uplatnenie sa Dock reštartuje.",
+        stageManagerTitle: "Stage Manager",
+        stageManagerCaption: "Zobrazí aktívne okno v strede a ostatné po stranách. Uplatní sa hneď.",
+        menuBarAutoHideTitle: "Automaticky skryť lištu ponúk",
+        menuBarAutoHideCaption: "Skryje lištu ponúk, kým ukazovateľ nedosiahne horný okraj. Na uplatnenie sa lišta ponúk reštartuje."
     )
 
     static let de = QuickToggleFeatureStrings(
@@ -499,7 +557,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Keine Eingabemethode von Drittanbietern läuft.",
         restartInProgress: "Wird neu gestartet…",
         restartSucceeded: "Neu gestartet.",
-        restartConfirmButton: "Neu starten"
+        restartConfirmButton: "Neu starten",
+        dockAutoHideTitle: "Dock automatisch ausblenden",
+        dockAutoHideCaption: "Blendet das Dock aus, bis der Zeiger den Rand erreicht. Das Dock wird zum Anwenden neu gestartet.",
+        dockLockTitle: "Dock-Inhalt sperren",
+        dockLockCaption: "Verhindert das Hinzufügen, Verschieben oder Entfernen von Symbolen. Das Dock wird zum Anwenden neu gestartet.",
+        stageManagerTitle: "Stage Manager",
+        stageManagerCaption: "Zeigt das vorderste Fenster mittig und die anderen an der Seite. Wird sofort angewendet.",
+        menuBarAutoHideTitle: "Menüleiste automatisch ausblenden",
+        menuBarAutoHideCaption: "Blendet die Menüleiste aus, bis der Zeiger nach oben kommt. Die Menüleiste wird zum Anwenden neu gestartet."
     )
 
     static let fr = QuickToggleFeatureStrings(
@@ -558,7 +624,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Aucune méthode de saisie tierce n’est en cours d’exécution.",
         restartInProgress: "Redémarrage…",
         restartSucceeded: "Redémarré.",
-        restartConfirmButton: "Redémarrer"
+        restartConfirmButton: "Redémarrer",
+        dockAutoHideTitle: "Masquer automatiquement le Dock",
+        dockAutoHideCaption: "Masque le Dock jusqu’à ce que le pointeur atteigne le bord. Le Dock redémarre pour s’appliquer.",
+        dockLockTitle: "Verrouiller le contenu du Dock",
+        dockLockCaption: "Empêche l’ajout, le déplacement ou la suppression d’icônes. Le Dock redémarre pour s’appliquer.",
+        stageManagerTitle: "Stage Manager",
+        stageManagerCaption: "Affiche la fenêtre au premier plan au centre et les autres sur le côté. S’applique immédiatement.",
+        menuBarAutoHideTitle: "Masquer automatiquement la barre des menus",
+        menuBarAutoHideCaption: "Masque la barre des menus jusqu’à ce que le pointeur atteigne le haut. La barre des menus redémarre pour s’appliquer."
     )
 
     static let it = QuickToggleFeatureStrings(
@@ -617,7 +691,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Nessun metodo di input di terze parti è in esecuzione.",
         restartInProgress: "Riavvio in corso…",
         restartSucceeded: "Riavviato.",
-        restartConfirmButton: "Riavvia"
+        restartConfirmButton: "Riavvia",
+        dockAutoHideTitle: "Nascondi automaticamente il Dock",
+        dockAutoHideCaption: "Nasconde il Dock finché il puntatore non raggiunge il bordo. Il Dock si riavvia per applicare.",
+        dockLockTitle: "Blocca il contenuto del Dock",
+        dockLockCaption: "Impedisce di aggiungere, spostare o rimuovere icone. Il Dock si riavvia per applicare.",
+        stageManagerTitle: "Stage Manager",
+        stageManagerCaption: "Mostra la finestra in primo piano al centro e le altre di lato. Si applica subito.",
+        menuBarAutoHideTitle: "Nascondi automaticamente la barra dei menu",
+        menuBarAutoHideCaption: "Nasconde la barra dei menu finché il puntatore non raggiunge la parte superiore. La barra dei menu si riavvia per applicare."
     )
 
     static let ja = QuickToggleFeatureStrings(
@@ -676,7 +758,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "実行中のサードパーティ入力ソースはありません。",
         restartInProgress: "再起動しています…",
         restartSucceeded: "再起動しました。",
-        restartConfirmButton: "再起動"
+        restartConfirmButton: "再起動",
+        dockAutoHideTitle: "Dockを自動的に隠す",
+        dockAutoHideCaption: "ポインタが端に来るまでDockを隠します。適用にはDockの再起動が必要です。",
+        dockLockTitle: "Dockの内容をロック",
+        dockLockCaption: "アイコンの追加、移動、削除を防ぎます。適用にはDockの再起動が必要です。",
+        stageManagerTitle: "ステージマネージャ",
+        stageManagerCaption: "最前面のウインドウを中央に、ほかを横に並べます。すぐに適用されます。",
+        menuBarAutoHideTitle: "メニューバーを自動的に隠す",
+        menuBarAutoHideCaption: "ポインタが上部に来るまでメニューバーを隠します。適用にはメニューバーの再起動が必要です。"
     )
 
     static let ko = QuickToggleFeatureStrings(
@@ -735,7 +825,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "실행 중인 타사 입력기가 없습니다.",
         restartInProgress: "재시작 중…",
         restartSucceeded: "재시작됨.",
-        restartConfirmButton: "재시작"
+        restartConfirmButton: "재시작",
+        dockAutoHideTitle: "Dock 자동으로 가리기",
+        dockAutoHideCaption: "포인터가 가장자리에 닿을 때까지 Dock을 가립니다. 적용하려면 Dock을 재시동합니다.",
+        dockLockTitle: "Dock 내용 잠금",
+        dockLockCaption: "아이콘 추가, 이동, 제거를 막습니다. 적용하려면 Dock을 재시동합니다.",
+        stageManagerTitle: "스테이지 매니저",
+        stageManagerCaption: "맨 앞 윈도우를 가운데에, 나머지는 옆에 표시합니다. 즉시 적용됩니다.",
+        menuBarAutoHideTitle: "메뉴 막대 자동으로 가리기",
+        menuBarAutoHideCaption: "포인터가 위쪽에 닿을 때까지 메뉴 막대를 가립니다. 적용하려면 메뉴 막대를 재시동합니다."
     )
 
     static let zhHans = QuickToggleFeatureStrings(
@@ -794,7 +892,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "没有正在运行的第三方输入法。",
         restartInProgress: "正在重启…",
         restartSucceeded: "已重启。",
-        restartConfirmButton: "重启"
+        restartConfirmButton: "重启",
+        dockAutoHideTitle: "自动隐藏程序坞",
+        dockAutoHideCaption: "指针移到屏幕边缘时才显示程序坞。生效需重新启动程序坞。",
+        dockLockTitle: "锁定程序坞内容",
+        dockLockCaption: "阻止添加、移动或移除图标。生效需重新启动程序坞。",
+        stageManagerTitle: "台前调度",
+        stageManagerCaption: "将前台窗口居中，其他窗口放在一侧。立即生效。",
+        menuBarAutoHideTitle: "自动隐藏菜单栏",
+        menuBarAutoHideCaption: "指针移到屏幕顶部时才显示菜单栏。生效需重新启动菜单栏。"
     )
 
     static let zhTW = QuickToggleFeatureStrings(
@@ -853,7 +959,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "沒有正在執行的第三方輸入法。",
         restartInProgress: "正在重新啟動…",
         restartSucceeded: "已重新啟動。",
-        restartConfirmButton: "重新啟動"
+        restartConfirmButton: "重新啟動",
+        dockAutoHideTitle: "自動隱藏 Dock",
+        dockAutoHideCaption: "指標移到螢幕邊緣時才顯示 Dock。生效需重新啟動 Dock。",
+        dockLockTitle: "鎖定 Dock 內容",
+        dockLockCaption: "防止加入、移動或移除圖示。生效需重新啟動 Dock。",
+        stageManagerTitle: "台前調度",
+        stageManagerCaption: "將前景視窗置中，其他視窗放在一側。立即生效。",
+        menuBarAutoHideTitle: "自動隱藏選單列",
+        menuBarAutoHideCaption: "指標移到螢幕頂端時才顯示選單列。生效需重新啟動選單列。"
     )
 
     static let zhHK = QuickToggleFeatureStrings(
@@ -912,7 +1026,15 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "沒有正在執行的第三方輸入法。",
         restartInProgress: "正在重新啟動…",
         restartSucceeded: "已重新啟動。",
-        restartConfirmButton: "重新啟動"
+        restartConfirmButton: "重新啟動",
+        dockAutoHideTitle: "自動隱藏 Dock",
+        dockAutoHideCaption: "指標移到螢幕邊緣時才顯示 Dock。生效需重新啟動 Dock。",
+        dockLockTitle: "鎖定 Dock 內容",
+        dockLockCaption: "防止加入、移動或移除圖示。生效需重新啟動 Dock。",
+        stageManagerTitle: "台前調度",
+        stageManagerCaption: "將前景視窗置中，其他視窗置於一側。立即生效。",
+        menuBarAutoHideTitle: "自動隱藏選單列",
+        menuBarAutoHideCaption: "指標移到螢幕頂端時才顯示選單列。生效需重新啟動選單列。"
     )
     static let uk = QuickToggleFeatureStrings(
         pageTitle: "Швидкі перемикачі",
@@ -970,6 +1092,14 @@ extension QuickToggleFeatureStrings {
         restartInputMethodUnavailable: "Сторонній спосіб введення не запущено.",
         restartInProgress: "Перезапуск…",
         restartSucceeded: "Перезапущено.",
-        restartConfirmButton: "Перезапустити"
+        restartConfirmButton: "Перезапустити",
+        dockAutoHideTitle: "Автоматично ховати Dock",
+        dockAutoHideCaption: "Ховає Dock, доки вказівник не опиниться біля краю. Щоб застосувати, Dock перезапускається.",
+        dockLockTitle: "Заблокувати вміст Dock",
+        dockLockCaption: "Забороняє додавати, переміщати чи вилучати значки. Щоб застосувати, Dock перезапускається.",
+        stageManagerTitle: "Stage Manager",
+        stageManagerCaption: "Показує активне вікно по центру, а інші збоку. Застосовується одразу.",
+        menuBarAutoHideTitle: "Автоматично ховати рядок меню",
+        menuBarAutoHideCaption: "Ховає рядок меню, доки вказівник не опиниться вгорі. Щоб застосувати, рядок меню перезапускається."
     )
 }
