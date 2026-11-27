@@ -158,6 +158,7 @@ enum ReleaseChangeAliases {
             "input counts"]
         case .appRepair: return ["app repair", "damaged app", "quarantine", "app will not open",
             "cannot be opened", "signature"]
+        case .automation: return ["automation rule", "automation rules", "single trigger"]
         case .macSettings: return ["mac settings", "settings snapshot", "dock settings", "finder settings",
             "keyboard repeat"]
         case .launchItems: return ["launch items", "launch agents", "login items",

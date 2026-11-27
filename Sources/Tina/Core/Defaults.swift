@@ -340,6 +340,8 @@ enum DefaultsKey {
     static let cleanerLastAutoFreed = "cleanerLastAutoFreed"            // Int bytes
     static let cleanerLastAutoFailed = "cleanerLastAutoFailed"          // Int items left in place
     static let cleanerScreenshotAgeDays = "cleanerScreenshotAgeDays"    // Int, 0 = off
+    static let automationEnabled = "automationEnabled"
+    static let automationRules = "automationRules"                      // Data (JSON rules)
     static let usageStatsRetentionDays = "usageStatsRetentionDays"      // 7 | 30 | 90
     static let usageStatsEnabled = "usageStatsEnabled"
     static let inputRemapEnabled = "inputRemapEnabled"
@@ -1629,6 +1631,8 @@ enum Defaults {
         DefaultsKey.cleanerLastAutoFreed: 0,
         DefaultsKey.cleanerLastAutoFailed: 0,
         DefaultsKey.cleanerScreenshotAgeDays: CleanerPolicy.defaultScreenshotAgeDays,
+        DefaultsKey.automationEnabled: false,
+        DefaultsKey.automationRules: Data(),
         DefaultsKey.usageStatsRetentionDays: 30,
         DefaultsKey.usageStatsEnabled: false,
         DefaultsKey.inputRemapEnabled: false,
