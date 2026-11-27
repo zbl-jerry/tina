@@ -28,6 +28,13 @@ enum MonitorSamplingKind: String {
     /// Fan speed pinned to the menu bar keeps the chosen interval.
     case fanSpeedMenuBar
     case connectedDevices
+    /// The Wi-Fi token's connection state. The radio's association changes
+    /// on human time, not sampling time, so even a visible panel reads it on
+    /// a modest stride and carries the last reading in between.
+    case wifi
+    /// The default output's volume and mute switch. The read is a cheap HAL
+    /// query, so it follows the monitor's normal cadence.
+    case volume
 }
 
 enum MonitorSamplingPolicy {
@@ -92,8 +99,10 @@ enum MonitorSamplingPolicy {
             switch kind {
             case .peripheralBattery:
                 return 15
-            case .connectedDevices:
+            case .connectedDevices, .volume:
                 return 2
+            case .wifi:
+                return 15
             case .cpu, .memory, .network, .disk, .power, .powerDraw, .gpuUsage, .gpuUsageMenuBar,
                  .temperature, .temperatureMenuBar, .fanSpeed, .fanSpeedMenuBar:
                 return 1
@@ -119,6 +128,12 @@ enum MonitorSamplingPolicy {
             return 10
         case .peripheralBattery:
             return 60
+        case .wifi:
+            // About 15 s: a radio association does not move often, and the
+            // CoreWLAN query crosses to the Wi-Fi daemon.
+            return 15
+        case .volume:
+            return 2
         }
     }
 }

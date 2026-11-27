@@ -136,7 +136,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         }
         statusController.onMetricClick = { [weak self] metric, button in
             self?.captureStatusClick()
-            self?.showMetricPanel(for: metric, anchoredTo: button)
+            guard let self else { return }
+            if metric == .volume {
+                // The volume reading has no detail page of its own: its click
+                // opens the existing system output slider in the mixer section.
+                MenuPanelFocus.shared.focus(.mixer)
+                if !self.popoverIsOpen { self.showPopover(anchor: button) }
+            } else {
+                self.showMetricPanel(for: metric, anchoredTo: button)
+            }
         }
         statusController.onClipboardPreviewClick = {
             // No captureStatusClick() here, unlike the other click handlers:
@@ -539,7 +547,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     }
 
     private func showMetricPanel(for metric: MenuBarMetric, anchoredTo button: NSStatusBarButton) {
-        let detailKind = metric.detailKind
+        guard let detailKind = metric.detailKind else { return }
         if NotchSupport.routesAppPanel(), NotchService.shared.acceptsSystemFeedback,
            NotchSupport.modules().contains(.system) {
             NotchService.shared.showMetric(detailKind, toggle: true); return

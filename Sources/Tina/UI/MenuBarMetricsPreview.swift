@@ -15,6 +15,9 @@ struct MenuBarMetricsPreview: View {
     @AppStorage(DefaultsKey.menuBarGPUTemperature) private var gpuTemperature = false
     @AppStorage(DefaultsKey.menuBarBatteryTemperature) private var batteryTemperature = false
     @AppStorage(DefaultsKey.menuBarNetwork) private var network = false
+    @AppStorage(DefaultsKey.menuBarWiFi) private var wifi = false
+    @AppStorage(DefaultsKey.menuBarWiFiSignal) private var wifiSignal = false
+    @AppStorage(DefaultsKey.menuBarVolume) private var volume = false
     @AppStorage(DefaultsKey.menuBarDiskUsage) private var diskUsage = false
     @AppStorage(DiskMenuBarStyle.defaultsKey) private var diskStyle = DiskMenuBarStyle.percent
     @AppStorage(DefaultsKey.menuBarDiskActivity) private var diskActivity = false
@@ -128,6 +131,9 @@ struct MenuBarMetricsPreview: View {
         let _ = gpuTemperature
         let _ = batteryTemperature
         let _ = network
+        let _ = wifi
+        let _ = wifiSignal
+        let _ = volume
         let _ = diskUsage
         let _ = diskActivity
         let _ = battery

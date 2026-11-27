@@ -477,6 +477,9 @@ enum DefaultsKey {
     static let menuBarBatteryTemperature = "menuBarBatteryTemperature"
     static let menuBarTemperature = "menuBarTemperature" // legacy Developer key for the old generic temperature metric
     static let menuBarNetwork = "menuBarNetwork"
+    static let menuBarWiFi = "menuBarWiFi"
+    static let menuBarWiFiSignal = "menuBarWiFiSignal" // show signal strength beside the Wi-Fi state
+    static let menuBarVolume = "menuBarVolume"
     static let menuBarDiskUsage = "menuBarDiskUsage"
     static let menuBarDiskActivity = "menuBarDiskActivity"
     static let menuBarBattery = "menuBarBattery"
@@ -1360,7 +1363,7 @@ enum Defaults {
         "gpu", "gpuTemperature",
         "memory",
         "battery", "batteryTime", "batteryTemperature", "peripheralBattery",
-        "network", "diskUsage", "diskActivity", "connectedDevices", "power", "fanSpeed",
+        "network", "wifi", "diskUsage", "diskActivity", "connectedDevices", "volume", "power", "fanSpeed",
     ]
     static let allowedMenuBarLabelStyles = ["compact", "classic"]
     static let allowedMenuBarMemoryStyles = ["dot", "percent", "both"]
@@ -1888,6 +1891,9 @@ enum Defaults {
         DefaultsKey.menuBarDiskActivity: false,
         DefaultsKey.menuBarPeripheralBattery: false,
         DefaultsKey.menuBarConnectedDevices: false,
+        DefaultsKey.menuBarWiFi: false,
+        DefaultsKey.menuBarWiFiSignal: false,
+        DefaultsKey.menuBarVolume: false,
         DefaultsKey.menuBarFanSpeed: false,
         DefaultsKey.menuBarPreset: "dense",
         DefaultsKey.menuBarMetricSpacing: "compact",  // owner's call: compact by default in 3.1.8

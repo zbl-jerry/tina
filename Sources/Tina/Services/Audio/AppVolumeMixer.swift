@@ -2853,6 +2853,18 @@ final class AppVolumeMixer: ObservableObject {
         return applied
     }
 
+    /// The default output's main scalar and mute switch, read without
+    /// bringing the mixer up. A part is nil when the Mac has no default
+    /// output, the output exposes no software volume, or it has no mute
+    /// switch; callers must never read those as zero.
+    static func systemOutputReading() -> OutputVolumeReading {
+        guard let device = defaultOutputDeviceID() else {
+            return OutputVolumeReading(level: nil, isMuted: nil)
+        }
+        return OutputVolumeReading(level: outputVolume(for: device).map(Double.init),
+                                   isMuted: outputMuted(for: device))
+    }
+
     /// Whether the sound is currently cut, or nil when this output has no
     /// mute switch of its own.
     static func systemOutputIsMuted() -> Bool? {

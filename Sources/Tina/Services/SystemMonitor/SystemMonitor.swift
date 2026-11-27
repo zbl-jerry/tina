@@ -69,6 +69,12 @@ struct SystemSnapshot {
     // Connected USB Devices
     var connectedDevices: [ConnectedUSBDevice] = []
 
+    // Menu bar connection and output status. Nil means the reading was not
+    // asked for (its token is off), not that the Mac has no value: the
+    // formatters say "N/A" for a reading that came back empty.
+    var wifiStatus: WiFiStatusReading?
+    var outputVolume: OutputVolumeReading?
+
     // History (oldest → newest) for the graphs
     var cpuHistory: [Double] = []          // 0...1
     var gpuHistory: [Double] = []          // 0...1
@@ -180,6 +186,7 @@ final class SystemMonitor: ObservableObject {
     private let cpuCoreSampler = CPUCoreSampler()
     private var powerSampler: PowerSampler?
     private let usbSampler = USBDeviceSampler()
+    private let wifiSampler = WiFiStatusSampler()
 
     // Running state
     private var previousCPUTicks: (busy: UInt64, total: UInt64, time: TimeInterval)?
@@ -212,6 +219,10 @@ final class SystemMonitor: ObservableObject {
     private var peripheralSamplingEnabled = false
     private var peripheralSampleDue = false
     private var lastConnectedDevices: [ConnectedUSBDevice] = []
+    /// The Wi-Fi state is carried between its 15 s reads, like a temperature
+    /// is between SMC reads. Volume is cheap enough to read on its own stride.
+    private var lastWiFiStatus: WiFiStatusReading?
+    private var lastOutputVolume: OutputVolumeReading?
     private var lastPublishedPlan: SamplingPlan?
     private var lastPublishedForeground: Bool?
 
@@ -506,6 +517,8 @@ final class SystemMonitor: ObservableObject {
         var needFanSpeed = false
         var needFanSpeedMenuBar = false
         var needConnectedDevices = false
+        var needWiFi = false
+        var needVolume = false
 
         var needSMC: Bool { needPower || needTemperature || needFanSpeed }
 
@@ -528,7 +541,8 @@ final class SystemMonitor: ObservableObject {
 
         var any: Bool {
             needCPU || needMemory || needNetwork || needDisk || needPower ||
-                needPeripheralBattery || needGPUUsage || needTemperature || needFanSpeed || needConnectedDevices
+                needPeripheralBattery || needGPUUsage || needTemperature || needFanSpeed || needConnectedDevices ||
+                needWiFi || needVolume
         }
     }
 
@@ -610,6 +624,10 @@ final class SystemMonitor: ObservableObject {
             || (menuPanelNeeds.system && defaults.bool(forKey: DefaultsKey.monitorSysConnectedDevices))
             || menuPanelNeeds.connectedDevices
             || defaults.bool(forKey: DefaultsKey.menuBarConnectedDevices)
+        // The two connection/output tokens are menu-bar only: no panel row
+        // reads them, so a closed panel with the tokens off costs nothing.
+        plan.needWiFi = defaults.bool(forKey: DefaultsKey.menuBarWiFi)
+        plan.needVolume = defaults.bool(forKey: DefaultsKey.menuBarVolume)
 
         // The hub gates whole metric families: an unavailable metric never
         // samples, no matter what is pinned, shown or alerting.
@@ -632,7 +650,11 @@ final class SystemMonitor: ObservableObject {
             (available(.monitorCPU) && defaults.bool(forKey: DefaultsKey.menuBarCPUTemperature))
             || (available(.monitorGPU) && defaults.bool(forKey: DefaultsKey.menuBarGPUTemperature))
         if !available(.monitorMemory) { plan.needMemory = false }
-        if !available(.monitorNetwork) { plan.needNetwork = false }
+        if !available(.monitorNetwork) {
+            plan.needNetwork = false
+            plan.needWiFi = false
+        }
+        if !available(.mixer) { plan.needVolume = false }
         if !available(.monitorDisk) { plan.needDisk = false }
         if !available(.monitorPower) {
             plan.needPower = false
@@ -700,6 +722,8 @@ final class SystemMonitor: ObservableObject {
         if plan.needTemperature { kinds.append(plan.temperatureKind) }
         if plan.needFanSpeed { kinds.append(plan.fanSpeedKind) }
         if plan.needConnectedDevices { kinds.append(.connectedDevices) }
+        if plan.needWiFi { kinds.append(.wifi) }
+        if plan.needVolume { kinds.append(.volume) }
         return kinds
     }
 
@@ -955,6 +979,21 @@ final class SystemMonitor: ObservableObject {
                     self.lastConnectedDevices = self.usbSampler.sample()
                 }
                 next.connectedDevices = self.lastConnectedDevices
+            }
+
+            // Wi-Fi crosses to the Wi-Fi daemon, so its stride carries the
+            // previous state between reads instead of re-asking every tick.
+            if plan.needWiFi {
+                if take(.wifi) {
+                    self.lastWiFiStatus = self.wifiSampler.sample()
+                }
+                next.wifiStatus = self.lastWiFiStatus
+            }
+            if plan.needVolume {
+                if take(.volume) {
+                    self.lastOutputVolume = AppVolumeMixer.systemOutputReading()
+                }
+                next.outputVolume = self.lastOutputVolume
             }
 
             next.cpuHistory = plan.needCPU

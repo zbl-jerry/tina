@@ -94,7 +94,9 @@ enum MetricDetailKind: String, Equatable, Identifiable {
 }
 
 extension MenuBarMetric {
-    var detailKind: MetricDetailKind {
+    /// The detail page a click opens, or nil when the token has no page of its
+    /// own (volume opens the mixer section instead).
+    var detailKind: MetricDetailKind? {
         switch self {
         case .cpu, .cpuTemperature:
             return .cpu
@@ -102,8 +104,10 @@ extension MenuBarMetric {
             return .gpu
         case .memory:
             return .memory
-        case .network:
+        case .network, .wifi:
             return .network
+        case .volume:
+            return nil
         case .diskUsage, .diskActivity:
             return .disk
         case .battery, .batteryTemperature, .peripheralBattery:

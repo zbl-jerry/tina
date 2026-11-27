@@ -5,7 +5,7 @@ import AppKit
 
 /// A live reading the user can pin next to the menu bar icon.
 enum MenuBarMetric: String, CaseIterable, Identifiable {
-    case cpu, gpu, memory, cpuTemperature, gpuTemperature, batteryTemperature, network, diskUsage, diskActivity, battery, batteryTime, peripheralBattery, power, fanSpeed, connectedDevices
+    case cpu, gpu, memory, cpuTemperature, gpuTemperature, batteryTemperature, network, wifi, diskUsage, diskActivity, battery, batteryTime, peripheralBattery, power, fanSpeed, connectedDevices, volume
 
     var id: String { rawValue }
 
@@ -18,6 +18,8 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         case .gpuTemperature: return DefaultsKey.menuBarGPUTemperature
         case .batteryTemperature: return DefaultsKey.menuBarBatteryTemperature
         case .network: return DefaultsKey.menuBarNetwork
+        case .wifi: return DefaultsKey.menuBarWiFi
+        case .volume: return DefaultsKey.menuBarVolume
         case .diskUsage: return DefaultsKey.menuBarDiskUsage
         case .diskActivity: return DefaultsKey.menuBarDiskActivity
         case .battery: return DefaultsKey.menuBarBattery
@@ -38,6 +40,8 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         case .gpuTemperature: return "rectangle.connected.to.line.below"
         case .batteryTemperature: return "battery.100"
         case .network: return "network"
+        case .wifi: return "wifi"
+        case .volume: return "speaker.wave.2.fill"
         case .diskUsage: return "internaldrive"
         case .diskActivity: return "internaldrive.fill"
         case .battery: return "battery.100"
@@ -58,6 +62,8 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         case .gpuTemperature: return strings.monitorShowGPUTemperature
         case .batteryTemperature: return strings.monitorShowBatteryTemperature
         case .network: return strings.monitorShowNetwork
+        case .wifi: return strings.monitorShowWiFi
+        case .volume: return strings.monitorShowVolume
         case .diskUsage: return strings.monitorItemDiskUsage
         case .diskActivity: return strings.monitorItemDiskActivity
         case .battery: return strings.batteryLabel
@@ -74,7 +80,7 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         .gpu, .gpuTemperature,
         .memory,
         .battery, .batteryTime, .batteryTemperature, .peripheralBattery,
-        .network, .diskUsage, .diskActivity, .connectedDevices, .power, .fanSpeed,
+        .network, .wifi, .diskUsage, .diskActivity, .connectedDevices, .volume, .power, .fanSpeed,
     ]
 
     static func order(in defaults: UserDefaults) -> [MenuBarMetric] {
@@ -95,7 +101,8 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         case .cpu, .cpuTemperature: return .monitorCPU
         case .gpu, .gpuTemperature: return .monitorGPU
         case .memory: return .monitorMemory
-        case .network: return .monitorNetwork
+        case .network, .wifi: return .monitorNetwork
+        case .volume: return .mixer
         case .diskUsage, .diskActivity: return .monitorDisk
         case .connectedDevices: return .connectedDevices
         case .battery, .batteryTime, .batteryTemperature, .peripheralBattery, .power: return .monitorPower
@@ -589,6 +596,19 @@ enum MenuBarRenderer {
                                             minimumValue: "99",
                                             style: style,
                                             pressure: nil)])
+            case .wifi:
+                groups.append([.metricBlock(label: WiFiStatusText.label,
+                                            value: WiFiStatusText.value(for: snapshot.wifiStatus,
+                                                                        showsSignal: UserDefaults.standard.bool(forKey: DefaultsKey.menuBarWiFiSignal)),
+                                            minimumValue: WiFiStatusText.minimumValue,
+                                            style: style,
+                                            pressure: nil)])
+            case .volume:
+                groups.append([.metricBlock(label: OutputVolumeText.label,
+                                            value: OutputVolumeText.value(for: snapshot.outputVolume),
+                                            minimumValue: OutputVolumeText.minimumValue,
+                                            style: style,
+                                            pressure: nil)])
             case .power:
                 if let watts = snapshot.power?.systemWatts {
                     groups.append([.metricBlock(label: "PWR",
@@ -676,6 +696,10 @@ enum MenuBarRenderer {
             return 12      // symbol + " KBD 100%+9"
         case (_, .network):
             return 15      // down symbol + 999Kb/1023K + up symbol + 999Kb/1023K
+        case (_, .wifi):
+            return 11      // symbol + " WIFI 100%"
+        case (_, .volume):
+            return 11      // symbol + " VOL 100%"
         case (_, .diskUsage):
             return DiskMenuBarStyle.current.showsPercentage ? 11 : 14
         case (_, .diskActivity):
@@ -1221,6 +1245,8 @@ enum MenuBarRenderer {
         snapshot.fanSpeeds = Array(repeating: 20_000, count: fanCount)
         snapshot.netDownBytesPerSec = 1_000_000_000
         snapshot.netUpBytesPerSec = 1_000_000_000
+        snapshot.wifiStatus = WiFiStatusReading(state: .connected, rssi: -50)
+        snapshot.outputVolume = OutputVolumeReading(level: 1, isMuted: false)
         snapshot.disk = DiskReading(devices: [
             DiskDeviceReading(id: "main",
                               name: "Macintosh HD",
