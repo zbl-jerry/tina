@@ -35,7 +35,27 @@ enum CleanerPolicy {
         "/Library/Developer/Xcode/iOS DeviceSupport",
         "/Library/Developer/Xcode/watchOS DeviceSupport",
         "/Library/Developer/Xcode/tvOS DeviceSupport",
+        "/Library/Caches/org.swift.swiftpm",
+        "/Library/Caches/com.apple.dt.Xcode",
     ]
+
+    /// Release archives are build products the user may still need to upload
+    /// or symbolicate. They are listed one bundle at a time, only when older
+    /// than the chosen age, and never pre checked. 0 turns the listing off.
+    static let xcodeArchivePath = "/Library/Developer/Xcode/Archives"
+    static let archiveAgeChoices = [30, 60, 90, 180, 365]
+    static let defaultArchiveAgeDays = 90
+
+    static func sanitizedArchiveAgeDays(_ raw: Int) -> Int {
+        raw <= 0 ? 0 : min(raw, 3650)
+    }
+
+    /// Everything under the developer paths rebuilds on the next build, so it
+    /// starts checked. Archives are the one exception: they are the user's
+    /// output, not a cache.
+    static func developerIsPrechecked(_ homeRelativePath: String) -> Bool {
+        precheckDeveloper && homeRelativePath != xcodeArchivePath
+    }
 
     /// Device backups are the user's safety net: enormous, ancient, and the
     /// other classic tenant of "Other" storage, but never a machine's call
