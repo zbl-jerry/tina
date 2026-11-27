@@ -340,6 +340,8 @@ enum DefaultsKey {
     static let cleanerLastAutoFreed = "cleanerLastAutoFreed"            // Int bytes
     static let cleanerLastAutoFailed = "cleanerLastAutoFailed"          // Int items left in place
     static let cleanerScreenshotAgeDays = "cleanerScreenshotAgeDays"    // Int, 0 = off
+    static let inputRemapEnabled = "inputRemapEnabled"
+    static let inputRemapRules = "inputRemapRules"                      // Data (JSON rules)
     /// Labels of user LaunchAgents stopped from Tina. Kept so the list can
     /// say why an agent is not running; never used to re-enable anything.
     static let launchItemsDisabledLabels = "launchItemsDisabledLabels"
@@ -1625,6 +1627,8 @@ enum Defaults {
         DefaultsKey.cleanerLastAutoFreed: 0,
         DefaultsKey.cleanerLastAutoFailed: 0,
         DefaultsKey.cleanerScreenshotAgeDays: CleanerPolicy.defaultScreenshotAgeDays,
+        DefaultsKey.inputRemapEnabled: false,
+        DefaultsKey.inputRemapRules: Data(),
         DefaultsKey.launchItemsDisabledLabels: [String](),
         DefaultsKey.cleanerArchiveAgeDays: CleanerPolicy.defaultArchiveAgeDays,
         DefaultsKey.whatsAppDownloadsEnabled: false,

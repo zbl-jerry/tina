@@ -239,6 +239,17 @@ final class FeatureRuntime: ObservableObject {
     /// permission it depends on) changes. Most on-demand tools have no binding;
     /// Media only binds so uninstalling it can cancel work already in flight.
     private static let bindings: [AppFeature: () -> Void] = [
+        .inputRemapping: {
+            let defaults = UserDefaults.standard
+            guard defaults.bool(forKey: DefaultsKey.inputRemapEnabled) else {
+                InputRemapService.shared.stop()
+                return
+            }
+            let data = defaults.data(forKey: DefaultsKey.inputRemapRules) ?? Data()
+            let rules = (try? JSONDecoder().decode([InputRemapRule].self, from: data)) ?? []
+            InputRemapService.shared.setRules(rules)
+            _ = InputRemapService.shared.start()
+        },
         .switcher: {
             WindowUseTracker.shared.syncWithFeatures()
             AppSwitcher.shared.syncWithPreferences()
