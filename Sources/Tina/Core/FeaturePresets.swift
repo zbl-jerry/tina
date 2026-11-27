@@ -159,8 +159,7 @@ extension AppFeature {
              .screenOCR, .cleaningMode, .mediaTools, .cleaner, .uninstaller, .homebrew, .screenshot,
              .cameraPreview, .scratchpad, .commandBar, .screenRecorder, .wallpaper, .fanControl,
              .diskImageInstaller, .killProcess, .portManager, .hostsProfiles, .totpAuthenticator,
-             .launchpad, .autoInputSource, .captions, .macSettings:
-             .launchpad, .autoInputSource, .captions, .launchItems:
+             .launchpad, .autoInputSource, .captions, .macSettings, .launchItems:
             return .idle
         case .appUpdates:
             // The list is on demand; only a background schedule keeps a timer.

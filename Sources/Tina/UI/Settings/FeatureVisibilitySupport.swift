@@ -8,8 +8,7 @@ import Foundation
 /// below and the unit tests can reason about pages without pulling UI in.
 enum SettingsPage: Hashable {
     case general, features, energy, monitor
-    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, windowPinning, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, macSettings, notch, notchMascot
-    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, windowPinning, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, launchItems, notch, notchMascot
+    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, windowPinning, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, macSettings, launchItems, notch, notchMascot
     case shortcuts, advanced, about, releaseNotes, support
 }
 

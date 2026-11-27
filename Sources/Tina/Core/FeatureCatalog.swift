@@ -29,8 +29,7 @@ enum AppFeature: String, CaseIterable {
     case quickLauncher, quickToggles, quitApps, colorPicker, screenOCR, cleaningMode, mediaTools,
          cleaner, uninstaller, homebrew, appUpdates, screenshot, cameraPreview, radialMenu, scratchpad,
          commandBar, screenRecorder, wallpaper, killProcess, portManager, hostsProfiles,
-         totpAuthenticator, launchpad, macSettings
-         totpAuthenticator, launchpad, launchItems
+         totpAuthenticator, launchpad, macSettings, launchItems
     // Dynamic Island, then its extensions
     case notch, notchCalendar, notchNotifications, notchGestures, notchTimer, notchAccessories, notchLyrics,
          notchQueue, notchLiveEqualizer, notchDownloads, notchAgents, notchWatch, notchMascot
@@ -126,8 +125,7 @@ extension AppFeature {
         case .quickLauncher, .quickToggles, .quitApps, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .radialMenu,
              .scratchpad, .commandBar, .screenRecorder, .wallpaper, .killProcess, .portManager,
-             .hostsProfiles, .totpAuthenticator, .macSettings:
-             .hostsProfiles, .totpAuthenticator, .launchItems:
+             .hostsProfiles, .totpAuthenticator, .macSettings, .launchItems:
             return .tools
         case .notch, .notchCalendar, .notchNotifications, .notchGestures, .notchTimer, .notchAccessories,
              .notchLyrics, .notchQueue, .notchLiveEqualizer, .notchDownloads, .notchAgents, .notchWatch,
@@ -447,8 +445,7 @@ extension AppFeature {
         switch self {
         case .keepAwake, .brightness, .radialMenu, .quickToggles, .cleaner,
              .uninstaller, .homebrew, .appUpdates, .mixer, .cameraPreview,
-             .micMute, .musicBlock, .notchWatch, .launchpad, .macSettings:
-             .micMute, .musicBlock, .notchWatch, .launchpad, .launchItems:
+             .micMute, .musicBlock, .notchWatch, .launchpad, .macSettings, .launchItems:
             return []
         default:
             return permissions.filter { $0 == .accessibility || $0 == .screenRecording }
