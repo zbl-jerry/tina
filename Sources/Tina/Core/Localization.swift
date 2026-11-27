@@ -1205,6 +1205,15 @@ struct Strings {
     let cleanerScreenshotsCaptionFormat: String
     let cleanerScreenshotsSettingCaption: String
     let cleanerScreenshotsAfterFormat: String
+    let cleanerSystemDataTitle: String
+    let cleanerSystemDataCaption: String
+    let cleanerSystemDataScan: String
+    let cleanerSystemDataScanAgain: String
+    let cleanerSystemDataUnavailable: String
+    let cleanerSystemDataApplicationSupport: String
+    let cleanerSystemDataContainers: String
+    let cleanerSystemDataGroupContainers: String
+    let cleanerSystemDataItemsFormat: String
     let cleanerArchivesTitle: String
     let cleanerArchivesAfterFormat: String
     let cleanerArchivesCaption: String
@@ -2358,6 +2367,15 @@ extension Strings {
         cleanerScreenshotsCaptionFormat: "Capturas de tela que você não abre há %d dias e que ainda têm o nome e a pasta que o macOS deu. As que você renomeou ou moveu nunca aparecem aqui.",
         cleanerScreenshotsSettingCaption: "A varredura lista, desmarcadas e com o tamanho total, as capturas de tela que você não abre há esse tempo.",
         cleanerScreenshotsAfterFormat: "Após %d dias",
+        cleanerSystemDataTitle: "Dados do sistema",
+        cleanerSystemDataCaption: "O que o macOS considera Dados do sistema neste Mac. Somente leitura: nada é removido.",
+        cleanerSystemDataScan: "Medir",
+        cleanerSystemDataScanAgain: "Medir novamente",
+        cleanerSystemDataUnavailable: "Algumas pastas não puderam ser lidas.",
+        cleanerSystemDataApplicationSupport: "Suporte de Aplicativos",
+        cleanerSystemDataContainers: "Contêineres",
+        cleanerSystemDataGroupContainers: "Contêineres de grupo",
+        cleanerSystemDataItemsFormat: "%d itens",
         cleanerArchivesTitle: "Arquivos de versão",
         cleanerArchivesAfterFormat: "Com mais de %d dias",
         cleanerArchivesCaption: "Os arquivos de versão do Xcode mais antigos são listados um a um e nunca marcados por padrão.",
@@ -3512,6 +3530,15 @@ extension Strings {
         cleanerScreenshotsCaptionFormat: "Screenshots you have not opened in %d days that still have the name and folder macOS gave them. Ones you renamed or moved never show up here.",
         cleanerScreenshotsSettingCaption: "The scan lists the screenshots you have not opened for this long, unchecked, with their total size.",
         cleanerScreenshotsAfterFormat: "After %d days",
+        cleanerSystemDataTitle: "System Data",
+        cleanerSystemDataCaption: "What macOS counts as System Data on this Mac. Read-only: nothing here is removed.",
+        cleanerSystemDataScan: "Measure",
+        cleanerSystemDataScanAgain: "Measure Again",
+        cleanerSystemDataUnavailable: "Some folders could not be read.",
+        cleanerSystemDataApplicationSupport: "Application Support",
+        cleanerSystemDataContainers: "Containers",
+        cleanerSystemDataGroupContainers: "Group Containers",
+        cleanerSystemDataItemsFormat: "%d items",
         cleanerArchivesTitle: "Release archives",
         cleanerArchivesAfterFormat: "Older than %d days",
         cleanerArchivesCaption: "Xcode release archives older than this are listed one by one and never pre-checked.",
