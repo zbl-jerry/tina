@@ -8,7 +8,7 @@ import Foundation
 /// below and the unit tests can reason about pages without pulling UI in.
 enum SettingsPage: Hashable {
     case general, features, energy, monitor
-    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, windowPinning, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, macSettings, launchItems, inputRemapping, usageStats, appRepair, notch, notchMascot
+    case mouse, switcher, dock, keyDebounce, layoutFix, superKey, autoInputSource, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, windowPinning, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, portManager, hostsProfiles, totpAuthenticator, launchpad, macSettings, launchItems, inputRemapping, usageStats, appRepair, automation, notch, notchMascot
     case shortcuts, advanced, about, releaseNotes, support
 }
 
@@ -426,6 +426,7 @@ extension AppFeature {
         case .totpAuthenticator: return FeatureSettingsDestination(.totpAuthenticator)
         case .launchpad: return FeatureSettingsDestination(.launchpad)
         case .macSettings: return FeatureSettingsDestination(.macSettings)
+        case .automation: return FeatureSettingsDestination(.automation)
         case .appRepair: return FeatureSettingsDestination(.appRepair)
         case .usageStats: return FeatureSettingsDestination(.usageStats)
         case .inputRemapping: return FeatureSettingsDestination(.inputRemapping)
@@ -507,6 +508,7 @@ enum FeatureVisibilitySupport {
         case .totpAuthenticator: return [.totpAuthenticator]
         case .launchpad: return [.launchpad]
         case .macSettings: return [.macSettings]
+        case .automation: return [.automation]
         case .appRepair: return [.appRepair]
         case .usageStats: return [.usageStats]
         case .inputRemapping: return [.inputRemapping]

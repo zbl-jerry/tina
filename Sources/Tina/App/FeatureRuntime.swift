@@ -239,6 +239,16 @@ final class FeatureRuntime: ObservableObject {
     /// permission it depends on) changes. Most on-demand tools have no binding;
     /// Media only binds so uninstalling it can cancel work already in flight.
     private static let bindings: [AppFeature: () -> Void] = [
+        .automation: {
+            let defaults = UserDefaults.standard
+            guard defaults.bool(forKey: DefaultsKey.automationEnabled) else {
+                AutomationService.shared.stop()
+                return
+            }
+            let data = defaults.data(forKey: DefaultsKey.automationRules) ?? Data()
+            let rules = (try? JSONDecoder().decode([AutomationRule].self, from: data)) ?? []
+            AutomationService.shared.start(rules: rules)
+        },
         .usageStats: {
             if UserDefaults.standard.bool(forKey: DefaultsKey.usageStatsEnabled) {
                 UsageStatsService.shared.start()

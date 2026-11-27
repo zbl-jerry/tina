@@ -644,6 +644,8 @@ if (( TEST )); then
         Sources/Tina/Services/Uninstall/UninstallerSupport.swift
         Sources/Tina/Services/ManagedDownloads/WhatsAppDownloadSupport.swift
         Sources/Tina/Core/SecureInputSupport.swift
+        Sources/Tina/Services/Automation/AutomationSupport.swift
+        Sources/Tina/Core/AutomationStrings.swift
         Sources/Tina/Services/AppRepair/AppRepairService.swift
         Sources/Tina/Services/AppRepair/AppRepairSupport.swift
         Sources/Tina/Core/AppRepairStrings.swift

@@ -155,6 +155,7 @@ struct MetricsTests {
                 ShortcutRegistrationAuditTests.run(suite)
             }),
             ("utilities", {
+                AutomationSupportTests.run(suite)
                 UsageStatsStoreTests.run(suite)
                 InputRemapSupportTests.run(suite)
                 MacSettingsSupportTests.run(suite)
