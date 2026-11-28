@@ -237,6 +237,9 @@ final class RecorderButton: NSButton {
     }
 
     private func handleRecordingKey(_ event: NSEvent) {
+        // The tap forwards repeats whose down preceded capture. They must
+        // reach downstream remappers, but are not new presses for this field.
+        guard !event.isARepeat else { return }
         handleRecordingKey(keyCode: Int64(event.keyCode),
                            modifiers: GlobalShortcutModifiers(eventFlags: event.modifierFlags),
                            flags: CGEventFlags(rawValue: UInt64(event.modifierFlags.rawValue)))

@@ -43,29 +43,14 @@ final class LaunchItemsService: ObservableObject {
     /// launchd's same GUI domain to verify its effect.
     func perform(_ action: LaunchItemsSupport.Action, on item: LaunchItem,
                  completion: @escaping (Bool) -> Void) {
-        guard item.allows(action), let identity = item.plistIdentity,
-              !busyLabels.contains(item.label) else {
+        guard item.allows(action), !busyLabels.contains(item.label) else {
             completion(false)
             return
         }
         busyLabels.insert(item.label)
         queue.async { [weak self] in
-            let uid = getuid()
             let home = URL(fileURLWithPath: NSHomeDirectory())
-            let isCurrent = {
-                LaunchItemsSupport.ownedPlistIdentity(item.url, home: home, uid: uid) == identity
-                    && Self.readPlist(item.url)?.label == item.label
-            }
-            let fresh = LaunchItemsSupport.ownedPlistIdentity(item.url, home: home, uid: uid) == identity
-                ? Self.readPlist(item.url) : nil
-            let changesLogin = action == .enableAtLogin || action == .disableAtLogin
-            let verified = fresh.map { plist in
-                plist.label == item.label
-                    && (!changesLogin || Self.userOwnsLabel(item.label, at: item.url, home: home))
-                    && LaunchItemsSupport.perform(action, uid: uid, label: item.label, plist: item.url,
-                                                  defaultDisabled: plist.disabled, run: Self.run,
-                                                  isCurrent: isCurrent)
-            } ?? false
+            let verified = LaunchItemsSupport.perform(action, on: item, home: home, uid: getuid(), run: Self.run)
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.busyLabels.remove(item.label)
@@ -79,49 +64,18 @@ final class LaunchItemsService: ObservableObject {
 
     // MARK: - Reading
 
-    private static func readPlist(_ url: URL) -> (label: String, program: String?, disabled: Bool)? {
-        var info = stat()
-        guard lstat(url.path, &info) == 0, (info.st_mode & S_IFMT) == S_IFREG,
-              let data = try? Data(contentsOf: url) else { return nil }
-        return LaunchItemsSupport.parse(data)
-    }
-
-    private static func entries(in folder: URL) -> [URL]? {
-        do {
-            return try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
-                .filter { $0.pathExtension == "plist" }
-        } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
-            return []
-        } catch {
-            return nil
-        }
-    }
-
-    private static let localAgents = URL(fileURLWithPath: "/Library/LaunchAgents", isDirectory: true)
-    private static let systemAgents = URL(fileURLWithPath: "/System/Library/LaunchAgents", isDirectory: true)
-
-    private static func userOwnsLabel(_ label: String, at selected: URL, home: URL) -> Bool {
-        for root in [home.appendingPathComponent("Library/LaunchAgents"), localAgents, systemAgents] {
-            guard let plists = entries(in: root) else { return false }
-            for other in plists where other.standardizedFileURL != selected.standardizedFileURL {
-                guard let peer = readPlist(other), peer.label != label else { return false }
-            }
-        }
-        return true
-    }
-
     private static func enumerate() -> (items: [LaunchItem], unreadable: Bool) {
         let home = URL(fileURLWithPath: NSHomeDirectory())
         let uid = getuid()
         let overrides = LaunchItemsSupport.disabledOverrides(uid: uid, run: run)
         var unreadable = false
         var found: [LaunchItem] = []
-        for root in [home.appendingPathComponent("Library/LaunchAgents"), localAgents,
+        for root in [home.appendingPathComponent("Library/LaunchAgents"), LaunchItemsSupport.AgentFolders.standard.local,
                      URL(fileURLWithPath: "/Library/LaunchDaemons", isDirectory: true)] {
-            guard let plists = entries(in: root) else { unreadable = true; continue }
+            guard let plists = LaunchItemsSupport.entries(in: root) else { unreadable = true; continue }
             for url in plists {
                 guard let scope = LaunchItemsSupport.scope(for: url, home: home) else { continue }
-                guard let plist = readPlist(url) else { unreadable = true; continue }
+                guard let plist = LaunchItemsSupport.readPlist(url) else { unreadable = true; continue }
                 let state = scope.isWritable
                     ? LaunchItemsSupport.serviceState(uid: uid, label: plist.label, run: run)
                     : .unknown

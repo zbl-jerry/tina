@@ -456,6 +456,30 @@ enum ShortcutClearingTests {
         }
         suite.expect(remapCaptures.count == 4, "each remap press produced one capture")
 
+        func localKey(_ code: Int, modifiers: NSEvent.ModifierFlags = [], repeatDown: Bool) -> NSEvent {
+            NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: modifiers,
+                             timestamp: 0, windowNumber: 0, context: nil, characters: "x",
+                             charactersIgnoringModifiers: "x", isARepeat: repeatDown, keyCode: UInt16(code))!
+        }
+        let recorder = RecorderButton()
+        var clears = 0
+        var saved: GlobalShortcut?
+        recorder.clearAction = { clears += 1 }
+        recorder.captureAction = { saved = $0 }
+        recorder.beginRecording()
+        recorder.keyDown(with: localKey(kVK_Delete, repeatDown: true))
+        suite.expect(clears == 0 && ShortcutCapture.isCapturing,
+                     "a held Delete repeat reaching AppKit does not clear or end capture")
+        let repeatedChord = recorder.performKeyEquivalent(with: localKey(kVK_ANSI_K, modifiers: .command,
+                                                                         repeatDown: true))
+        suite.expect(repeatedChord && saved == nil && ShortcutCapture.isCapturing,
+                     "a forwarded chord repeat is handled without saving a shortcut or invoking the menu")
+        let freshChord = recorder.performKeyEquivalent(with: localKey(kVK_ANSI_K, modifiers: .command,
+                                                                      repeatDown: false))
+        suite.expect(freshChord && saved == GlobalShortcut(keyCode: Int64(kVK_ANSI_K), modifiers: .command)
+                     && !ShortcutCapture.isCapturing, "a fresh local chord still completes capture")
+        recorder.stopRecording()
+
         let unsupported = Row(.shelf)
         let previous = unsupported.rawValue
         unsupported.clear()

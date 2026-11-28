@@ -2538,6 +2538,11 @@ enum CommandBarFeatureTests {
                 && monitor.contains("#selector(NSText.paste(_:))")
                 && monitor.contains("NSApp.sendAction"),
                "the Command Bar sends standard editing commands through its responder chain")
+        let localCapture = monitor.components(separatedBy: "if case .capturingShortcut = self.mode {")
+        suite.expect(localCapture.count == 2
+                && localCapture[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                    .hasPrefix("guard !event.isARepeat else { return nil }\n                self.handleCaptureKey("),
+               "the Command Bar consumes a forwarded repeat without acting on it in shortcut capture")
         // Ends on the next declaration rather than naming a neighbour: a
         // rename would find no separator, leave the slice running to end of
         // file, and quietly restore the whole-file search.

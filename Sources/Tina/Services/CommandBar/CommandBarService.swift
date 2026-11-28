@@ -3545,9 +3545,10 @@ final class CommandBarService: ObservableObject {
 
             // Listening for a combination: every key belongs to the person,
             // except the two that mean "never mind" and "take it off". The
-            // recording tap is the primary path; this is the fallback when
-            // that tap cannot exist.
+            // recording tap is the primary path; a held key may still
+            // repeat here if its down preceded recording.
             if case .capturingShortcut = self.mode {
+                guard !event.isARepeat else { return nil }
                 self.handleCaptureKey(
                     keyCode: Int64(event.keyCode),
                     modifiers: GlobalShortcutModifiers(eventFlags: event.modifierFlags))
