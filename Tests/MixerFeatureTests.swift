@@ -1736,5 +1736,19 @@ enum MixerFeatureTests {
                 && !name.isEmpty && name.hasSuffix(hint)
                 && panel.components(separatedBy: hint).count == 3,
                "the reorder hint remains on both the app icon and name")
+
+        let directOutput = section(from: "if outputOnly {", to: "} else if settingsMode")
+        let fullDevices = section(from: "private var audioDevicesSection: some View {",
+                                  to: "private var outputSwitchFeedback: some View {")
+        for (name, branch) in [("direct output", directOutput), ("full mixer", fullDevices)] {
+            suite.expect(branch.contains("universalOutputPicker")
+                         && branch.components(separatedBy: "outputSwitchFeedback").count == 2,
+                         "the \(name) picker includes exactly one shared switch feedback row")
+        }
+        let feedback = section(from: "private var outputSwitchFeedback: some View {",
+                               to: "private var optionsDisclosure: some View {")
+        suite.expect(feedback.contains("if let error = mixer.outputSwitchError")
+                     && feedback.contains("String(format: l10n.s.mixerSystemOutputErrorFormat, error)"),
+                     "output feedback uses the localized message only while an error exists")
     }
 }

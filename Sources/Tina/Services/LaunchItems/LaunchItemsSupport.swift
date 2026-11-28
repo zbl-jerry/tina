@@ -32,6 +32,21 @@ struct LaunchItem: Identifiable, Equatable {
 }
 
 enum LaunchItemsSupport {
+    struct AgentFolders {
+        let local: URL
+        let system: URL
+        let cryptex: URL
+        let systemOwner: uid_t
+
+        static let standard = AgentFolders(
+            local: URL(fileURLWithPath: "/Library/LaunchAgents", isDirectory: true),
+            system: URL(fileURLWithPath: "/System/Library/LaunchAgents", isDirectory: true),
+            cryptex: URL(fileURLWithPath: "/System/Volumes/Preboot/Cryptexes/App/System/Library/LaunchAgents",
+                        isDirectory: true),
+            systemOwner: 0
+        )
+    }
+
     enum Action: String, Identifiable {
         case startForSession, stopForSession, enableAtLogin, disableAtLogin
 
@@ -62,10 +77,11 @@ enum LaunchItemsSupport {
     }
 
     typealias Command = ([String]) -> CommandResult
+    typealias Plist = (label: String, program: String?, disabled: Bool)
 
     /// Reads the label and the executable path from a launchd plist. A plist
     /// without a label cannot be identified and is skipped.
-    static func parse(_ data: Data) -> (label: String, program: String?, disabled: Bool)? {
+    static func parse(_ data: Data) -> Plist? {
         guard let object = try? PropertyListSerialization.propertyList(from: data,
                                                                        options: [],
                                                                        format: nil),
@@ -77,6 +93,57 @@ enum LaunchItemsSupport {
         let program = (dictionary["Program"] as? String)
             ?? (dictionary["ProgramArguments"] as? [String])?.first
         return (label, program?.isEmpty == true ? nil : program, dictionary["Disabled"] as? Bool ?? false)
+    }
+
+    static func readPlist(_ url: URL, systemOwner: uid_t? = nil) -> Plist? {
+        let fd = open(url.path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)
+        guard fd >= 0 else { return nil }
+        defer { close(fd) }
+        var info = stat()
+        guard fstat(fd, &info) == 0, (info.st_mode & S_IFMT) == S_IFREG else { return nil }
+        if let systemOwner {
+            guard info.st_uid == systemOwner, (info.st_mode & 0o022) == 0 else { return nil }
+        }
+        let reader = FileHandle(fileDescriptor: fd, closeOnDealloc: false)
+        guard let data = try? reader.readToEnd() else { return nil }
+        return parse(data)
+    }
+
+    static func entries(in folder: URL) -> [URL]? {
+        do {
+            return try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+                .filter { $0.pathExtension == "plist" }
+        } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
+            return []
+        } catch {
+            return nil
+        }
+    }
+
+    private static func peerLabel(_ url: URL, folders: AgentFolders) -> String? {
+        if let ordinary = readPlist(url) { return ordinary.label }
+
+        // Stock system agents can point into Apple's App Cryptex. Follow this
+        // narrow exception only when reading a peer for label comparison.
+        var info = stat()
+        guard url.deletingLastPathComponent().standardizedFileURL == folders.system.standardizedFileURL,
+              lstat(url.path, &info) == 0, (info.st_mode & S_IFMT) == S_IFLNK,
+              info.st_uid == folders.systemOwner else { return nil }
+        let resolved = url.resolvingSymlinksInPath().standardizedFileURL
+        guard resolved.deletingLastPathComponent().standardizedFileURL == folders.cryptex.standardizedFileURL,
+              resolved.pathExtension == "plist" else { return nil }
+        return readPlist(resolved, systemOwner: folders.systemOwner)?.label
+    }
+
+    private static func hasUniqueAgentLabel(_ label: String, at selected: URL,
+                                            home: URL, folders: AgentFolders) -> Bool {
+        for root in [home.appendingPathComponent("Library/LaunchAgents"), folders.local, folders.system] {
+            guard let plists = entries(in: root) else { return false }
+            for other in plists where other.standardizedFileURL != selected.standardizedFileURL {
+                guard let peer = peerLabel(other, folders: folders), peer != label else { return false }
+            }
+        }
+        return true
     }
 
     /// Resolves which of the three launchd folders a plist belongs to. The
@@ -145,9 +212,11 @@ enum LaunchItemsSupport {
         guard lines.first == "disabled services = {", lines.last == "}" else { return nil }
         var resultByLabel: [String: Bool] = [:]
         for line in lines.dropFirst().dropLast() where !line.isEmpty {
-            guard line.first == "\"", let separator = line.range(of: "\" => ", options: .backwards)
-            else { return nil }
-            let label = String(line[line.index(after: line.startIndex)..<separator.lowerBound])
+            let labelStart = line.index(after: line.startIndex)
+            guard line.first == "\"",
+                  let separator = line.range(of: "\" => ", options: .backwards),
+                  labelStart < separator.lowerBound else { return nil }
+            let label = String(line[labelStart..<separator.lowerBound])
             let state = line[separator.upperBound...]
             switch state {
             case "disabled", "true": resultByLabel[label] = true
@@ -188,5 +257,22 @@ enum LaunchItemsSupport {
             return run([disable ? "disable" : "enable", target]).status == 0
                 && disabledOverrides(uid: uid, run: run)?[label] == disable
         }
+    }
+
+    /// Performs an action only for the confirmed, still-owned user plist.
+    /// A login override changes a label, so all peer labels must be known and unique.
+    static func perform(_ action: Action, on item: LaunchItem, home: URL, uid: uid_t,
+                        folders: AgentFolders = .standard, run: Command) -> Bool {
+        guard item.allows(action), let identity = item.plistIdentity,
+              ownedPlistIdentity(item.url, home: home, uid: uid) == identity,
+              let plist = readPlist(item.url), plist.label == item.label else { return false }
+        if action == .enableAtLogin || action == .disableAtLogin {
+            guard hasUniqueAgentLabel(item.label, at: item.url, home: home, folders: folders) else { return false }
+        }
+        return perform(action, uid: uid, label: item.label, plist: item.url,
+                       defaultDisabled: plist.disabled, run: run, isCurrent: {
+            ownedPlistIdentity(item.url, home: home, uid: uid) == identity
+                && readPlist(item.url)?.label == item.label
+        })
     }
 }

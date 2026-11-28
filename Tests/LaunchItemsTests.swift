@@ -62,6 +62,7 @@ enum LaunchItemsTests {
                      "a plist label cannot redirect the launchd target")
         operation(suite, plist: plist, label: user.label)
         verifyOwnedPlist(suite)
+        verifyPersistentPeerGuard(suite)
     }
 
     private static func operation(_ suite: TestSuite, plist: URL, label: String) {
@@ -123,6 +124,9 @@ enum LaunchItemsTests {
 
         let overriddenDisabled = result(0, "\tdisabled services = {\n\t\t\"\(label)\" => disabled\n\t}")
         let overriddenEnabled = result(0, "\tdisabled services = {\n\t\t\"\(label)\" => enabled\n\t}")
+        let malformedOverride = result(0, "disabled services = {\n\" => enabled\n}")
+        suite.expect(LaunchItemsSupport.disabledOverrides(uid: 501, run: { _ in malformedOverride }) == nil,
+                     "a row with only a closing quote is unknown, not a parser trap")
         suite.expect(runAction(.disableAtLogin, replies: [loaded(), noOverrides, result(), overriddenDisabled])
                      && commands == [printService, printDisabled, ["disable", target], printDisabled],
                      "persistent disable uses and verifies an explicit login override")
@@ -156,6 +160,129 @@ enum LaunchItemsTests {
                          "a symbolic link cannot authorize an operation even if its destination is an owned plist")
         } catch {
             suite.expect(false, "the launch-item ownership fixture could not be created: \(error)")
+        }
+    }
+
+    private static func verifyPersistentPeerGuard(_ suite: TestSuite) {
+        let files = FileManager.default
+        let root = files.temporaryDirectory.resolvingSymlinksInPath()
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let home = root.appendingPathComponent("User", isDirectory: true)
+        let userFolder = home.appendingPathComponent("Library/LaunchAgents", isDirectory: true)
+        let uid = getuid()
+        let folders = LaunchItemsSupport.AgentFolders(
+            local: root.appendingPathComponent("LocalAgents", isDirectory: true),
+            system: root.appendingPathComponent("SystemAgents", isDirectory: true),
+            cryptex: root.appendingPathComponent("CryptexAgents", isDirectory: true),
+            systemOwner: uid)
+        let lookalike = root.appendingPathComponent("CryptexAgents-Untrusted", isDirectory: true)
+        let selected = userFolder.appendingPathComponent("selected.plist")
+        let systemLink = folders.system.appendingPathComponent("apple.plist")
+        let applePlist = folders.cryptex.appendingPathComponent("apple.plist")
+        let userLink = userFolder.appendingPathComponent("linked.plist")
+        let localLink = folders.local.appendingPathComponent("linked.plist")
+        let label = "com.vendor.confirmed"
+        let domain = "gui/\(uid)"
+        let target = "\(domain)/\(label)"
+        defer { try? files.removeItem(at: root) }
+
+        func write(_ label: String, to url: URL) throws {
+            let plist = try PropertyListSerialization.data(fromPropertyList: ["Label": label],
+                                                           format: .xml,
+                                                           options: 0)
+            try plist.write(to: url)
+            try files.setAttributes([.posixPermissions: 0o644], ofItemAtPath: url.path)
+        }
+
+        do {
+            for folder in [userFolder, folders.local, folders.system, folders.cryptex, lookalike] {
+                try files.createDirectory(at: folder, withIntermediateDirectories: true)
+            }
+            try write(label, to: selected)
+            try write("com.apple.unrelated", to: applePlist)
+            try files.createSymbolicLink(atPath: systemLink.path,
+                                         withDestinationPath: "../CryptexAgents/apple.plist")
+
+            guard let selectedIdentity = LaunchItemsSupport.ownedPlistIdentity(selected, home: home, uid: uid) else {
+                suite.expect(false, "the persistent-peer fixture must own its selected regular file")
+                return
+            }
+            func attempt(_ action: LaunchItemsSupport.Action, url: URL, owner: uid_t,
+                         folders: LaunchItemsSupport.AgentFolders) -> (success: Bool, commands: [[String]]) {
+                var overridesDisabled = action == .enableAtLogin
+                let item = LaunchItem(url: url, label: label, program: nil, scope: .userAgent,
+                                      state: .unloaded, disabledAtLogin: overridesDisabled,
+                                      plistIdentity: selectedIdentity)
+                var commands: [[String]] = []
+                let success = LaunchItemsSupport.perform(action, on: item, home: home, uid: owner,
+                                                         folders: folders, run: { command in
+                    commands.append(command)
+                    let output: String
+                    switch command {
+                    case ["print", target]:
+                        return .init(status: 113,
+                                     output: Data("Could not find service \"\(label)\" in domain for user gui: \(uid)".utf8))
+                    case ["print-disabled", domain]:
+                        let state = overridesDisabled ? "disabled" : "enabled"
+                        output = "disabled services = {\n\"\(label)\" => \(state)\n}"
+                    case ["enable", target], ["disable", target]:
+                        overridesDisabled = command.first == "disable"
+                        output = ""
+                    default: return .init(status: 112, output: Data())
+                    }
+                    return .init(status: 0, output: Data(output.utf8))
+                })
+                return (success, commands)
+            }
+            func expectRefusal(_ message: String) {
+                let transaction = attempt(.disableAtLogin, url: selected, owner: uid, folders: folders)
+                suite.expect(!transaction.success && transaction.commands.isEmpty, message)
+            }
+
+            let actions: [(LaunchItemsSupport.Action, String)] = [(.disableAtLogin, "disable"),
+                                                                  (.enableAtLogin, "enable")]
+            for (action, verb) in actions {
+                let transaction = attempt(action, url: selected, owner: uid, folders: folders)
+                suite.expect(transaction.success
+                             && transaction.commands == [["print", target], ["print-disabled", domain],
+                                                          [verb, target], ["print-disabled", domain]],
+                             "an unrelated trusted Cryptex peer allows verified same-domain \(verb)")
+            }
+
+            try write(label, to: applePlist)
+            expectRefusal("a duplicate label behind a trusted system link cannot be changed")
+            try write("com.apple.unrelated", to: applePlist)
+            try files.setAttributes([.posixPermissions: 0o666], ofItemAtPath: applePlist.path)
+            expectRefusal("a group- or other-writable Cryptex target is not trusted")
+            try files.setAttributes([.posixPermissions: 0o644], ofItemAtPath: applePlist.path)
+            try files.createSymbolicLink(at: localLink, withDestinationURL: applePlist)
+            expectRefusal("a local LaunchAgents peer cannot use the system-only link exception")
+            try files.removeItem(at: localLink)
+            try files.createSymbolicLink(at: userLink, withDestinationURL: applePlist)
+            expectRefusal("a user LaunchAgents peer cannot use the system-only link exception")
+            try files.removeItem(at: userLink)
+
+            let outside = lookalike.appendingPathComponent("apple.plist")
+            try files.removeItem(at: systemLink)
+            try write("com.apple.unrelated", to: outside)
+            try files.createSymbolicLink(at: systemLink, withDestinationURL: outside)
+            expectRefusal("a prefix lookalike outside the Cryptex directory is not trusted")
+            try files.removeItem(at: systemLink)
+            try files.createSymbolicLink(at: systemLink, withDestinationURL: applePlist)
+            try Data("invalid plist".utf8).write(to: applePlist)
+            expectRefusal("a trusted link with an unparseable target fails closed")
+            try files.removeItem(at: applePlist)
+            expectRefusal("an unresolved system link fails closed")
+            try write("com.apple.unrelated", to: applePlist)
+
+            let wrongOwner = attempt(.disableAtLogin, url: selected, owner: uid == 0 ? 1 : 0, folders: folders)
+            suite.expect(!wrongOwner.success && wrongOwner.commands.isEmpty,
+                         "the confirmed plist must belong to the effective fixture user")
+            try files.moveItem(at: selected, to: userLink)
+            try files.createSymbolicLink(at: selected, withDestinationURL: userLink)
+            expectRefusal("a symlink at the confirmed target path cannot authorize persistent changes")
+        } catch {
+            suite.expect(false, "the persistent-peer launch-item fixture failed: \(error)")
         }
     }
 }

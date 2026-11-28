@@ -39,7 +39,11 @@ struct MixerSection: View {
     var body: some View {
         Group {
             if outputOnly {
-                universalOutputPicker.panelCard(interactive: false)
+                VStack(alignment: .leading, spacing: 6) {
+                    universalOutputPicker
+                    outputSwitchFeedback
+                }
+                .panelCard(interactive: false)
             } else if settingsMode {
                 SettingsCard(title: l10n.s.mixerSection) {
                     mixerControls
@@ -87,10 +91,15 @@ struct MixerSection: View {
             universalOutputPicker
             systemSoundOutputPicker
             microphonePicker
-            if let outputSwitchError = mixer.outputSwitchError {
-                inputMessage(String(format: l10n.s.mixerSystemOutputErrorFormat, outputSwitchError),
-                             systemImage: "exclamationmark.triangle")
-            }
+            outputSwitchFeedback
+        }
+    }
+
+    @ViewBuilder
+    private var outputSwitchFeedback: some View {
+        if let error = mixer.outputSwitchError {
+            inputMessage(String(format: l10n.s.mixerSystemOutputErrorFormat, error),
+                         systemImage: "exclamationmark.triangle")
         }
     }
 

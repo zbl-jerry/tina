@@ -16,6 +16,7 @@ enum SuperKeyTapContract {
     enum Tap {
         static var requests: [Request] = []
         static func enable(tap: CFMachPort, enable: Bool) {}
+        static func isEnabled(tap: CFMachPort) -> Bool { CFMachPortIsValid(tap) }
         static func create(tap: CGEventTapLocation, place: CGEventTapPlacement, options: CGEventTapOptions,
                            eventsOfInterest: CGEventMask, callback: CGEventTapCallBack,
                            userInfo: UnsafeMutableRawPointer?) -> CFMachPort? {
@@ -204,15 +205,12 @@ enum SuperKeyTapContract {
         static var tap: CFMachPort?
         static var runLoopSource: CFRunLoopSource?
         static var drainWatchdog: DispatchWorkItem?
-        static var heldKeyCode: Int64?
-        static var drainingKeyCode: Int64?
+        static var ownedKeyCodes: Set<Int64> = []
         static var superState = SuperKeySupport.State()
         static var superKeyTap: CFMachPort?
         static var observingSession = false
         static var handler: ((Int64, GlobalShortcutModifiers, CGEventFlags) -> Void)?
         static func AXIsProcessTrusted() -> Bool { true }
-        static func tearDown() {}
-        static func armDrainWatchdog() {}
     }
     struct Pipeline {
         struct Filter {
@@ -280,11 +278,7 @@ enum SuperKeyTapContract {
             State.isEngaged = false
             State.inputSourceChanges = 0
             Clock.systemUptime = 100
-            RecordingState.handler = nil
-            RecordingState.superState.reset()
-            RecordingState.superKeyTap = nil
-            RecordingState.heldKeyCode = nil
-            RecordingState.drainingKeyCode = nil
+            ShortcutRecordingTap.tearDown()
             RecordingState.observingSession = false
         }
         let trigger = SuperKeySupport.triggerKeyCode
@@ -413,6 +407,7 @@ enum SuperKeyTapContract {
         suite.expect(captured.map { $0.0 } == [trigger],
                      "a disabled tap does not reserve F18")
         service.tap = nil
+        checkRecorderOwnership(suite, recordingRequest: recordingRequest, consumer: consumer)
 
         // HID hardware carries mach ticks; synthetic events carry nanoseconds.
         // Both must keep the same 500 ms tap/hold boundary on Apple Silicon.
@@ -439,6 +434,111 @@ enum SuperKeyTapContract {
         }
         checkCapsLock(suite, request: request)
         checkKeyboardWait(suite)
+    }
+
+    private static func checkRecorderOwnership(_ suite: TestSuite, recordingRequest: Request, consumer: Request) {
+        ShortcutRecordingTap.tearDown()
+        guard let port = CFMachPortCreate(nil, { _, _, _, _ in }, nil, nil) else {
+            suite.expect(false, "the recorder fixture can hold a local port during drain")
+            return
+        }
+        defer { ShortcutRecordingTap.tearDown() }
+        RecordingState.tap = port
+
+        let trigger = SuperKeySupport.triggerKeyCode
+        let superKey = SuperKeyService()
+        let keyboard = CFMachPortCreate(nil, { _, _, _, _ in }, nil, nil)
+        guard let keyboard else {
+            suite.expect(false, "the Super Key can hold a separate offline port")
+            return
+        }
+        defer { CFMachPortInvalidate(keyboard) }
+        superKey.tap = keyboard
+        State.shared = superKey
+
+        var presses = InputRemapSupport.Presses()
+        var forwarded: [Int64] = []
+        var sent: [GlobalShortcut] = []
+        var captured: [Int64] = []
+        var pipeline = Pipeline()
+        pipeline.install("super", .init(location: .cghidEventTap, placement: .tailAppendEventTap, mask: consumer.mask)) {
+            superKey.handle(type: $0.type, event: $0)?.takeUnretainedValue()
+        }
+        pipeline.install("recorder", recordingRequest) {
+            ShortcutRecordingTap.handle(type: $0.type, event: $0)?.takeUnretainedValue()
+        }
+        pipeline.install("session remapper", consumer) { event in
+            let code = event.getIntegerValueField(.keyboardEventKeycode)
+            let phase: InputRemapSupport.Presses.Phase = event.type == .keyUp ? .up
+                : (event.getIntegerValueField(.keyboardEventAutorepeat) != 0 ? .repeatDown : .down)
+            forwarded.append(code)
+            if let target = presses.target(for: UInt16(code), phase: phase, matching: {
+                guard RecordingState.handler == nil, code == 0 || code == 1 else { return nil }
+                return InputRemapRule(sourceKeyCode: UInt16(code), sourceModifiers: [],
+                                     targetKeyCode: UInt16(code + 10), targetModifiers: [])
+            }) {
+                sent.append(target)
+            }
+            return event
+        }
+        let capture: (Int64, GlobalShortcutModifiers, CGEventFlags) -> Void = { code, _, _ in captured.append(code) }
+        func repeatKey(_ code: Int64) -> CGEvent {
+            let event = key(code)
+            event.setIntegerValueField(.keyboardEventAutorepeat, value: 1)
+            return event
+        }
+
+        pipeline.send(key(trigger))
+        pipeline.send(key(0))
+        pipeline.send(key(1))
+        suite.expect(superKey.state.isHeld && sent.map(\.keyCode) == [10, 11],
+                     "Super Key and both replacements are held before recording")
+        suite.expect(ShortcutRecordingTap.begin(capture), "recording starts on the stub tap")
+        pipeline.send(repeatKey(trigger))
+        pipeline.send(key(trigger, down: false))
+        pipeline.send(repeatKey(0))
+        pipeline.send(key(0, down: false))
+        suite.expect(!superKey.state.isHeld && sent.map(\.keyCode) == [10, 11, 10, 10] && captured.isEmpty,
+                     "recording forwards pre-existing Super Key and mapped repeats and releases to their owners")
+
+        pipeline.send(key(2))
+        pipeline.send(key(3))
+        ShortcutRecordingTap.end()
+        suite.expect(RecordingState.tap != nil, "ending capture keeps the tap for owned tails")
+        pipeline.send(repeatKey(1))
+        pipeline.send(key(1, down: false))
+        pipeline.send(key(4))
+        suite.expect(sent.map(\.keyCode) == [10, 11, 10, 10, 11, 11] && presses.finish().isEmpty,
+                     "drain forwards an unrelated held remapped key without leaving a target down")
+        suite.expect(forwarded.last == 4, "a fresh unrelated key is not consumed while draining")
+        pipeline.send(repeatKey(2))
+        pipeline.send(key(2, down: false))
+        suite.expect(RecordingState.tap != nil && !forwarded.contains(2),
+                     "releasing one owned key does not end another key's drain")
+
+        suite.expect(ShortcutRecordingTap.begin(capture), "recording can restart while still draining")
+        pipeline.send(repeatKey(3))
+        pipeline.send(key(3, down: false))
+        suite.expect(captured == [2, 3] && !forwarded.contains(3),
+                     "restart keeps ownership of old tails but never captures those tails again")
+        ShortcutRecordingTap.end()
+        suite.expect(RecordingState.tap == nil, "tap stops after the last owned key is released")
+
+        guard let nextPort = CFMachPortCreate(nil, { _, _, _, _ in }, nil, nil) else {
+            suite.expect(false, "the drain watchdog fixture can allocate its tap")
+            return
+        }
+        RecordingState.tap = nextPort
+        _ = ShortcutRecordingTap.begin(capture)
+        pipeline.send(key(6))
+        ShortcutRecordingTap.end()
+        let deadline = RecordingState.drainWatchdog
+        pipeline.send(repeatKey(6))
+        suite.expect(deadline?.isCancelled == true && RecordingState.drainWatchdog != nil
+                     && !forwarded.contains(6), "an owned repeat refreshes the drain deadline without escaping")
+        pipeline.send(key(6)) // The earlier up was missed; a new physical down is not a repeat.
+        suite.expect(RecordingState.tap == nil && forwarded.last == 6 && captured == [2, 3, 6],
+                     "a fresh down during drain forwards and discards stale ownership")
     }
 
     private static func checkKeyboardWait(_ suite: TestSuite) {

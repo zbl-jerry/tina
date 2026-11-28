@@ -1494,8 +1494,11 @@ def main():
           + "}\nfinal class ShortcutRecordingTap: RecordingState {\n"
           + "".join(declaration("Sources/Tina/Services/ShortcutRecordingTap.swift", prefix)
                     .replace("private static func", "static func", 1)
-                    for prefix in ["    static func begin(", "    static func resetSuperKey()", "    private static func handle("])
+                    for prefix in ["    static func begin(", "    static func end()", "    private static func armDrainWatchdog()",
+                                   "    private static func tearDown()", "    static func resetSuperKey()", "    private static func handle("])
             .replace("CGEvent.tapCreate(", "Tap.create(")
+            .replace("CGEvent.tapEnable(", "Tap.enable(")
+            .replace("CGEvent.tapIsEnabled(", "Tap.isEnabled(")
           + "}\n}\n")
 
     write("CleanerLastRun.swift", "import Foundation\nextension CleanerLastRunContract {\n"

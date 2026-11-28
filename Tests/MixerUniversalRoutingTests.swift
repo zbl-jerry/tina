@@ -340,15 +340,19 @@ enum MixerUniversalRoutingContract {
 
         mixer.savedRoutes = ["Wine Game": "airpods"]
         Mixer.writeStatus = -1
-        suite.expect(!mixer.setDefaultOutputDeviceUID("speakers")
+        suite.expect(!mixer.setUniversalOutputDeviceUID("speakers")
+                     && mixer.outputSwitchError == "OSStatus -1"
                      && mixer.savedRoutes == ["Wine Game": "airpods"]
                      && mixer.sessionRoutes[unnamed.id] == "airpods",
-                     "a failed universal switch preserves all earlier routing choices")
+                     "a failed picker switch publishes the HAL error and preserves earlier routing choices")
         let writes = Mixer.writes.count
-        suite.expect(!mixer.setDefaultOutputDeviceUID("missing") && Mixer.writes.count == writes,
-                     "an unavailable output cannot begin a universal switch")
+        suite.expect(!mixer.setUniversalOutputDeviceUID("missing") && Mixer.writes.count == writes
+                     && mixer.outputSwitchError == L10n.shared.s.mixerOutputUnavailable,
+                     "a disappeared picker device publishes the unavailable error without a HAL write")
 
         Mixer.writeStatus = noErr
+        suite.expect(mixer.setUniversalOutputDeviceUID("speakers") && mixer.outputSwitchError == nil,
+                     "a successful picker switch clears prior feedback")
         let rapid = Mixer()
         suite.expect(rapid.switchToNextSoundOutput(in: ["speakers", "airpods"])
                      && rapid.switchToNextSoundOutput(in: ["speakers", "airpods"])
