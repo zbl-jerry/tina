@@ -289,9 +289,11 @@ struct MetricsTests {
         ]
         var selected = Set<String>()
         var listOnly = false
+        var listDefault = false
         for argument in CommandLine.arguments.dropFirst() {
-            if argument == "--list" {
+            if argument == "--list" || argument == "--list-default" {
                 listOnly = true
+                listDefault = listDefault || argument == "--list-default"
                 continue
             }
             guard argument.hasPrefix("--suite="),
@@ -301,13 +303,15 @@ struct MetricsTests {
             }
             selected.insert(String(argument.dropFirst(8)))
         }
-        if listOnly {
-            groups.forEach { print($0.0) }
-            exit(0)
-        }
         // notch-music is a focused subset already executed by notch. Running it
         // twice in an unfiltered pass also repeats stateful adapter fixtures.
-        for (name, body) in groups where (selected.isEmpty && name != "notch-music") || selected.contains(name) {
+        let defaultGroups = groups.filter { $0.0 != "notch-music" }
+        if listOnly {
+            (listDefault ? defaultGroups : groups).forEach { print($0.0) }
+            exit(0)
+        }
+        let requestedGroups = selected.isEmpty ? defaultGroups : groups.filter { selected.contains($0.0) }
+        for (name, body) in requestedGroups {
             suite.run(name, body)
         }
         suite.finish()
