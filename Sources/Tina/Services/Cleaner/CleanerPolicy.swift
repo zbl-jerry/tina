@@ -27,7 +27,8 @@ enum CleanerPolicy {
     /// Relative to the home folder. Only ever offered when they exist. The
     /// DeviceSupport folders are debug symbol caches Xcode rebuilds on the
     /// next device connection; they quietly grow to tens of gigabytes and
-    /// are a classic slice of the storage macOS files under "Other".
+    /// are a classic slice of the storage macOS files under "Other". The
+    /// ordinary cache scan owns ~/Library/Caches, including Xcode and SwiftPM.
     static let developerJunkPaths: [String] = [
         "/Library/Developer/Xcode/DerivedData",
         "/Library/Developer/Xcode/DocumentationCache",
@@ -35,8 +36,6 @@ enum CleanerPolicy {
         "/Library/Developer/Xcode/iOS DeviceSupport",
         "/Library/Developer/Xcode/watchOS DeviceSupport",
         "/Library/Developer/Xcode/tvOS DeviceSupport",
-        "/Library/Caches/org.swift.swiftpm",
-        "/Library/Caches/com.apple.dt.Xcode",
     ]
 
     /// Release archives are build products the user may still need to upload
@@ -50,11 +49,44 @@ enum CleanerPolicy {
         raw <= 0 ? 0 : min(raw, 3650)
     }
 
+    /// Organizer saves archives inside YYYY-MM-DD folders. Also accept a
+    /// bundle placed straight in Archives, but never search other subtrees.
+    static func xcodeArchives(at root: URL, ageDays: Int, now: Date = Date(),
+                              fileManager: FileManager = .default) -> [URL] {
+        let ageDays = sanitizedArchiveAgeDays(ageDays)
+        guard ageDays > 0 else { return [] }
+        let keys: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey, .contentModificationDateKey]
+        let cutoff = now.addingTimeInterval(-Double(ageDays) * 86_400)
+        func properties(_ url: URL) -> URLResourceValues? {
+            guard let values = try? url.resourceValues(forKeys: keys),
+                  values.isDirectory == true, values.isSymbolicLink == false else { return nil }
+            return values
+        }
+        func children(_ url: URL) -> [URL] {
+            (try? fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: Array(keys),
+                                                   options: [.skipsHiddenFiles])) ?? []
+        }
+        func isOldArchive(_ url: URL) -> Bool {
+            guard url.pathExtension == "xcarchive",
+                  let modified = properties(url)?.contentModificationDate else { return false }
+            return modified < cutoff
+        }
+
+        guard properties(root) != nil else { return [] }
+        return children(root).flatMap { entry in
+            if isOldArchive(entry) { return [entry] }
+            guard entry.lastPathComponent.range(of: #"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"#,
+                                               options: .regularExpression) != nil,
+                  properties(entry) != nil else { return [] }
+            return children(entry).filter(isOldArchive)
+        }
+    }
+
     /// Everything under the developer paths rebuilds on the next build, so it
     /// starts checked. Archives are the one exception: they are the user's
     /// output, not a cache.
     static func developerIsPrechecked(_ homeRelativePath: String) -> Bool {
-        precheckDeveloper && homeRelativePath != xcodeArchivePath
+        precheckDeveloper && developerJunkPaths.contains(homeRelativePath)
     }
 
     /// Device backups are the user's safety net: enormous, ancient, and the

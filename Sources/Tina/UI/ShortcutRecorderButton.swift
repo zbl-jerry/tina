@@ -6,13 +6,16 @@ import Carbon.HIToolbox
 import SwiftUI
 
 struct ShortcutRecorderButton: NSViewRepresentable {
-    let shortcut: GlobalShortcut
+    let shortcut: GlobalShortcut?
     let isEnabled: Bool
     /// Shown inside the field while it is listening. Short on purpose: the
     /// sentence explaining what to do lives in the caption under the row, so
     /// the field never has to grow to fit it.
     let waitingTitle: String
     var requiresModifier = true
+    /// A remapping field records Escape and Delete as physical keys rather
+    /// than interpreting them as recorder actions.
+    var capturesEditingKeys = false
     /// When set, the button shows this instead of the shortcut, meaning "no
     /// shortcut assigned"; clicking still records a new one.
     var emptyTitle: String? = nil
@@ -73,6 +76,7 @@ struct ShortcutRecorderButton: NSViewRepresentable {
 
     private func apply(to button: RecorderButton) {
         button.requiresModifier = requiresModifier
+        button.capturesEditingKeys = capturesEditingKeys
         button.shortcut = shortcut
         button.waitingTitle = waitingTitle
         button.emptyTitle = emptyTitle
@@ -90,7 +94,8 @@ struct ShortcutRecorderButton: NSViewRepresentable {
 
 final class RecorderButton: NSButton {
     var requiresModifier = true
-    var shortcut = GlobalShortcut.keepAwakeDefault
+    var capturesEditingKeys = false
+    var shortcut: GlobalShortcut? = .keepAwakeDefault
     var waitingTitle = ""
     var emptyTitle: String?
     var clearAction: (() -> Void)?
@@ -245,11 +250,11 @@ final class RecorderButton: NSButton {
         awaitingKeyForHeldModifiers = false
         modifierRecording.keyPressed()
 
-        if keyCode == Int64(kVK_Escape), !modifiers.hasPrimaryModifier {
+        if !capturesEditingKeys, keyCode == Int64(kVK_Escape), !modifiers.hasPrimaryModifier {
             stopRecording()
             return
         }
-        if GlobalShortcut.clearsShortcut(keyCode: keyCode, modifiers: modifiers) {
+        if !capturesEditingKeys, GlobalShortcut.clearsShortcut(keyCode: keyCode, modifiers: modifiers) {
             guard let clearAction else { return }
             stopRecording()
             clearAction()
@@ -270,6 +275,7 @@ final class RecorderButton: NSButton {
             return
         }
         shortcut = captured
+        if capturesEditingKeys { emptyTitle = nil }
         stopRecording()
         if let captureWithFlagsAction {
             captureWithFlagsAction(captured, flags)
@@ -298,7 +304,7 @@ final class RecorderButton: NSButton {
         if isRecording {
             title = waitingTitle
         } else {
-            title = emptyTitle ?? shortcut.displayString
+            title = emptyTitle ?? shortcut?.displayString ?? ""
         }
     }
 }

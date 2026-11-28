@@ -10,12 +10,21 @@ enum AppRepairIssue: String, CaseIterable, Hashable {
     case quarantined
     case invalidSignature
     case notAccepted
+    case assessmentUnavailable
+}
+
+struct AppRepairFileIdentity: Equatable {
+    let device: Int32
+    let inode: UInt64
+    let createdSeconds: Int
+    let createdNanoseconds: Int
 }
 
 struct AppRepairCandidate: Identifiable, Equatable {
     let url: URL
     let bundleIdentifier: String?
     let name: String
+    let fileIdentity: AppRepairFileIdentity
     let issues: Set<AppRepairIssue>
     /// The quarantine flag was read successfully. A failed read is not the
     /// same as "not quarantined" and keeps the row out of the repair list.
@@ -38,6 +47,7 @@ enum AppRepairPolicy {
             && issues.contains(.quarantined)
             && !issues.contains(.invalidSignature)
             && !issues.contains(.notAccepted)
+            && !issues.contains(.assessmentUnavailable)
     }
 
     /// Only apps with at least one issue make it into the list.

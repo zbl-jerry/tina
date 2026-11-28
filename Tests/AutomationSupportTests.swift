@@ -82,6 +82,29 @@ enum AutomationSupportTests {
                                                   weekdays: [(parts.weekday! % 7) + 1])
         suite.expect(!AutomationSupport.scheduleMatches(wrongDay, at: monday, calendar: calendar),
                      "a different weekday does not fire")
+        let minuteStart = calendar.dateInterval(of: .minute, for: monday)!.start
+        suite.expect(AutomationSupport.dueMinute(matching, after: minuteStart.addingTimeInterval(-1),
+                                               through: minuteStart.addingTimeInterval(100),
+                                               calendar: calendar) == minuteStart,
+                     "short delays catch up a missed schedule minute")
+        suite.expect(AutomationSupport.dueMinute(matching, after: minuteStart,
+                                               through: minuteStart.addingTimeInterval(70),
+                                               calendar: calendar) == nil,
+                     "a covered minute is not replayed")
+        suite.expect(AutomationSupport.dueMinute(matching, after: minuteStart.addingTimeInterval(-1),
+                                               through: minuteStart.addingTimeInterval(360),
+                                               calendar: calendar) == nil,
+                     "long sleeps do not replay stale switches")
+        let forbidden = [AppFeature.autoQuit, .inputRemapping, .usageStats, .automation, .keepAwake].map {
+            rule(.power(connected: true), .feature(id: $0.rawValue, enabled: true))
+        }
+        suite.expect(AutomationSupport.configuredRules(forbidden + [a, b]) == [a],
+                     "the real allowlist rejects uncovered and side-effecting actions before execution")
+        suite.expect(!AutomationSupport.canApply(.notchCalendar, notchActive: false, accessibility: true)
+                     && AutomationSupport.canApply(.notchCalendar, notchActive: true, accessibility: false)
+                     && !AutomationSupport.canApply(.scrollInverter, notchActive: true, accessibility: false)
+                     && !AutomationSupport.canApply(.autoQuit, notchActive: true, accessibility: true),
+                     "a recorded action needs both an approved switch and its runtime prerequisites")
 
         // A round trip keeps both halves of a rule.
         let original = rule(.display(connected: true), .quickToggle(id: "emptyTrash"))

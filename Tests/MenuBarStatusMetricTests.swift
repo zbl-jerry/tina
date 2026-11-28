@@ -86,32 +86,40 @@ enum MenuBarStatusMetricTests {
     // MARK: - Wi-Fi state
 
     private static func wifiStateContracts(_ suite: TestSuite) {
-        func reading(_ wifi: String?, power: Bool?, primary: String?, rssi: Int? = -52) -> WiFiStatusReading {
+        func reading(_ wifi: String?, power: Bool?, routes: Set<String>, rssi: Int? = nil) -> WiFiStatusReading {
             WiFiStateResolver.reading(wifiInterfaceName: wifi,
                                       isPoweredOn: power,
-                                      primaryInterfaceName: primary,
+                                      primaryInterfaces: routes,
+                                      ethernetInterfaces: ["en5"],
                                       rssi: rssi)
         }
 
-        suite.expect(reading("en0", power: true, primary: "en0")
+        suite.expect(reading("en0", power: true, routes: ["en0"], rssi: -52)
                      == WiFiStatusReading(state: .connected, rssi: -52),
                      "the Wi-Fi interface carrying the primary route is connected with its signal")
-        suite.expect(reading("en0", power: true, primary: "en0", rssi: 0)
+        suite.expect(reading("en0", power: true, routes: ["en0"], rssi: 0)
                      == WiFiStatusReading(state: .connected, rssi: nil),
                      "CoreWLAN's zero RSSI is not a signal strength")
-        suite.expect(reading("en0", power: true, primary: "en5") == WiFiStatusReading(state: .ethernet, rssi: nil),
-                     "another primary interface is reported as Ethernet")
-        suite.expect(reading("en0", power: true, primary: nil) == WiFiStatusReading(state: .notConnected, rssi: nil),
-                     "a powered radio without a primary route is not connected")
-        suite.expect(reading("en0", power: false, primary: nil) == WiFiStatusReading(state: .poweredOff, rssi: nil),
+        suite.expect(reading("en0", power: true, routes: ["en5"]) == WiFiStatusReading(state: .ethernet, rssi: nil),
+                     "a typed Ethernet primary interface is reported as Ethernet")
+        suite.expect(reading("en0", power: true, routes: ["utun0"]).state == .notConnected,
+                     "an unrelated tunnel is not reported as Ethernet")
+        suite.expect(reading("en0", power: true, routes: ["utun0"], rssi: -52).state == .connected
+                     && reading("en0", power: true, routes: [], rssi: -52).state == .connected,
+                     "radio association is still visible behind VPN or without a default route")
+        suite.expect(reading("en0", power: true, routes: ["utun0", "en0"]).state == .connected,
+                     "Wi-Fi can own one IP family's route while a tunnel owns the other")
+        suite.expect(reading("en0", power: true, routes: []) == WiFiStatusReading(state: .notConnected, rssi: nil),
+                     "a powered radio with neither association nor route is not connected")
+        suite.expect(reading("en0", power: false, routes: []) == WiFiStatusReading(state: .poweredOff, rssi: nil),
                      "a powered-off radio is reported as off, not as disconnected")
-        suite.expect(reading(nil, power: nil, primary: nil) == .unavailable,
+        suite.expect(reading(nil, power: nil, routes: []) == .unavailable,
                      "a Mac with no Wi-Fi interface reports unavailable")
-        suite.expect(reading("en0", power: nil, primary: nil) == .unavailable,
+        suite.expect(reading("en0", power: nil, routes: []) == .unavailable,
                      "a failed power reading reports unavailable instead of guessing")
-        suite.expect(reading("en0", power: false, primary: "en5") == WiFiStatusReading(state: .ethernet, rssi: nil),
+        suite.expect(reading("en0", power: false, routes: ["en5"]) == WiFiStatusReading(state: .ethernet, rssi: nil),
                      "a cable keeps the Mac online even with the radio switched off")
-        suite.expect(reading(nil, power: nil, primary: "en5") == WiFiStatusReading(state: .ethernet, rssi: nil),
+        suite.expect(reading(nil, power: nil, routes: ["en5"]) == WiFiStatusReading(state: .ethernet, rssi: nil),
                      "a Mac without Wi-Fi hardware still reports its wired route")
     }
 

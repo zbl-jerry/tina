@@ -3,10 +3,7 @@
 
 import Foundation
 
-/// What the Wi-Fi menu bar token reports. `ethernet` is an active non-Wi-Fi
-/// primary route, so a Mac whose radio is off but has a cable in still says it
-/// is online; `unavailable` means the state could not be read at all and is
-/// never folded into "not connected".
+/// LAN means a typed Ethernet route, not an arbitrary non-Wi-Fi interface.
 enum WiFiLinkState: Equatable {
     case connected
     case notConnected
@@ -39,15 +36,15 @@ struct OutputVolumeReading: Equatable {
 enum WiFiStateResolver {
     static func reading(wifiInterfaceName: String?,
                         isPoweredOn: Bool?,
-                        primaryInterfaceName: String?,
+                        primaryInterfaces: Set<String>,
+                        ethernetInterfaces: Set<String>,
                         rssi: Int?) -> WiFiStatusReading {
-        if let primary = primaryInterfaceName, !primary.isEmpty {
-            if let wifi = wifiInterfaceName, primary == wifi {
-                // CoreWLAN reports 0 for "not associated"; only a negative dBm
-                // reading is real signal strength.
-                let signal = rssi.flatMap { $0 < 0 ? $0 : nil }
-                return WiFiStatusReading(state: .connected, rssi: signal)
-            }
+        let signal = rssi.flatMap { $0 < 0 ? $0 : nil }
+        if let wifi = wifiInterfaceName, isPoweredOn != false,
+           signal != nil || primaryInterfaces.contains(wifi) {
+            return WiFiStatusReading(state: .connected, rssi: signal)
+        }
+        if !primaryInterfaces.isDisjoint(with: ethernetInterfaces) {
             return WiFiStatusReading(state: .ethernet, rssi: nil)
         }
         guard wifiInterfaceName != nil else { return .unavailable }

@@ -3,17 +3,17 @@
 
 import Foundation
 
-/// Reads, saves and applies the curated macOS settings. Every write is
-/// preceded by a snapshot of the current values, so the last apply can be
-/// undone from the same page. No administrator rights are involved.
+/// Reads, saves and applies the curated macOS settings. Undo retains the
+/// exact previous values of the last apply's touched keys.
 final class MacSettingsStore: ObservableObject {
     static let shared = MacSettingsStore()
 
     @Published private(set) var profiles: [MacSettingsProfile] = []
-    @Published private(set) var lastAppliedBackup: MacSettingsProfile?
+    @Published private(set) var canUndoLastApply = false
 
     private let fileURL: URL?
     private let lock = NSLock()
+    private var lastApply: [MacSettingsSupport.UndoEntry] = []
 
     init(fileURL: URL? = MacSettingsStore.defaultFileURL()) {
         self.fileURL = fileURL
@@ -29,10 +29,10 @@ final class MacSettingsStore: ObservableObject {
 
     func readCurrent() -> [String: MacSettingValue] {
         var current: [String: MacSettingValue] = [:]
-        for setting in MacSetting.allCases {
-            if let value = MacSettingsSupport.value(for: setting,
-                                                    raw: Self.read(setting)) {
-                current[setting.rawValue] = value
+        for settings in Dictionary(grouping: MacSetting.allCases, by: \.domain).values {
+            guard let first = settings.first, Self.synchronize(first) else { continue }
+            for setting in settings {
+                current[setting.rawValue] = MacSettingsSupport.value(for: setting, raw: Self.read(setting))
             }
         }
         return current
@@ -63,59 +63,51 @@ final class MacSettingsStore: ObservableObject {
 
     // MARK: - Applying
 
-    /// Writes the selected settings from the profile, after keeping the
-    /// current values so `restoreLastApply()` can undo exactly this change.
+    /// Rechecks the live settings at the time of the write, not the view's
+    /// cached snapshot. A no-op does not replace an existing Undo.
     @discardableResult
-    func apply(_ profile: MacSettingsProfile, settings: [MacSetting]) -> Bool {
-        let current = readCurrent()
-        let backup = MacSettingsProfile(name: "Before apply", values: current)
-        var wroteAll = true
-        for setting in settings {
-            guard let value = profile.values[setting.rawValue] else { continue }
-            if !Self.write(setting, value: value) { wroteAll = false }
+    func apply(_ profile: MacSettingsProfile) -> Bool {
+        let result = MacSettingsSupport.apply(profile, prepare: Self.synchronize,
+                                              read: Self.read, write: Self.write)
+        if !result.undo.isEmpty {
+            lastApply = result.undo
+            canUndoLastApply = true
         }
-        lock.lock(); lastAppliedBackup = backup; lock.unlock()
-        restart(MacSettingsSupport.components(for: settings))
-        return wroteAll
+        restart(MacSettingsSupport.components(for: result.changed))
+        return result.succeeded
     }
 
     @discardableResult
     func restoreLastApply() -> Bool {
-        lock.lock(); let backup = lastAppliedBackup; lock.unlock()
-        guard let backup else { return false }
-        var wroteAll = true
-        var settings: [MacSetting] = []
-        for setting in MacSetting.allCases {
-            guard let value = backup.values[setting.rawValue] else { continue }
-            settings.append(setting)
-            if !Self.write(setting, value: value) { wroteAll = false }
-        }
-        restart(MacSettingsSupport.components(for: settings))
-        lock.lock(); lastAppliedBackup = nil; lock.unlock()
-        return wroteAll
+        guard !lastApply.isEmpty else { return false }
+        let result = MacSettingsSupport.restore(lastApply, write: Self.write)
+        lastApply = result.undo
+        canUndoLastApply = !lastApply.isEmpty
+        restart(MacSettingsSupport.components(for: result.changed))
+        return result.succeeded
     }
 
     // MARK: - Preferences
 
     private static func read(_ setting: MacSetting) -> Any? {
-        let application = setting.domain == kCFPreferencesAnyApplication as String
-            ? kCFPreferencesAnyApplication
-            : setting.domain as CFString
-        return CFPreferencesCopyAppValue(setting.key as CFString, application)
+        CFPreferencesCopyValue(setting.key as CFString, applicationDomain(for: setting),
+                               kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
     }
 
-    private static func write(_ setting: MacSetting, value: MacSettingValue) -> Bool {
-        let application = setting.domain == kCFPreferencesAnyApplication as String
+    private static func applicationDomain(for setting: MacSetting) -> CFString {
+        setting.domain == kCFPreferencesAnyApplication as String
             ? kCFPreferencesAnyApplication
             : setting.domain as CFString
-        let raw: Any
-        switch value {
-        case .bool(let flag): raw = flag
-        case .number(let number): raw = number
-        case .text(let text): raw = text
-        }
-        CFPreferencesSetAppValue(setting.key as CFString, raw as CFTypeRef, application)
-        return CFPreferencesAppSynchronize(application)
+    }
+
+    private static func write(_ setting: MacSetting, _ value: Any?) -> Bool {
+        CFPreferencesSetValue(setting.key as CFString, value.map { $0 as CFTypeRef }, applicationDomain(for: setting),
+                              kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+        return synchronize(setting) && MacSettingsSupport.sameRawValue(read(setting), value)
+    }
+
+    private static func synchronize(_ setting: MacSetting) -> Bool {
+        CFPreferencesSynchronize(applicationDomain(for: setting), kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
     }
 
     private func restart(_ components: Set<MacSetting.Component>) {

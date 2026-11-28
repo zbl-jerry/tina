@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Vorssaint
 
-import ApplicationServices
 import SwiftUI
 
 /// Single key-to-key mappings. The page edits the rule list; the service
@@ -9,6 +8,7 @@ import SwiftUI
 /// is granted, so a missing permission never swallows a key.
 struct InputRemapSettings: View {
     @ObservedObject private var l10n = L10n.shared
+    @ObservedObject private var permissions = Permissions.shared
     @AppStorage(DefaultsKey.inputRemapEnabled) private var enabled = false
     @State private var rules: [InputRemapRule] = []
     @State private var adding = false
@@ -23,13 +23,12 @@ struct InputRemapSettings: View {
             Section {
                 Toggle(text.title, isOn: $enabled)
                     .onChange(of: enabled) { _, _ in
-                        save()
                         FeatureRuntime.shared.sync([.inputRemapping])
                     }
                 Text(text.caption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if enabled, !AXIsProcessTrusted() {
+                if enabled, !permissions.accessibility {
                     Text(text.permission)
                         .font(.caption)
                         .foregroundStyle(.orange)
@@ -43,8 +42,10 @@ struct InputRemapSettings: View {
                 Button(text.addRule) {
                     newSource = nil
                     newTarget = nil
+                    failed = false
                     adding = true
                 }
+                .disabled(rules.count >= InputRemapSupport.maximumRules)
                 if failed {
                     Text(text.failed)
                         .font(.caption)
@@ -72,15 +73,15 @@ struct InputRemapSettings: View {
                 get: { rule.enabled },
                 set: { value in
                     if let index = rules.firstIndex(where: { $0.id == rule.id }) {
-                        rules[index].enabled = value
-                        save()
+                        var edited = rules
+                        edited[index].enabled = value
+                        save(edited)
                     }
                 }
             ))
             .labelsHidden()
             Button(role: .destructive) {
-                rules.removeAll { $0.id == rule.id }
-                save()
+                save(rules.filter { $0.id != rule.id })
             } label: {
                 Image(systemName: "trash")
             }
@@ -94,10 +95,12 @@ struct InputRemapSettings: View {
             HStack {
                 Text(text.from)
                 ShortcutRecorderButton(
-                    shortcut: newSource ?? GlobalShortcut(keyCode: 0, modifiers: []),
+                    shortcut: newSource,
                     isEnabled: true,
                     waitingTitle: l10n.s.shortcutPressKeys,
-                    emptyTitle: l10n.s.shortcutNone,
+                    requiresModifier: false,
+                    capturesEditingKeys: true,
+                    emptyTitle: newSource == nil ? l10n.s.shortcutNone : nil,
                     invalidAction: {},
                     captureAction: { newSource = $0 }
                 )
@@ -106,28 +109,34 @@ struct InputRemapSettings: View {
             HStack {
                 Text(text.to)
                 ShortcutRecorderButton(
-                    shortcut: newTarget ?? GlobalShortcut(keyCode: 0, modifiers: []),
+                    shortcut: newTarget,
                     isEnabled: true,
                     waitingTitle: l10n.s.shortcutPressKeys,
-                    emptyTitle: l10n.s.shortcutNone,
+                    requiresModifier: false,
+                    capturesEditingKeys: true,
+                    emptyTitle: newTarget == nil ? l10n.s.shortcutNone : nil,
                     invalidAction: {},
                     captureAction: { newTarget = $0 }
                 )
                 .frame(width: 120)
             }
+            if failed {
+                Text(text.failed)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
             HStack {
                 Spacer()
                 Button(l10n.s.uninstallerCancel) { adding = false }
                 Button(text.addRule) {
-                    guard let source = newSource, let target = newTarget else { return }
-                    rules.append(InputRemapRule(sourceKeyCode: UInt16(max(0, source.keyCode)),
-                                                sourceModifiers: source.modifiers,
-                                                targetKeyCode: UInt16(max(0, target.keyCode)),
-                                                targetModifiers: target.modifiers))
-                    save()
-                    adding = false
+                    guard let source = newSource, let target = newTarget,
+                          let sourceCode = UInt16(exactly: source.keyCode),
+                          let targetCode = UInt16(exactly: target.keyCode) else { return }
+                    let rule = InputRemapRule(sourceKeyCode: sourceCode, sourceModifiers: source.modifiers,
+                                              targetKeyCode: targetCode, targetModifiers: target.modifiers)
+                    if save(rules + [rule]) { adding = false }
                 }
-                .disabled(newSource == nil || newTarget == nil)
+                .disabled(newSource == nil || newTarget == nil || newSource == newTarget)
             }
         }
         .padding(18)
@@ -140,17 +149,21 @@ struct InputRemapSettings: View {
 
     private func load() {
         let data = UserDefaults.standard.data(forKey: DefaultsKey.inputRemapRules) ?? Data()
-        rules = (try? JSONDecoder().decode([InputRemapRule].self, from: data)) ?? []
+        let decoded = (try? JSONDecoder().decode([InputRemapRule].self, from: data)) ?? []
+        rules = InputRemapSupport.sanitized(decoded)
     }
 
-    private func save() {
-        do {
-            let data = try JSONEncoder().encode(InputRemapSupport.sanitized(rules))
-            UserDefaults.standard.set(data, forKey: DefaultsKey.inputRemapRules)
-            failed = false
-        } catch {
+    @discardableResult
+    private func save(_ edited: [InputRemapRule]) -> Bool {
+        let cleaned = InputRemapSupport.sanitized(edited)
+        guard cleaned == edited, let data = try? JSONEncoder().encode(cleaned) else {
             failed = true
+            return false
         }
+        UserDefaults.standard.set(data, forKey: DefaultsKey.inputRemapRules)
+        rules = cleaned
+        failed = false
         FeatureRuntime.shared.sync([.inputRemapping])
+        return true
     }
 }

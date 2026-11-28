@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Vorssaint
 
 import Foundation
+import Combine
 
 /// The folders macOS rolls into "System Data". Read-only: this summary only
 /// measures, and every delete path stays with the Cleaner's own categories.
@@ -49,11 +50,14 @@ struct SystemDataSummary: Equatable {
 /// summary answers "which app is holding System Data" without a treemap.
 enum SystemDataSummaryBuilder {
     static func defaultRoots(home: URL = URL(fileURLWithPath: NSHomeDirectory())) -> [(SystemDataCategory, URL)] {
-        let library = home.appendingPathComponent("Library", isDirectory: true)
+        // Resolve only the caller's anchor (macOS may spell it through an
+        // alias such as /var). Generated paths below it must not redirect.
+        let anchor = home.resolvingSymlinksInPath().standardizedFileURL
+        let library = anchor.appendingPathComponent("Library", isDirectory: true)
         let applicationSupport = library.appendingPathComponent("Application Support",
                                                                  isDirectory: true)
         // The home Trash, so every root stays under the home the caller gave.
-        let trash = home.appendingPathComponent(".Trash", isDirectory: true)
+        let trash = anchor.appendingPathComponent(".Trash", isDirectory: true)
         return [
             (.applicationSupport, applicationSupport),
             (.containers, library.appendingPathComponent("Containers", isDirectory: true)),
@@ -71,7 +75,12 @@ enum SystemDataSummaryBuilder {
                         fileManager: FileManager = .default,
                         topLimit: Int = 10) -> SystemDataSummary {
         let groups = roots.map { category, root in
-            group(category: category, root: root, fileManager: fileManager, topLimit: topLimit)
+            let rootPath = root.standardizedFileURL.path
+            let prefix = rootPath == "/" ? "/" : rootPath + "/"
+            let nestedRoots = Set(roots.map { $0.1.standardizedFileURL.path }
+                .filter { $0 != rootPath && $0.hasPrefix(prefix) })
+            return group(category: category, root: root, fileManager: fileManager, topLimit: topLimit,
+                         excluding: nestedRoots)
         }
         return SystemDataSummary(groups: groups, scannedAt: Date())
     }
@@ -79,10 +88,14 @@ enum SystemDataSummaryBuilder {
     static func group(category: SystemDataCategory,
                       root: URL,
                       fileManager: FileManager = .default,
-                      topLimit: Int = 10) -> SystemDataGroup {
-        let keys: [URLResourceKey] = [.isDirectoryKey, .isSymbolicLinkKey]
-        guard let entries = try? fileManager.contentsOfDirectory(at: root,
-                                                                 includingPropertiesForKeys: keys,
+                      topLimit: Int = 10,
+                      excluding excludedPaths: Set<String> = []) -> SystemDataGroup {
+        let rootKeys: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey]
+        guard root.standardizedFileURL.path == root.resolvingSymlinksInPath().standardizedFileURL.path,
+              let values = try? root.resourceValues(forKeys: rootKeys),
+              values.isDirectory == true, values.isSymbolicLink == false,
+              let entries = try? fileManager.contentsOfDirectory(at: root,
+                                                                 includingPropertiesForKeys: Array(measurementKeys),
                                                                  options: []) else {
             return SystemDataGroup(category: category, bytes: 0, itemCount: 0,
                                    top: [], complete: false)
@@ -91,9 +104,11 @@ enum SystemDataSummaryBuilder {
         var complete = true
         var all: [SystemDataEntry] = []
         for entry in entries {
-            let values = try? entry.resourceValues(forKeys: Set(keys))
-            if values?.isSymbolicLink == true { continue }
-            let measured = size(of: entry, fileManager: fileManager)
+            guard !excludedPaths.contains(entry.standardizedFileURL.path) else { continue }
+            guard let values = try? entry.resourceValues(forKeys: measurementKeys),
+                  let isLink = values.isSymbolicLink else { complete = false; continue }
+            if isLink { continue }
+            let measured = size(of: entry, values: values, fileManager: fileManager, excluding: excludedPaths)
             if !measured.complete { complete = false }
             total += measured.bytes
             all.append(SystemDataEntry(name: entry.lastPathComponent, bytes: measured.bytes))
@@ -108,19 +123,22 @@ enum SystemDataSummaryBuilder {
     /// Allocated bytes under one URL, never following a symlink. A tree with
     /// an unreadable member reports `complete: false`; the bytes it could
     /// read are still counted.
-    static func size(of url: URL, fileManager: FileManager = .default) -> (bytes: Int64, complete: Bool) {
-        var isDirectory: ObjCBool = false
-        guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
-            return (0, false)
+    private static let measurementKeys: Set<URLResourceKey> = [
+        .totalFileAllocatedSizeKey, .isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey,
+    ]
+
+    private static func size(of url: URL, values: URLResourceValues,
+                             fileManager: FileManager, excluding excludedPaths: Set<String>)
+        -> (bytes: Int64, complete: Bool) {
+        guard let isDirectory = values.isDirectory, let isFile = values.isRegularFile else { return (0, false) }
+        if !isDirectory {
+            guard isFile else { return (0, true) }
+            guard let bytes = values.totalFileAllocatedSize else { return (0, false) }
+            return (Int64(bytes), true)
         }
-        if !isDirectory.boolValue {
-            let values = try? url.resourceValues(forKeys: [.totalFileAllocatedSizeKey])
-            return (Int64(values?.totalFileAllocatedSize ?? 0), true)
-        }
-        let keys: [URLResourceKey] = [.totalFileAllocatedSizeKey, .isRegularFileKey, .isSymbolicLinkKey]
         var complete = true
         guard let enumerator = fileManager.enumerator(at: url,
-                                                      includingPropertiesForKeys: keys,
+                                                      includingPropertiesForKeys: Array(measurementKeys),
                                                       options: [],
                                                       errorHandler: { _, _ in
             complete = false
@@ -128,10 +146,24 @@ enum SystemDataSummaryBuilder {
         }) else { return (0, false) }
         var total: Int64 = 0
         for case let file as URL in enumerator {
-            let values = try? file.resourceValues(forKeys: Set(keys))
-            if values?.isSymbolicLink == true { continue }
-            if values?.isRegularFile == true {
-                total += Int64(values?.totalFileAllocatedSize ?? 0)
+            if excludedPaths.contains(file.standardizedFileURL.path) {
+                enumerator.skipDescendants()
+                continue
+            }
+            guard let values = try? file.resourceValues(forKeys: measurementKeys),
+                  let isLink = values.isSymbolicLink, let isFile = values.isRegularFile else {
+                complete = false
+                enumerator.skipDescendants()
+                continue
+            }
+            if isLink {
+                enumerator.skipDescendants()
+            } else if isFile {
+                if let bytes = values.totalFileAllocatedSize {
+                    total += Int64(bytes)
+                } else {
+                    complete = false
+                }
             }
         }
         return (total, complete)

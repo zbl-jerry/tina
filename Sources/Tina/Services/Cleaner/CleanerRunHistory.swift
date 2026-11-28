@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Vorssaint
 
 import Foundation
+import Combine
 
 enum CleanerRunOrigin: String, Codable, Equatable {
     case manual, automatic
@@ -12,6 +13,23 @@ enum CleanerRunOutcome: String, Codable, Equatable {
 }
 
 struct CleanerRunEntry: Codable, Equatable {
+    struct TrashIdentity: Codable, Equatable {
+        let device: UInt64
+        let inode: UInt64
+        let createdAt: Date
+
+        init?(at url: URL, matching expected: UninstallerSupport.FileIdentity? = nil) {
+            guard !UninstallerSupport.isSymbolicLink(url),
+                  let identity = UninstallerSupport.fileIdentity(at: url),
+                  expected == nil || identity == expected,
+                  let dates = try? FileManager.default.attributesOfItem(atPath: url.path),
+                  let createdAt = dates[.creationDate] as? Date else { return nil }
+            device = identity.device
+            inode = identity.inode
+            self.createdAt = createdAt
+        }
+    }
+
     let path: String
     let category: String
     let detail: String
@@ -20,8 +38,17 @@ struct CleanerRunEntry: Codable, Equatable {
     /// Where the item went in the Trash. Nil when the move succeeded through
     /// Finder (which does not hand a path back) or when nothing moved.
     let trashPath: String?
+    /// Older histories have no fingerprint; never resolve those paths to a
+    /// possibly unrelated replacement.
+    var trashIdentity: TrashIdentity? = nil
 
     var name: String { (path as NSString).lastPathComponent }
+
+    var revealableTrashURL: URL? {
+        guard outcome == .trashed, let trashPath, let trashIdentity else { return nil }
+        let url = URL(fileURLWithPath: trashPath)
+        return TrashIdentity(at: url) == trashIdentity ? url : nil
+    }
 }
 
 extension CleanerSupport.Category {
@@ -48,8 +75,11 @@ struct CleanerRun: Codable, Equatable, Identifiable {
     let entries: [CleanerRunEntry]
 
     var freed: Int64 {
-        entries.filter { $0.outcome == .trashed || $0.outcome == .emptied }
-            .reduce(0) { $0 + $1.size }
+        entries.reduce(0) { $0 + ($1.outcome == .emptied ? $1.size : 0) }
+    }
+
+    var moved: Int64 {
+        entries.reduce(0) { $0 + ($1.outcome == .trashed ? $1.size : 0) }
     }
 
     var failedCount: Int {
@@ -59,17 +89,20 @@ struct CleanerRun: Codable, Equatable, Identifiable {
     var skippedCount: Int {
         entries.filter { $0.outcome == .skipped }.count
     }
+
+    var leftBehindCount: Int { failedCount + skippedCount }
 }
 
 /// The last handful of cleans, kept so a user can see what moved, where it
-/// went and what stayed behind. Records hold paths and sizes only: no file
-/// contents, no app data. The store is owner-only and local.
+/// went and what stayed behind. Records hold paths, sizes and file identities,
+/// not file contents or app data. The store is owner-only and local.
 final class CleanerRunHistory: ObservableObject {
     static let shared = CleanerRunHistory()
 
     /// Older runs fall off the end. Twenty is enough to answer "what did the
     /// scheduled clean do last night" without growing without bound.
     static let limit = 20
+    private static let persistence = DispatchQueue(label: "com.tina.utils.cleaner-history")
 
     @Published private(set) var runs: [CleanerRun] = []
 
@@ -97,8 +130,15 @@ final class CleanerRunHistory: ObservableObject {
     }
 
     func clear() {
+        // Do not show an empty history while a crash could still restore old
+        // records. Serialize the explicit clear after all pending snapshots.
+        if let fileURL, !Self.persistence.sync(execute: { Self.write([], to: fileURL) }) { return }
         runs = []
-        persist()
+    }
+
+    /// Normal app exit waits for the last queued write.
+    static func flushPendingWrites() {
+        persistence.sync {}
     }
 
     func delete(_ id: UUID) {
@@ -115,10 +155,16 @@ final class CleanerRunHistory: ObservableObject {
     }
 
     private func persist() {
-        guard let fileURL,
-              let data = try? JSONEncoder().encode(runs)
-        else { return }
-        _ = PrivateFileStore.createDirectory(at: fileURL.deletingLastPathComponent())
-        _ = PrivateFileStore.write(data, to: fileURL)
+        guard let fileURL else { return }
+        let snapshot = runs
+        Self.persistence.async {
+            _ = Self.write(snapshot, to: fileURL)
+        }
+    }
+
+    private static func write(_ snapshot: [CleanerRun], to fileURL: URL) -> Bool {
+        guard let data = try? JSONEncoder().encode(snapshot),
+              PrivateFileStore.createDirectory(at: fileURL.deletingLastPathComponent()) else { return false }
+        return PrivateFileStore.write(data, to: fileURL)
     }
 }

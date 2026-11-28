@@ -1019,7 +1019,7 @@ extension Strings {
         cleanerHistoryEmpty: "Очистки пока не записаны.",
         cleanerHistoryManual: "Вручную",
         cleanerHistoryAutomatic: "По расписанию",
-        cleanerHistorySummaryFormat: "Освобождено %1$@ · осталось %2$d",
+        cleanerHistorySummaryFormat: "В Корзину: %1$@ · освобождено %2$@ · осталось %3$d",
         cleanerHistoryShowInFinder: "Показать в Finder",
         cleanerHistoryClear: "Очистить историю",
         cleanerNothingFound: "Нечего очищать. Ваш Mac в порядке.",

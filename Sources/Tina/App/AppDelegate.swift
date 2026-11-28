@@ -138,8 +138,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             self?.captureStatusClick()
             guard let self else { return }
             if metric == .volume {
-                // The volume reading has no detail page of its own: its click
-                // opens the existing system output slider in the mixer section.
+                // The menu panel can present the output controls directly
+                // even when its full mixer section is hidden.
                 MenuPanelFocus.shared.focus(.mixer)
                 if !self.popoverIsOpen { self.showPopover(anchor: button) }
             } else {
@@ -204,7 +204,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
                     .scrollInverter, .scrollHorizontal, .scrollZoom, .scrollSpeed, .focusFollowsMouse, .smoothScroll, .linearScroll, .mouseNavigation, .switcher,
                     .dockPreview, .finderCutPaste, .finderRename, .autoQuit, .dockClick,
                     .middleClick, .windowMaximizer, .keyboardDebounce, .windowLayout, .windowPinning,
-                    .textSnippets, .brightness, .radialMenu, .mouseButtonShortcuts,
+                    .textSnippets, .brightness, .radialMenu, .mouseButtonShortcuts, .inputRemapping,
                     .mouseClickDebounce, .superKey, .layoutFix, .quitWindowProtection, .mixer, .musicBlock, .notch,
                 ])
             }
@@ -375,6 +375,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         AudioInputDeviceManager.shared.stop()
         // Flushes any scratchpad edit still inside the save debounce.
         ScratchpadService.shared.suspend()
+        if AppFeature.usageStats.shouldRunOptInService() { UsageStatsService.shared.stop() }
+        InputRemapService.shared.stop()
+        CleanerRunHistory.flushPendingWrites()
         // Every macOS shortcut a feature took over goes back now, whichever
         // feature held it; not all of them suspend here.
         SystemShortcutTakeover.restoreAll()

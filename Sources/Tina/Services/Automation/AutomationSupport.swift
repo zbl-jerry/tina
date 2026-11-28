@@ -34,6 +34,55 @@ struct AutomationRule: Codable, Equatable, Identifiable {
 
 enum AutomationSupport {
     static let maximumRules = 32
+    static let catchUpWindow: TimeInterval = 5 * 60
+
+    // Explicit main switches only. Never infer that a feature is safe to
+    // automate from installation, ownership of some preferences, or its name.
+    static let featureSwitches: [AppFeature: String] = [
+        .nightWarmth: DefaultsKey.nightWarmthEnabled,
+        .scrollInverter: DefaultsKey.scrollInverterEnabled,
+        .scrollHorizontal: DefaultsKey.scrollHorizontalEnabled,
+        .scrollZoom: DefaultsKey.pinchZoomEnabled,
+        .smoothScroll: DefaultsKey.smoothScrollEnabled,
+        .linearScroll: DefaultsKey.linearScrollEnabled,
+        .scrollSpeed: DefaultsKey.scrollSpeedEnabled,
+        .notch: DefaultsKey.notchEnabled,
+        .notchGestures: DefaultsKey.notchGesturesEnabled,
+        .notchTimer: DefaultsKey.notchTimerEnabled,
+        .notchCalendar: DefaultsKey.notchCalendarEnabled,
+        .pastePlain: DefaultsKey.pastePlainEnabled,
+        .urlCleaner: DefaultsKey.urlCleanerEnabled,
+    ]
+
+    static func configuredRules(_ rules: [AutomationRule]) -> [AutomationRule] {
+        sanitized(rules, knownFeatures: Set(featureSwitches.keys.map(\.rawValue)), knownToggles: [])
+    }
+
+    static func canApply(_ feature: AppFeature, notchActive: Bool, accessibility: Bool) -> Bool {
+        guard featureSwitches[feature] != nil else { return false }
+        switch feature {
+        case .notchCalendar, .notchGestures, .notchTimer:
+            return notchActive
+        case .scrollInverter, .scrollHorizontal, .scrollZoom, .smoothScroll, .linearScroll, .scrollSpeed, .pastePlain:
+            return accessibility
+        default:
+            return true
+        }
+    }
+
+    /// Return at most one recently missed occurrence. Old actions are stale
+    /// after a long sleep; a short run-loop stall must not drop the action.
+    static func dueMinute(_ trigger: AutomationTrigger, after previous: Date, through now: Date,
+                          calendar: Calendar = .current) -> Date? {
+        guard now > previous,
+              var minute = calendar.dateInterval(of: .minute, for: now)?.start else { return nil }
+        let cutoff = max(previous, now.addingTimeInterval(-catchUpWindow))
+        while minute > cutoff {
+            if scheduleMatches(trigger, at: minute, calendar: calendar) { return minute }
+            minute = minute.addingTimeInterval(-60)
+        }
+        return nil
+    }
 
     /// Drops rules with an unusable trigger or an unknown feature id, keeps
     /// the first rule for an identical trigger + action pair, and caps the

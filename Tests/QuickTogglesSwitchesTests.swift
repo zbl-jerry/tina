@@ -11,8 +11,70 @@ enum QuickTogglesSwitchesTests {
         flagsParseLikeThePreferencesStore(suite)
         plansNameTheOwningComponent(suite)
         statesDefaultOffAndReadBack(suite)
+        rollsBackExactValueAndReportsFailure(suite)
         rowsAppendToTheStoredLayout(suite)
         copyIsTranslated(suite)
+    }
+
+    private static func rollsBackExactValueAndReportsFailure(_ suite: TestSuite) {
+        var stored: CFPropertyList?
+        var writes = 0
+        var refreshes = 0
+        var restorationRefreshes = 0
+        let deniedWrite = QuickTogglesSupport.set(.dockAutoHide, enabled: true, read: { stored },
+            write: { value in
+                // CFPreferences may cache the write even if synchronizing fails.
+                stored = value
+                writes += 1
+                return writes > 1
+            }, refresh: { _ in
+                refreshes += 1
+                return true
+            })
+        suite.expect(deniedWrite == .failed && writes == 2 && stored == nil && refreshes == 0,
+                     "a rejected initial write is cleared, never applied or relaunched")
+
+        stored = "legacy value" as CFString
+        let failedRestart = QuickTogglesSupport.set(.menuBarAutoHide, enabled: true, read: { stored },
+            write: { stored = $0; return true }, refresh: { _ in false }, refreshAfterRollback: {
+                restorationRefreshes += 1
+                return true
+            })
+        suite.expect(failedRestart == .failed && stored as? String == "legacy value"
+                     && restorationRefreshes == 1,
+                     "failed relaunch restores the raw legacy string and refreshes affected hosts")
+
+        stored = nil
+        let unconfirmedRestore = QuickTogglesSupport.set(.stageManager, enabled: true, read: { stored },
+            write: { value in
+                // Ignore the second write, simulating a read-back mismatch.
+                if let value { stored = value }
+                return true
+            }, refresh: { _ in false })
+        suite.expect(unconfirmedRestore == .rollbackFailed && stored as? Bool == true,
+                     "an unverified restoration is not reported as an ordinary rollback")
+
+        stored = nil
+        let ignoredWrite = QuickTogglesSupport.set(.dockLock, enabled: true, read: { stored },
+            write: { _ in true }, refresh: { _ in
+                refreshes += 1
+                return true
+            })
+        suite.expect(ignoredWrite == .failed && stored == nil && refreshes == 0,
+                     "success from the write is not enough without a matching read-back")
+
+        let partialRestore = QuickTogglesSupport.set(.menuBarAutoHide, enabled: true, read: { stored },
+            write: { stored = $0; return true }, refresh: { _ in false }, refreshAfterRollback: { false })
+        suite.expect(partialRestore == .rollbackFailed && stored == nil,
+                     "a restored preference without a confirmed refresh is still reported as incomplete")
+
+        let success = QuickTogglesSupport.set(.stageManager, enabled: true, read: { stored },
+            write: { stored = $0; return true }, refresh: { plan in
+                refreshes += 1
+                return plan.notification != nil
+            })
+        suite.expect(success == .applied && stored as? Bool == true && refreshes == 1,
+                     "a verified write signals the target without attempting rollback")
     }
 
     private static func flagsParseLikeThePreferencesStore(_ suite: TestSuite) {
@@ -104,7 +166,7 @@ enum QuickTogglesSwitchesTests {
         suite.expect(switches.allSatisfy { $0.feature == .quickToggles },
                      "the switches inherit the quick toggles availability check")
         suite.expect(switches.filter(\.restartsSystemComponent).isEmpty,
-                     "the switches are not the confirmed restart rows")
+                     "the switches remain distinct from the dedicated restart rows")
         suite.expect(switches.filter(\.relaunchesComponent).map(\.rawValue)
                      == ["dockAutoHide", "dockLock", "menuBarAutoHide"],
                      "only the Dock and menu bar switches report a component relaunch")
@@ -135,7 +197,8 @@ enum QuickTogglesSwitchesTests {
             let values = [strings.dockAutoHideTitle, strings.dockAutoHideCaption,
                           strings.dockLockTitle, strings.dockLockCaption,
                           strings.stageManagerTitle, strings.stageManagerCaption,
-                          strings.menuBarAutoHideTitle, strings.menuBarAutoHideCaption]
+                          strings.menuBarAutoHideTitle, strings.menuBarAutoHideCaption,
+                          strings.systemSwitchRollbackFailed]
             suite.expect(values.allSatisfy { !$0.trimmingCharacters(in: .whitespaces).isEmpty },
                          "every switch string is translated (\(language.rawValue))")
             suite.expect(values.allSatisfy { !$0.contains("—") },

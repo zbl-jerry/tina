@@ -52,7 +52,7 @@ final class UsageStatsStore: ObservableObject {
 
     /// Adds one sample. `bundleID` is nil when no app was frontmost.
     func add(appBundleID: String?, seconds: Double, screenOn: Bool,
-             keyPresses: Int = 0, clicks: Int = 0, now: Date = Date()) {
+             keyPresses: Int = 0, clicks: Int = 0, now: Date = Date(), observedAt: Date? = nil) {
         let key = Self.dayKey(now, calendar: calendar)
         lock.lock()
         var changed = false
@@ -76,7 +76,7 @@ final class UsageStatsStore: ObservableObject {
         }
         if changed { dirty = true }
         lock.unlock()
-        if changed { trimAndPersist(now: now) }
+        if changed { trimAndPersist(now: observedAt ?? now) }
     }
 
     /// Forces the pending aggregates to disk (quit, feature off, tests).

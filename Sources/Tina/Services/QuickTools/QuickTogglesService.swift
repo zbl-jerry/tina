@@ -61,7 +61,7 @@ final class QuickTogglesService: ObservableObject {
     static let shared = QuickTogglesService()
 
     enum RunState: Equatable {
-        case running, failed
+        case running, failed, rollbackFailed
         /// The action needs an Automation consent the user declined; the row
         /// turns into a permission prompt until the grant shows up.
         case needsPermission
@@ -315,62 +315,58 @@ final class QuickTogglesService: ObservableObject {
     /// write, a missing menu bar host or a failed relaunch reports the failure
     /// and puts the previous value back, so the row never claims a change the
     /// system did not take.
-    func toggleSystemSwitch(_ action: QuickToggleAction) {
+    func setSystemSwitch(_ action: QuickToggleAction, enabled: Bool) {
         guard available, let systemSwitch = action.systemSwitch,
-              beginRun(action) else { return }
-        let plan = QuickTogglesSupport.plan(for: systemSwitch,
-                                            enabled: !systemSwitchState(systemSwitch))
+              states[action] != .running else { return }
+        if let target = systemSwitch.restartTarget {
+            guard confirmRestart(target == .dock ? .restartDock : .restartMenuBar) else { return }
+        }
+        guard beginRun(action) else { return }
         workQueue.async {
-            var applied = Self.apply(plan)
-            if applied, let target = plan.restartTarget {
-                switch target {
-                case .dock: applied = Self.restartDock()
-                case .menuBar: applied = Self.restartMenuBar()
+            let key = systemSwitch.key as CFString
+            let domain = Self.preferencesDomain(systemSwitch)
+            var relaunchedMenuBarHosts: [String] = []
+            let result = QuickTogglesSupport.set(systemSwitch, enabled: enabled, read: {
+                CFPreferencesCopyValue(key, domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+            }, write: { value in
+                CFPreferencesSetValue(key, value, domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+                return CFPreferencesSynchronize(domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+            }, refresh: { plan in
+                switch plan.restartTarget {
+                case .dock: return Self.restartDock()
+                case .menuBar:
+                    let running = Self.runningMenuBarHosts()
+                    relaunchedMenuBarHosts = Self.relaunchMenuBarHosts(running)
+                    return !running.isEmpty && relaunchedMenuBarHosts.count == running.count
+                case nil:
+                    if let notification = plan.notification {
+                        DistributedNotificationCenter.default().postNotificationName(
+                            Notification.Name(notification), object: nil, userInfo: nil,
+                            deliverImmediately: true)
+                    }
+                    return true
                 }
-                if !applied {
-                    // The running component kept the old value, so the stored
-                    // one goes back to match what the user sees.
-                    _ = Self.apply(QuickTogglesSupport.plan(for: systemSwitch,
-                                                            enabled: !plan.value))
-                }
+            }, refreshAfterRollback: {
+                // If only some hosts relaunched, the ones that picked up the
+                // attempted setting must reload the restored preference.
+                Self.relaunchMenuBarHosts(relaunchedMenuBarHosts).count == relaunchedMenuBarHosts.count
+            })
+            switch result {
+            case .applied: self.finishRun(action, state: nil)
+            case .failed: self.finishRun(action, state: .failed)
+            case .rollbackFailed: self.finishRun(action, state: .rollbackFailed, resets: false)
             }
-            if applied, let notification = plan.notification {
-                DistributedNotificationCenter.default().postNotificationName(
-                    Notification.Name(notification),
-                    object: nil,
-                    userInfo: nil,
-                    deliverImmediately: true)
-            }
-            self.finishRun(action, state: applied ? nil : .failed)
             DispatchQueue.main.async { self.systemSwitchRevision += 1 }
         }
     }
 
-    /// Writes one preference and reads it back. `CFPreferencesSynchronize`
-    /// alone cannot tell a denied write from a stored one, so the read-back is
-    /// the contract; a value that did not stick is a failure.
-    private static func apply(_ plan: QuickTogglesSupport.SystemSwitchPlan) -> Bool {
-        let domain = plan.domain as CFString
-        CFPreferencesSetValue(plan.key as CFString,
-                              plan.value as CFBoolean,
-                              domain,
-                              kCFPreferencesCurrentUser,
-                              kCFPreferencesAnyHost)
-        guard CFPreferencesSynchronize(domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost) else {
-            return false
-        }
-        let stored = CFPreferencesCopyValue(plan.key as CFString,
-                                            domain,
-                                            kCFPreferencesCurrentUser,
-                                            kCFPreferencesAnyHost)
-        // A missing value answers the opposite of what was written, so a read
-        // that does not come back is a failure, not the default.
-        return QuickTogglesSupport.preferenceFlag(stored, default: !plan.value) == plan.value
+    private static func preferencesDomain(_ systemSwitch: QuickTogglesSupport.SystemSwitch) -> CFString {
+        systemSwitch == .menuBarAutoHide ? kCFPreferencesAnyApplication : systemSwitch.domain as CFString
     }
 
     private func systemSwitchState(_ systemSwitch: QuickTogglesSupport.SystemSwitch) -> Bool {
         let value = CFPreferencesCopyValue(systemSwitch.key as CFString,
-                                           systemSwitch.domain as CFString,
+                                           Self.preferencesDomain(systemSwitch),
                                            kCFPreferencesCurrentUser,
                                            kCFPreferencesAnyHost)
         return QuickTogglesSupport.switchState(systemSwitch, value: value)
@@ -447,6 +443,14 @@ final class QuickTogglesService: ObservableObject {
             refreshInputMethodTarget()
             guard inputMethodTarget != nil else { return }
         }
+        guard confirmRestart(action) else { return }
+        // The target is resolved on the main thread: TIS and NSWorkspace
+        // reads belong here. The kill and relaunch below run off it.
+        performRestart(action,
+                       inputMethod: action == .restartInputMethod ? inputMethodTarget : nil)
+    }
+
+    private func confirmRestart(_ action: QuickToggleAction) -> Bool {
         let strings = FeatureStrings.quickToggles(L10n.shared.language)
         let alert = NSAlert()
         alert.alertStyle = .warning
@@ -457,12 +461,7 @@ final class QuickTogglesService: ObservableObject {
         let island = NotchService.shared.presentationWindow
         let fromIsland = island?.isVisible == true
             && (NSApp.currentEvent?.window === island || NSApp.keyWindow === island)
-        guard NotchIslandAlert.run(alert, above: fromIsland ? island : nil)
-                == .alertFirstButtonReturn else { return }
-        // The target is resolved on the main thread: TIS and NSWorkspace
-        // reads belong here. The kill and relaunch below run off it.
-        performRestart(action,
-                       inputMethod: action == .restartInputMethod ? inputMethodTarget : nil)
+        return NotchIslandAlert.run(alert, above: fromIsland ? island : nil) == .alertFirstButtonReturn
     }
 
     /// Re-reads the current input source and the running input methods. TIS
@@ -529,17 +528,20 @@ final class QuickTogglesService: ObservableObject {
     /// name that is absent would report a failure for a component the system
     /// does not use.
     private static func restartMenuBar() -> Bool {
+        let running = runningMenuBarHosts()
+        return !running.isEmpty && relaunchMenuBarHosts(running).count == running.count
+    }
+
+    private static func runningMenuBarHosts() -> [String] {
         let present = Set(QuickTogglesSupport.menuBarHostNames.filter(processIsRunning))
-        let running = QuickTogglesSupport.runningMenuBarHosts(present)
-        guard !running.isEmpty else { return false }
-        var restarted = 0
-        for name in running {
-            guard !KillProcessSupport.isProtectedName(name) else { continue }
-            if Shell.run("/usr/bin/killall", [name]).status == 0 || !processIsRunning(name) {
-                restarted += 1
-            }
+        return QuickTogglesSupport.runningMenuBarHosts(present)
+    }
+
+    private static func relaunchMenuBarHosts(_ names: [String]) -> [String] {
+        names.filter { name in
+            !KillProcessSupport.isProtectedName(name)
+                && (Shell.run("/usr/bin/killall", [name]).status == 0 || !processIsRunning(name))
         }
-        return restarted == running.count
     }
 
     /// Polite quit first, then SIGKILL, then reopen the bundle that was

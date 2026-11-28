@@ -275,7 +275,7 @@ enum CleanerEligibilityTests {
         try manager.moveItem(at: program, to: moved)
 
         let (phase, actions) = CleanerScanFlowTests.cleanFixture(item, installedApps: apps)
-        suite.expect(actions == [.trash(orphan)] && phase == .done(freed: item.size, failed: 0),
+        suite.expect(actions == [.trash(orphan)] && phase == .done(freed: 0, failed: 0, moved: item.size),
                      "cleaning the orphaned plist preserves the service with the same label")
 
         let handle = try FileHandle(forWritingTo: item.url)
@@ -572,8 +572,10 @@ enum CleanerEligibilityTests {
     private static func runDeveloperPolicy(_ suite: TestSuite) {
         suite.expect(CleanerPolicy.developerIsPrechecked("/Library/Developer/Xcode/DerivedData"),
                      "rebuildable developer data starts checked")
-        suite.expect(CleanerPolicy.developerIsPrechecked("/Library/Caches/org.swift.swiftpm"),
-                     "the SwiftPM cache starts checked")
+        suite.expect(!CleanerPolicy.developerJunkPaths.contains { $0.hasPrefix("/Library/Caches/") }
+                     && CleanerPolicy.precheckCacheEntry("org.swift.swiftpm")
+                     && !CleanerPolicy.precheckCacheEntry("com.apple.dt.Xcode"),
+                     "cache paths appear only under Caches and retain their distinct selection defaults")
         suite.expect(!CleanerPolicy.developerIsPrechecked(CleanerPolicy.xcodeArchivePath),
                      "release archives never start checked")
         suite.expect(!CleanerPolicy.developerJunkPaths.contains(CleanerPolicy.xcodeArchivePath),
@@ -585,5 +587,37 @@ enum CleanerEligibilityTests {
                      "zero and negative archive ages turn the listing off")
         suite.expect(CleanerPolicy.sanitizedArchiveAgeDays(99_999) == 3_650,
                      "an extreme archive age is capped")
+
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.resolvingSymlinksInPath()
+            .appendingPathComponent("tina-xcode-archives-\(UUID())")
+        defer { try? fm.removeItem(at: root) }
+        let now = Date()
+        func archive(_ path: String, daysOld: Int) throws -> URL {
+            let url = root.appendingPathComponent(path)
+            try fm.createDirectory(at: url, withIntermediateDirectories: true)
+            try fm.setAttributes([.modificationDate: now.addingTimeInterval(Double(-daysOld) * 86_400)],
+                                 ofItemAtPath: url.path)
+            return url
+        }
+        do {
+            let dated = try archive("2026-01-01/Old.xcarchive", daysOld: 120)
+            let direct = try archive("Direct.xcarchive", daysOld: 120)
+            _ = try archive("2026-01-01/Young.xcarchive", daysOld: 10)
+            _ = try archive("misc/Outside.xcarchive", daysOld: 120)
+            _ = try archive("2026-01-01/deeper/Outside.xcarchive", daysOld: 120)
+            try fm.createSymbolicLink(at: root.appendingPathComponent("Linked.xcarchive"),
+                                      withDestinationURL: dated)
+            try fm.createSymbolicLink(at: root.appendingPathComponent("2026-01-02"),
+                                      withDestinationURL: dated.deletingLastPathComponent())
+            let found = CleanerPolicy.xcodeArchives(at: root, ageDays: 90, now: now)
+            suite.expect(found.count == 2 && Set(found.map { $0.standardizedFileURL.path })
+                         == Set([dated, direct].map { $0.standardizedFileURL.path }),
+                         "only old real bundles directly under the root or a dated folder are offered")
+            suite.expect(CleanerPolicy.xcodeArchives(at: root, ageDays: 0, now: now).isEmpty,
+                         "turning off archive discovery overrides any old bundles on disk")
+        } catch {
+            suite.expect(false, "could not set up Organizer archive fixture: \(error)")
+        }
     }
 }

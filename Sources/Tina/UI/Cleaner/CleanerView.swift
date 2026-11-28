@@ -127,7 +127,7 @@ struct CleanerView: View {
         case .scanning: settingsScrolling(busyState(l10n.s.cleanerScanning, detail: scanningDetail))
         case .results: resultsState
         case .cleaning: settingsScrolling(busyState(l10n.s.cleanerCleaning, detail: nil))
-        case let .done(freed, failed): settingsScrolling(doneState(freed: freed, failed: failed))
+        case let .done(freed, failed, moved): settingsScrolling(doneState(freed: freed, failed: failed, moved: moved))
         }
     }
 
@@ -422,7 +422,7 @@ struct CleanerView: View {
                     .font(.system(size: 12, weight: .medium))
                 Spacer()
                 if let latest = history.runs.first {
-                    Text(Self.byteString(latest.freed))
+                    Text(Self.byteString(latest.moved + latest.freed))
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
@@ -1035,14 +1035,15 @@ struct CleanerView: View {
 
     // MARK: Done
 
-    private func doneState(freed: Int64, failed: Int) -> some View {
+    private func doneState(freed: Int64, failed: Int, moved: Int64) -> some View {
         VStack(spacing: 16) {
             Spacer(minLength: compact ? 20 : 0)
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: compact ? 40 : 54))
                 .foregroundStyle(.green)
             Text(l10n.s.uninstallerDoneTitle).font(.system(size: compact ? 17 : 20, weight: .bold))
-            Text(String(format: l10n.s.uninstallerFreedFormat, Self.byteString(freed)))
+            Text(String(format: l10n.s.cleanerHistorySummaryFormat,
+                        Self.byteString(moved), Self.byteString(freed), failed))
                 .font(.system(size: 13)).foregroundStyle(.secondary)
             Text(l10n.s.cleanerDoneNote)
                 .font(.caption).foregroundStyle(.tertiary)

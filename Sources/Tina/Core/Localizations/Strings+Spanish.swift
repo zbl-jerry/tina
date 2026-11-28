@@ -1018,7 +1018,7 @@ extension Strings {
         cleanerHistoryEmpty: "Aún no hay limpiezas registradas.",
         cleanerHistoryManual: "Manual",
         cleanerHistoryAutomatic: "Programada",
-        cleanerHistorySummaryFormat: "%1$@ liberados · %2$d restantes",
+        cleanerHistorySummaryFormat: "%1$@ a la Papelera · %2$@ liberados · %3$d restantes",
         cleanerHistoryShowInFinder: "Mostrar en Finder",
         cleanerHistoryClear: "Borrar historial",
         cleanerNothingFound: "Nada que limpiar. Tu Mac está en orden.",

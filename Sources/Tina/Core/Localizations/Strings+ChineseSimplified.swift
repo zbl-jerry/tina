@@ -1018,7 +1018,7 @@ extension Strings {
         cleanerHistoryEmpty: "还没有清理记录。",
         cleanerHistoryManual: "手动",
         cleanerHistoryAutomatic: "定时",
-        cleanerHistorySummaryFormat: "释放 %1$@ · 剩余 %2$d 项",
+        cleanerHistorySummaryFormat: "移入废纸篓 %1$@ · 释放 %2$@ · 未处理 %3$d 项",
         cleanerHistoryShowInFinder: "在访达中显示",
         cleanerHistoryClear: "清除记录",
         cleanerNothingFound: "没有可清理的内容。Mac 很整洁。",

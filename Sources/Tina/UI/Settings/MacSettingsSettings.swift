@@ -55,10 +55,10 @@ struct MacSettingsSettings: View {
                 }
             }
 
-            if store.lastAppliedBackup != nil {
+            if store.canUndoLastApply {
                 Section {
                     Button(text.undo) {
-                        if !store.restoreLastApply() { errorText = text.failed }
+                        errorText = store.restoreLastApply() ? nil : text.failed
                         refresh()
                     }
                 }
@@ -91,9 +91,7 @@ struct MacSettingsSettings: View {
                     Spacer()
                     Button(text.apply) {
                         errorText = nil
-                        let differences = MacSettingsSupport.differences(between: current,
-                                                                         and: profile)
-                        if !store.apply(profile, settings: differences) {
+                        if !store.apply(profile) {
                             errorText = text.failed
                         }
                         refresh()

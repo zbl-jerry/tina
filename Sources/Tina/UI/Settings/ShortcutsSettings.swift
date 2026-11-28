@@ -43,6 +43,17 @@ struct ShortcutsSettings: View {
         availableRoles.filter { audit.isFailed($0.storageKey) }
     }
 
+    private var failedWindowActions: [WindowLayoutAction] {
+        guard AppFeature.windowLayout.isAvailable else { return [] }
+        return WindowLayoutAction.shortcutActions.filter { audit.isFailed($0.shortcutKey) }
+    }
+
+    private func retryFailedRegistrations() {
+        let owners = Set(failedRoles.map(\.feature))
+        if !failedWindowActions.isEmpty { WindowLayoutService.shared.retryFailedShortcuts() }
+        features.sync(AppFeature.allCases.filter { owners.contains($0) })
+    }
+
     private var visibleGroups: [FeatureGroup] {
         FeatureGroup.allCases.filter { group in
             availableRoles.contains { $0.group == group }
@@ -58,14 +69,15 @@ struct ShortcutsSettings: View {
                     .foregroundStyle(.secondary)
             }
 
-            if !failedRoles.isEmpty {
+            let failureCount = failedRoles.count + failedWindowActions.count
+            if failureCount > 0 {
                 Section {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Label(String(format: text.unavailableCountFormat, failedRoles.count),
+                        Label(String(format: text.unavailableCountFormat, failureCount),
                               systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Spacer()
-                        Button(text.retry) { audit.retryAll() }
+                        Button(text.retry) { retryFailedRegistrations() }
                     }
                 }
             }
@@ -156,6 +168,7 @@ struct ShortcutsSettings: View {
                             action: action,
                             shortcutsEnabled: UserDefaults.standard.bool(
                                 forKey: DefaultsKey.windowLayoutShortcutsEnabled),
+                            registrationFailed: audit.isFailed(action.shortcutKey),
                             showsSuperKeyAlternative: superKey.isRunning,
                             superKeyModifiers: superKey.modifiers,
                             text: text
@@ -405,6 +418,7 @@ private struct CentralWindowLayoutShortcutRow: View {
     @ObservedObject private var superKey = SuperKeyService.shared
     let action: WindowLayoutAction
     let shortcutsEnabled: Bool
+    let registrationFailed: Bool
     let showsSuperKeyAlternative: Bool
     let superKeyModifiers: GlobalShortcutModifiers
     let text: ShortcutSettingsStrings
@@ -415,11 +429,13 @@ private struct CentralWindowLayoutShortcutRow: View {
 
     init(action: WindowLayoutAction,
          shortcutsEnabled: Bool,
+         registrationFailed: Bool,
          showsSuperKeyAlternative: Bool,
          superKeyModifiers: GlobalShortcutModifiers,
          text: ShortcutSettingsStrings) {
         self.action = action
         self.shortcutsEnabled = shortcutsEnabled
+        self.registrationFailed = registrationFailed
         self.showsSuperKeyAlternative = showsSuperKeyAlternative
         self.superKeyModifiers = superKeyModifiers
         self.text = text
@@ -502,6 +518,10 @@ private struct CentralWindowLayoutShortcutRow: View {
                 Text(ShortcutRecordingCaption.text(l10n.s, canClear: true))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            } else if registrationFailed {
+                Text(l10n.s.shortcutUnavailable)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
             }
             if let pendingTakeOver {
                 SystemShortcutTakeOverOffer(

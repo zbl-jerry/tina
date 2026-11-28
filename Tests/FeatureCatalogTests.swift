@@ -564,6 +564,25 @@ enum FeatureCatalogTests {
         }
         let runtimeSource = (try? String(contentsOfFile: "Sources/Tina/App/FeatureRuntime.swift",
                                          encoding: .utf8)) ?? ""
+        if let defaults = UserDefaults(suiteName: "com.tina.tests.opt-in-lifecycle") {
+            defer { defaults.removePersistentDomain(forName: "com.tina.tests.opt-in-lifecycle") }
+            for (feature, key) in [(AppFeature.usageStats, DefaultsKey.usageStatsEnabled),
+                                   (.inputRemapping, DefaultsKey.inputRemapEnabled),
+                                   (.automation, DefaultsKey.automationEnabled)] {
+                defaults.set(true, forKey: key)
+                defaults.set(true, forKey: feature.availabilityKey)
+                suite.expect(feature.shouldRunOptInService(in: defaults),
+                             "installed and explicitly enabled opt-in service runs")
+                defaults.set(false, forKey: feature.availabilityKey)
+                suite.expect(!feature.shouldRunOptInService(in: defaults) && defaults.bool(forKey: key),
+                             "uninstall stops the service without erasing its enable choice")
+                defaults.set(true, forKey: feature.availabilityKey)
+                suite.expect(feature.shouldRunOptInService(in: defaults),
+                             "reinstall restores the saved opt-in state")
+            }
+        } else {
+            suite.expect(false, "isolated opt-in preferences available")
+        }
         suite.expect(runtimeSource.contains(
             "setAvailable(AppFeature.allCases, available, enablingFirstInstalls: false)"),
                "install all makes features available without switching on their behavior")

@@ -9,15 +9,16 @@ import Foundation
 /// A session-level keyboard tap that rewrites the keys the user mapped. Only
 /// single key-to-key mappings run here; macros, timing and recorded sequences
 /// stay out. Without Accessibility the tap is never installed, so no key is
-/// ever swallowed.
+/// ever swallowed. Main thread only, including the tap's callback.
 final class InputRemapService {
     static let shared = InputRemapService()
 
     private var tap: CFMachPort?
     private var source: CFRunLoopSource?
     private var rules: [InputRemapRule] = []
-    /// The frontmost app is read on each press so the exclusion list follows
-    /// app switches without another observer.
+    private var presses = InputRemapSupport.Presses()
+    private var isCapturingShortcut: () -> Bool = { false }
+    /// The frontmost app is read on each fresh press, not its repeat or up.
     var frontmostBundleID: () -> String? = {
         NSWorkspace.shared.frontmostApplication?.bundleIdentifier
     }
@@ -33,19 +34,23 @@ final class InputRemapService {
     /// Installs the tap. Returns false when Accessibility is missing or the
     /// system refuses the tap; callers surface that instead of pretending.
     @discardableResult
-    func start() -> Bool {
+    func start(isCapturingShortcut: @escaping () -> Bool) -> Bool {
+        guard AXIsProcessTrusted() else {
+            stop()
+            return false
+        }
+        self.isCapturingShortcut = isCapturingShortcut
         guard tap == nil else { return true }
-        guard AXIsProcessTrusted() else { return false }
         let mask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
         guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap,
                                           place: .headInsertEventTap,
                                           options: .defaultTap,
                                           eventsOfInterest: CGEventMask(mask),
-                                          callback: { proxy, type, event, userInfo in
+                                          callback: { _, type, event, userInfo in
             guard let userInfo else { return Unmanaged.passUnretained(event) }
             let service = Unmanaged<InputRemapService>.fromOpaque(userInfo)
                 .takeUnretainedValue()
-            return service.handle(proxy: proxy, type: type, event: event)
+            return service.handle(type: type, event: event)
         },
                                           userInfo: Unmanaged.passUnretained(self).toOpaque())
         else { return false }
@@ -61,53 +66,84 @@ final class InputRemapService {
     }
 
     func stop() {
+        let stoppedTap = tap
+        tap = nil
         if let source {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
         }
-        if let tap {
-            CGEvent.tapEnable(tap: tap, enable: false)
-            CFMachPortInvalidate(tap)
+        if let stoppedTap {
+            CGEvent.tapEnable(tap: stoppedTap, enable: false)
+            CFMachPortInvalidate(stoppedTap)
         }
         source = nil
-        tap = nil
+        isCapturingShortcut = { false }
+        releaseHeldKeys()
     }
 
-    /// A disabled tap (timeout, user disable) is re-enabled and the event is
-    /// passed through untouched, so a stall never eats input.
-    private func handle(proxy: CGEventTapProxy, type: CGEventType,
-                        event: CGEvent) -> Unmanaged<CGEvent>? {
+    private func handle(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent> {
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-            if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
+            // A release may have passed while the filter was disabled.
+            // Balance outstanding replacements before starting fresh.
+            if let tap, AXIsProcessTrusted() {
+                releaseHeldKeys()
+                CGEvent.tapEnable(tap: tap, enable: true)
+            } else {
+                stop()
+            }
             return Unmanaged.passUnretained(event)
         }
-        let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
-        let flags = event.flags
-        var modifiers: GlobalShortcutModifiers = []
-        if flags.contains(.maskControl) { modifiers.insert(.control) }
-        if flags.contains(.maskAlternate) { modifiers.insert(.option) }
-        if flags.contains(.maskShift) { modifiers.insert(.shift) }
-        if flags.contains(.maskCommand) { modifiers.insert(.command) }
-        guard let rule = InputRemapSupport.rule(for: keyCode,
-                                                modifiers: modifiers,
-                                                bundleID: frontmostBundleID(),
-                                                rules: rules) else {
+        guard type == .keyDown || type == .keyUp,
+              let keyCode = UInt16(exactly: event.getIntegerValueField(.keyboardEventKeycode)) else {
             return Unmanaged.passUnretained(event)
         }
-        let target = InputRemapSupport.target(for: rule)
-        let down = type == .keyDown
-        guard let synthetic = CGEvent(keyboardEventSource: nil,
-                                      virtualKey: CGKeyCode(target.keyCode),
-                                      keyDown: down) else {
+        let phase: InputRemapSupport.Presses.Phase = type == .keyUp ? .up
+            : (event.getIntegerValueField(.keyboardEventAutorepeat) == 0 ? .down : .repeatDown)
+        let target = presses.target(for: keyCode, phase: phase) {
+            // The recording tap normally owns this key before us. If it
+            // could not install, the recorder's view still needs raw keys.
+            guard !isCapturingShortcut(), !rules.isEmpty else { return nil }
+            return InputRemapSupport.rule(for: keyCode,
+                                          modifiers: GlobalShortcutModifiers(cgFlags: event.flags),
+                                          bundleID: frontmostBundleID(),
+                                          rules: rules)
+        }
+        guard let target else {
             return Unmanaged.passUnretained(event)
         }
-        var targetFlags: CGEventFlags = []
-        if target.modifiers.contains(.control) { targetFlags.insert(.maskControl) }
-        if target.modifiers.contains(.option) { targetFlags.insert(.maskAlternate) }
-        if target.modifiers.contains(.shift) { targetFlags.insert(.maskShift) }
-        if target.modifiers.contains(.command) { targetFlags.insert(.maskCommand) }
-        synthetic.flags = targetFlags
-        synthetic.post(tap: .cghidEventTap)
-        // The original key never reaches the app.
-        return nil
+        // A replacement returned from the callback continues after this tap.
+        // Reposting it at HID would feed chained rules back into this filter.
+        let replacement = Self.replacement(for: event, target: target)
+        return replacement === event ? Unmanaged.passUnretained(event) : Unmanaged.passRetained(replacement)
+    }
+
+    static func replacement(for event: CGEvent, target: GlobalShortcut) -> CGEvent {
+        let replacement = CGEvent(keyboardEventSource: CGEventSource(event: event),
+                                  virtualKey: CGKeyCode(target.keyCode),
+                                  keyDown: event.type == .keyDown) ?? event
+        // A fresh keyboard event avoids stale source-key Unicode; modifying
+        // the original is a fallback only if the replacement cannot allocate.
+        if replacement === event {
+            replacement.setIntegerValueField(.keyboardEventKeycode, value: target.keyCode)
+        } else {
+            replacement.timestamp = event.timestamp
+            replacement.location = event.location
+            for field: CGEventField in [.keyboardEventAutorepeat, .keyboardEventKeyboardType, .eventSourceUserData] {
+                replacement.setIntegerValueField(field, value: event.getIntegerValueField(field))
+            }
+        }
+        let preservedFlags = event.flags.intersection([.maskAlphaShift, .maskNonCoalesced])
+        replacement.flags = preservedFlags.union(target.syntheticEventFlags)
+        return replacement
+    }
+
+    private func releaseHeldKeys() {
+        let targets = presses.finish()
+        guard !targets.isEmpty, AXIsProcessTrusted() else { return }
+        for target in targets {
+            guard let event = CGEvent(keyboardEventSource: nil,
+                                      virtualKey: CGKeyCode(target.keyCode), keyDown: false) else { continue }
+            event.flags = target.syntheticEventFlags
+            event.post(tap: .cgAnnotatedSessionEventTap)
+        }
     }
 }

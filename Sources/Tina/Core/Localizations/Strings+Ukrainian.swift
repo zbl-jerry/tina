@@ -988,7 +988,7 @@ extension Strings {
         cleanerHistoryEmpty: "Очищень ще не записано.",
         cleanerHistoryManual: "Вручну",
         cleanerHistoryAutomatic: "За розкладом",
-        cleanerHistorySummaryFormat: "Звільнено %1$@ · залишилося %2$d",
+        cleanerHistorySummaryFormat: "У Смітник: %1$@ · звільнено %2$@ · залишилося %3$d",
         cleanerHistoryShowInFinder: "Показати у Finder",
         cleanerHistoryClear: "Очистити історію",
         cleanerNothingFound: "Нема чого очищати. Ваш Mac у порядку.",

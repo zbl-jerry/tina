@@ -1019,7 +1019,7 @@ extension Strings {
         cleanerHistoryEmpty: "還沒有清理記錄。",
         cleanerHistoryManual: "手動",
         cleanerHistoryAutomatic: "定時",
-        cleanerHistorySummaryFormat: "釋放 %1$@ · 剩餘 %2$d 項",
+        cleanerHistorySummaryFormat: "移至垃圾桶 %1$@ · 釋放 %2$@ · 未處理 %3$d 項",
         cleanerHistoryShowInFinder: "在 Finder 中顯示",
         cleanerHistoryClear: "清除記錄",
         cleanerNothingFound: "沒有可清理的內容。Mac 很整潔。",

@@ -1019,7 +1019,7 @@ extension Strings {
         cleanerHistoryEmpty: "아직 정리 기록이 없습니다.",
         cleanerHistoryManual: "수동",
         cleanerHistoryAutomatic: "예약됨",
-        cleanerHistorySummaryFormat: "%1$@ 확보 · %2$d개 남음",
+        cleanerHistorySummaryFormat: "휴지통으로 %1$@ 이동 · %2$@ 확보 · %3$d개 남음",
         cleanerHistoryShowInFinder: "Finder에서 보기",
         cleanerHistoryClear: "기록 지우기",
         cleanerNothingFound: "정리할 항목이 없습니다. Mac이 깔끔합니다.",

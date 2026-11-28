@@ -92,6 +92,7 @@ struct MenuPanelView: View {
     @State private var updateBannerHeight: CGFloat = 0
     @State private var selectedSection: PanelSectionID = PanelLayout.order.first ?? .keepAwake
     @State private var selectedMetric: MetricDetailKind?
+    @State private var showsDirectOutput = false
     @FocusState private var focusedSection: PanelSectionID?
 
     /// Cap the panel to the usable screen height so it never overflows the menu
@@ -142,11 +143,15 @@ struct MenuPanelView: View {
             applyFocus(request)
         }
         .onChange(of: focusedSection) { _, section in
-            if let section { selectedSection = section }
+            if let section {
+                showsDirectOutput = false
+                selectedSection = section
+            }
         }
     }
 
     private var monitorNeeds: SystemMonitorPanelNeeds {
+        if showsDirectOutput { return .none }
         if let selectedMetric {
             return selectedMetric.monitorNeeds
         }
@@ -168,12 +173,23 @@ struct MenuPanelView: View {
         switch request.target {
         case .normal:
             selectedMetric = nil
+            showsDirectOutput = false
         case .section(let section):
+            if section == .mixer, AppFeature.mixer.isAvailable, !isSectionVisible(section) {
+                // An explicit menu-bar click is independent of whether the
+                // user wants the mixer in normal section navigation.
+                selectedMetric = nil
+                focusedSection = nil
+                showsDirectOutput = true
+                return
+            }
             guard isSectionVisible(section) else { return }
+            showsDirectOutput = false
             selectedMetric = nil
             selectedSection = section
             focusedSection = section
         case .metric(let metric):
+            showsDirectOutput = false
             focusedSection = nil
             selectedMetric = metric
             selectedSection = metric.panelSection
@@ -193,7 +209,7 @@ struct MenuPanelView: View {
             OverlayScrollView(measuredHeight: $navigableContentHeight) {
                 Group {
                     if let selectedMetric { MetricDetailView(kind: selectedMetric) }
-                    else { section(for: activeSection, collapsible: false) }
+                    else { navigableContent }
                 }
                 .frame(width: size.width)
                 .environment(\.notchPresentation, true)
@@ -214,7 +230,7 @@ struct MenuPanelView: View {
 
             OverlayScrollView(measuredHeight: $navigableContentHeight) {
                 VStack(alignment: .leading, spacing: 12) {
-                    section(for: activeSection, collapsible: false)
+                    navigableContent
                 }
                 .frame(width: 308)
             }
@@ -266,6 +282,15 @@ struct MenuPanelView: View {
         visibleSections.contains(selectedSection) ? selectedSection : (visibleSections.first ?? .keepAwake)
     }
 
+    @ViewBuilder
+    private var navigableContent: some View {
+        if showsDirectOutput, AppFeature.mixer.isAvailable {
+            MixerSection(collapsible: false, outputOnly: true)
+        } else {
+            section(for: activeSection, collapsible: false)
+        }
+    }
+
     private var navigableScrollHeight: CGFloat {
         let measured = navigableContentHeight == 0 ? estimatedNavigableContentHeight : navigableContentHeight
         return min(measured, max(80, maxHeight - navigableChromeHeight))
@@ -292,6 +317,7 @@ struct MenuPanelView: View {
     }
 
     private var estimatedNavigableContentHeight: CGFloat {
+        if showsDirectOutput { return 75 }
         switch activeSection {
         case .keepAwake: return 250
         case .brightness: return 140
@@ -375,8 +401,9 @@ struct MenuPanelView: View {
     private var sectionNavigation: some View {
         HStack(spacing: 2) {
             ForEach(visibleSections) { id in
-                let isActive = activeSection == id
+                let isActive = !showsDirectOutput && activeSection == id
                 Button {
+                    showsDirectOutput = false
                     selectedSection = id
                     focusedSection = id
                 } label: {

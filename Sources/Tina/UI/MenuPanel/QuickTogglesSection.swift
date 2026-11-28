@@ -410,18 +410,19 @@ struct QuickTogglesList: View {
                        caption: caption(for: item, idle: idle),
                        systemImage: systemImage,
                        isOn: Binding(get: isOn,
-                                     set: { _ in QuickTogglesService.shared.toggleSystemSwitch(item) }),
+                                     set: { toggles.setSystemSwitch(item, enabled: $0) }),
                        isEditing: editing,
                        showsDragHandle: true,
                        visibility: visibilityBinding(item),
                        isActive: item.relaunchesComponent && toggles.state(for: item) == .running,
                        activeText: FeatureStrings.quickToggles(l10n.language).restartInProgress,
-                       needsAttention: toggles.state(for: item) == .failed)
+                       needsAttention: toggles.state(for: item) == .failed
+                           || toggles.state(for: item) == .rollbackFailed)
     }
 
     private func reportsState(_ item: QuickToggleAction) -> Bool {
         switch toggles.state(for: item) {
-        case .failed, .needsPermission, .succeeded: return true
+        case .failed, .rollbackFailed, .needsPermission, .succeeded: return true
         case .running, .none: return false
         }
     }
@@ -440,6 +441,7 @@ struct QuickTogglesList: View {
         let strings = FeatureStrings.quickToggles(l10n.language)
         switch toggles.state(for: item) {
         case .failed: return strings.actionFailed
+        case .rollbackFailed: return strings.systemSwitchRollbackFailed
         case .succeeded: return strings.restartSucceeded
         case .needsPermission:
             return "\(l10n.s.permissionRequired): \(permissionName(item))"
@@ -458,7 +460,7 @@ struct QuickTogglesList: View {
     private func ejectCaption(_ strings: QuickToggleFeatureStrings) -> String {
         switch toggles.state(for: .ejectDisks) {
         case .running: return l10n.s.diskEjecting
-        case .failed: return l10n.s.diskEjectFailed
+        case .failed, .rollbackFailed: return l10n.s.diskEjectFailed
         case .needsPermission, .succeeded, .none:
             return toggles.ejectableVolumeCount() > 0 ? strings.ejectCaption : l10n.s.diskNoExternal
         }
