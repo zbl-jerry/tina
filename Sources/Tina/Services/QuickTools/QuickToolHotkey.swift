@@ -17,9 +17,7 @@ final class QuickToolHotkey {
     /// The key the registered combination is stored under, so the take-over
     /// hears about this hotkey coming and going.
     private var claimedKey: String?
-    /// The last request, kept so the central Shortcuts page can retry a
-    /// failed registration without knowing which tool owns this instance.
-    private var lastRequest: (enabled: Bool, shortcut: GlobalShortcut, storageKey: String)?
+    private var lastStorageKey: String?
     var onPress: (() -> Void)?
     var isRegistered: Bool { hotKeyRef != nil }
 
@@ -31,7 +29,7 @@ final class QuickToolHotkey {
     /// registration (combination taken by another app).
     @discardableResult
     func sync(enabled: Bool, shortcut: GlobalShortcut, storageKey: String) -> Bool {
-        lastRequest = (enabled, shortcut, storageKey)
+        lastStorageKey = storageKey
         guard enabled else {
             unregister()
             ShortcutRegistrationAudit.shared.report(key: storageKey, failed: false)
@@ -51,9 +49,9 @@ final class QuickToolHotkey {
                                          id, GetEventDispatcherTarget(), 0, &ref)
         guard status == noErr, let ref else {
             registeredShortcut = nil
-            ShortcutRegistrationAudit.shared.report(key: storageKey, failed: true) { [weak self] in
-                self?.retryLastRequest()
-            }
+            // The central page re-syncs the owning feature, not this low-level
+            // registrar: the owner must publish the result on its own page.
+            ShortcutRegistrationAudit.shared.report(key: storageKey, failed: true)
             return false
         }
         hotKeyRef = ref
@@ -75,18 +73,9 @@ final class QuickToolHotkey {
         hotKeyRef = nil
         registeredShortcut = nil
         Self.instances.removeValue(forKey: hotKeyID)
-        if let key = lastRequest?.storageKey {
+        if let key = lastStorageKey {
             ShortcutRegistrationAudit.shared.clear(key: key)
         }
-    }
-
-    /// Re-runs the last request. The central page calls this through the
-    /// audit; owners still receive their normal sync result.
-    func retryLastRequest() {
-        guard let request = lastRequest else { return }
-        _ = sync(enabled: request.enabled,
-                 shortcut: request.shortcut,
-                 storageKey: request.storageKey)
     }
 
     /// Releases every quick tool key at once, for the moment a shortcut field

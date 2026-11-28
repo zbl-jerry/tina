@@ -145,8 +145,8 @@ final class CleanerScheduler: ObservableObject {
                     } else {
                         self.finishRun(freed: 0, failed: 0)
                     }
-                case let .done(freed, failed):
-                    self.finishRun(freed: freed, failed: failed)
+                case let .done(freed, failed, moved):
+                    self.finishRun(freed: freed, failed: failed, moved: moved)
                 case .idle:
                     // The user (or a reset) interrupted the automatic pass.
                     self.runObserver = nil
@@ -158,14 +158,14 @@ final class CleanerScheduler: ObservableObject {
         cleaner.scan(attended: false)
     }
 
-    private func finishRun(freed: Int64, failed: Int) {
+    private func finishRun(freed: Int64, failed: Int, moved: Int64 = 0) {
         runObserver = nil
         JunkCleaner.shared.reset()
         let defaults = UserDefaults.standard
         defaults.set(Date().timeIntervalSince1970, forKey: DefaultsKey.cleanerLastAutoRun)
         defaults.set(freed, forKey: DefaultsKey.cleanerLastAutoFreed)
         defaults.set(failed, forKey: DefaultsKey.cleanerLastAutoFailed)
-        notifyIfWanted(freed: freed, failed: failed)
+        notifyIfWanted(freed: freed, failed: failed, moved: moved)
         scheduleNext()
     }
 
@@ -173,9 +173,16 @@ final class CleanerScheduler: ObservableObject {
     /// app's regular notifier (which drops the note quietly if macOS
     /// notifications are not allowed). Even a run that found nothing posts,
     /// so a fresh schedule gives proof of life on its first pass.
-    private func notifyIfWanted(freed: Int64, failed: Int) {
+    private func notifyIfWanted(freed: Int64, failed: Int, moved: Int64) {
         guard UserDefaults.standard.bool(forKey: DefaultsKey.cleanerScheduleNotify) else { return }
         let strings = L10n.shared.s
+        if moved > 0 {
+            let body = String(format: strings.cleanerHistorySummaryFormat,
+                              ByteCountFormatter.string(fromByteCount: moved, countStyle: .file),
+                              ByteCountFormatter.string(fromByteCount: freed, countStyle: .file), failed)
+            Notifier.post(title: strings.cleanerScheduleTitle, body: body)
+            return
+        }
         var sentences: [String] = []
         if freed > 0 {
             sentences.append(String(format: strings.cleanerAutoNotificationFormat,

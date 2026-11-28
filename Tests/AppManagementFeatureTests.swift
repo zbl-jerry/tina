@@ -1224,7 +1224,7 @@ enum AppManagementFeatureTests {
         let cleanerViewCode = compact("Sources/Tina/UI/Cleaner/CleanerView.swift")
         suite.expect(schedulerCode.components(separatedBy: "cleanSelected(").count == 2
                && schedulerCode.contains("cleanSelected(escalate:false,origin:.automatic)")
-               && schedulerCode.contains("notifyIfWanted(freed:freed,failed:failed)"),
+               && schedulerCode.contains("notifyIfWanted(freed:freed,failed:failed,moved:moved)"),
                "the scheduled clean never escalates and reports what it left in place")
         suite.expect(junkCleanerSource.contains("func cleanSelected(escalate: Bool, origin: CleanerRunOrigin = .manual) {")
                && cleanerViewCode.components(separatedBy: "cleanSelected(").count == 2

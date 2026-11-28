@@ -39,6 +39,7 @@ enum CleanerScanFlowTests {
         var scanToken = UUID()
         var scanCancellation: CleanerSupport.ScanCancellation?
         static var scanned: [CleanerSupport.Category] = []
+        static var lastIncludedArchives: Bool?
         static var onScan: ((CleanerSupport.Category) -> Void)?
         static var fixtureApps: Set<String>?
         static var fixturePlugins: Set<String>?
@@ -95,7 +96,10 @@ enum CleanerScanFlowTests {
             }
             return record(.logs)
         }
-        static func scanDeveloperJunk() -> [Item] { record(.developer) }
+        static func scanDeveloperJunk(includingArchives: Bool) -> [Item] {
+            lastIncludedArchives = includingArchives
+            return record(.developer)
+        }
         static func scanTrash() -> [Item] { record(.trash) }
         static func scanDeviceBackups() -> [Item] { record(.deviceBackups) }
         static func screenshotSearch() -> (folders: [URL], days: Int)? { ([], 30) }
@@ -169,7 +173,7 @@ enum CleanerScanFlowTests {
         let ordinary = cleanFixture(items)
         let directMoves = items.map { CleanupAction.trash($0.url) }
         let total = items.reduce(Int64(0)) { $0 + $1.size }
-        suite.expect(ordinary.actions == directMoves && ordinary.phase == .done(freed: total, failed: 0)
+        suite.expect(ordinary.actions == directMoves && ordinary.phase == .done(freed: 0, failed: 0, moved: total)
                      && ordinary.appReads == 1 && ordinary.pluginReads == 1,
                      "the direct Trash pass shares each inventory across all selected login items")
 
@@ -184,7 +188,7 @@ enum CleanerScanFlowTests {
             return true
         }
         suite.expect(afterEmpty.actions == [.emptyTrash, .trash(orphan.url)]
-                     && afterEmpty.phase == .done(freed: trash.size + orphan.size, failed: 2),
+                     && afterEmpty.phase == .done(freed: trash.size, failed: 2, moved: orphan.size),
                      "owners installed while the Trash is being emptied protect their agents from the first move")
 
         let refusedAgents = cleanFixture(items) { _ in false }
@@ -219,6 +223,7 @@ enum CleanerScanFlowTests {
             Queue.pending = []
             Scanner.onScan = nil
             Scanner.scanned = []
+            Scanner.lastIncludedArchives = nil
             cleaner.reset()
         }
 
@@ -226,6 +231,8 @@ enum CleanerScanFlowTests {
         Queue.drain()
         suite.expect(Scanner.scanned == all && cleaner.phase == .results && cleaner.items.count == all.count,
                      "an uninterrupted scan visits every category and delivers its results")
+        suite.expect(Scanner.lastIncludedArchives == true,
+                     "an attended scan offers individual release archives")
 
         cleaner.reset()
         Scanner.scanned = []
@@ -258,6 +265,8 @@ enum CleanerScanFlowTests {
         Queue.drain()
         suite.expect(Scanner.scanned == all.filter { $0 != .screenshots } && cleaner.phase == .results,
                      "an unattended scan never reads the screenshot folders")
+        suite.expect(Scanner.lastIncludedArchives == false,
+                     "an unattended scan never visits manually selectable release archives")
 
         do {
             try checkCleanupInventories(suite)

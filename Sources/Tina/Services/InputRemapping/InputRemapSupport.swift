@@ -38,9 +38,7 @@ enum InputRemapSupport {
         var seen: Set<String> = []
         var result: [InputRemapRule] = []
         for rule in rules {
-            guard rule.targetKeyCode != 0 || rule.targetModifiers.isEmpty == false else {
-                continue
-            }
+            // Key code zero is a real key (ANSI A), not an empty selection.
             guard !(rule.sourceKeyCode == rule.targetKeyCode
                     && rule.sourceModifiers == rule.targetModifiers) else { continue }
             let key = signature(keyCode: rule.sourceKeyCode,
@@ -86,10 +84,34 @@ enum InputRemapSupport {
         "\(modifiers.rawValue)-\(keyCode)"
     }
 
-    /// The key the rule turns the press into, including the modifiers that
-    /// should be attached to the synthetic event.
-    static func target(for rule: InputRemapRule) -> (keyCode: UInt16,
-                                                     modifiers: GlobalShortcutModifiers) {
-        (rule.targetKeyCode, rule.targetModifiers)
+    struct Presses {
+        enum Phase { case down, repeatDown, up }
+
+        /// Only mapped presses need storage. A repeat or release without a
+        /// matched down must pass through, including after enabling the tap
+        /// mid-hold or when a passthrough press crosses an app boundary.
+        private var held: [UInt16: GlobalShortcut] = [:]
+
+        mutating func target(for physicalKey: UInt16, phase: Phase,
+                             matching: () -> InputRemapRule?) -> GlobalShortcut? {
+            switch phase {
+            case .down:
+                let target = matching().map {
+                    GlobalShortcut(keyCode: Int64($0.targetKeyCode), modifiers: $0.targetModifiers)
+                }
+                held[physicalKey] = target
+                return target
+            case .repeatDown:
+                return held[physicalKey]
+            case .up:
+                return held.removeValue(forKey: physicalKey)
+            }
+        }
+
+        mutating func finish() -> [GlobalShortcut] {
+            let mapped = Array(held.values)
+            held.removeAll()
+            return mapped
+        }
     }
 }

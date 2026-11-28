@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Vorssaint
 
+import AppKit
+import Carbon.HIToolbox
 import Foundation
 
 enum InputRemapSupportTests {
@@ -74,5 +76,80 @@ enum InputRemapSupportTests {
         suite.expect(decoded == withModifiers, "a rule round-trips through JSON")
         suite.expect(decoded?.sourceModifiers == option,
                      "the modifier set survives the round trip")
+
+        let toA = rule(UInt16(kVK_ANSI_B), UInt16(kVK_ANSI_A))
+        suite.expect(InputRemapSupport.sanitized([toA]) == [toA],
+                     "bare A is a real target even though its virtual key code is zero")
+        suite.expect(GlobalShortcut(keyCode: Int64(kVK_ANSI_A), modifiers: []).hasPrintableKey,
+                     "the bare-key recorder accepts virtual key code zero")
+
+        // A repeat or release never consults the current layer, frontmost app,
+        // or rewritten rules again. An unobserved down must not become a remap.
+        var presses = InputRemapSupport.Presses()
+        var lookups = 0
+        func lookup() -> InputRemapRule? {
+            lookups += 1
+            return toA
+        }
+        let source = toA.sourceKeyCode
+        let target = GlobalShortcut(keyCode: Int64(kVK_ANSI_A), modifiers: [])
+        suite.expect(presses.target(for: source, phase: .repeatDown, matching: lookup) == nil,
+                     "a key already repeating when the tap starts passes through")
+        suite.expect(presses.target(for: source, phase: .up, matching: lookup) == nil && lookups == 0,
+                     "an unmatched release passes through without remapping")
+        suite.expect(presses.target(for: source, phase: .down, matching: lookup) == target,
+                     "a fresh press selects a replacement")
+        suite.expect(presses.target(for: source, phase: .repeatDown) { nil } == target,
+                     "changed modifiers or an excluded app do not switch the target of a held key")
+        suite.expect(presses.target(for: source, phase: .up) { nil } == target,
+                     "the replacement receives the matching key-up")
+        suite.expect(presses.target(for: source, phase: .down) { nil } == nil,
+                     "a new press after release re-evaluates the current exclusion")
+        suite.expect(presses.target(for: source, phase: .repeatDown, matching: lookup) == nil,
+                     "a passthrough press does not start remapping when the app changes")
+        suite.expect(presses.target(for: source, phase: .up, matching: lookup) == nil && lookups == 1,
+                     "a passthrough press keeps its original key-up")
+        _ = presses.target(for: source, phase: .down, matching: lookup)
+        suite.expect(presses.finish() == [target] && presses.finish().isEmpty,
+                     "stopping releases only held replacements once")
+        suite.expect(presses.target(for: source, phase: .up, matching: lookup) == nil,
+                     "restarting does not inherit an old press")
+
+        eventReplacement(in: suite)
+    }
+
+    private static func eventReplacement(in suite: TestSuite) {
+        guard let event = CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(kVK_ANSI_B), keyDown: true) else {
+            suite.expect(false, "the fixture can construct an offline keyboard event")
+            return
+        }
+        event.timestamp = 123_456
+        event.location = CGPoint(x: 17, y: 32)
+        event.flags = [.maskCommand, .maskAlphaShift]
+        event.setIntegerValueField(.keyboardEventAutorepeat, value: 1)
+        event.setIntegerValueField(.eventSourceUserData, value: 42)
+        let target = GlobalShortcut(keyCode: Int64(kVK_LeftArrow), modifiers: [.option])
+        let replacement = InputRemapService.replacement(for: event, target: target)
+        suite.expect(replacement.type == .keyDown
+                     && replacement.getIntegerValueField(.keyboardEventKeycode) == Int64(kVK_LeftArrow),
+                     "a remap returns one event with the new virtual key")
+        suite.expect(replacement.getIntegerValueField(.keyboardEventAutorepeat) == 1
+                     && replacement.getIntegerValueField(.eventSourceUserData) == 42
+                     && replacement.timestamp == event.timestamp && replacement.location == event.location,
+                     "the forwarded replacement preserves repeat, source metadata, time and location")
+        suite.expect(replacement.flags.contains([.maskAlternate, .maskAlphaShift, .maskSecondaryFn, .maskNumericPad])
+                     && !replacement.flags.contains(.maskCommand),
+                     "the replacement preserves Caps Lock, changes the chord and sets target key flags")
+
+        event.flags = []
+        event.keyboardSetUnicodeString(stringLength: 1, unicodeString: [0x2605])
+        let printable = InputRemapService.replacement(
+            for: event, target: GlobalShortcut(keyCode: Int64(kVK_ANSI_A), modifiers: []))
+        var unicode = [UniChar](repeating: 0, count: 8)
+        var length = 0
+        printable.keyboardGetUnicodeString(maxStringLength: unicode.count, actualStringLength: &length,
+                                            unicodeString: &unicode)
+        suite.expect(length > 0 && unicode[0] != 0x2605,
+                     "rewriting a printable key does not forward the old key's Unicode override")
     }
 }

@@ -79,7 +79,7 @@ struct CleanerHistoryView: View {
                     .foregroundStyle(.secondary)
             }
             Text(String(format: l10n.s.cleanerHistorySummaryFormat,
-                        Self.byteString(run.freed), run.failedCount))
+                        Self.byteString(run.moved), Self.byteString(run.freed), run.leftBehindCount))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -102,11 +102,10 @@ struct CleanerHistoryView: View {
             Text(Self.byteString(entry.size))
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
-            if let trashPath = entry.trashPath,
-               FileManager.default.fileExists(atPath: trashPath) {
+            if entry.revealableTrashURL != nil {
                 Button(l10n.s.cleanerHistoryShowInFinder) {
-                    NSWorkspace.shared.activateFileViewerSelecting(
-                        [URL(fileURLWithPath: trashPath)])
+                    guard let url = entry.revealableTrashURL else { return }
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
                 }
                 .buttonStyle(.link)
                 .font(.caption)

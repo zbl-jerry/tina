@@ -30,6 +30,7 @@ struct MixerSection: View {
     @State private var dropTarget: MixerAppDropTarget?
     var collapsible = true
     var settingsMode = false
+    var outputOnly = false
 
     private var glassEnabled: Bool {
         LiquidGlassSupport.isEnabled(inNotch: inNotch, windows: windowsGlass, island: islandGlass)
@@ -37,7 +38,9 @@ struct MixerSection: View {
 
     var body: some View {
         Group {
-            if settingsMode {
+            if outputOnly {
+                universalOutputPicker.panelCard(interactive: false)
+            } else if settingsMode {
                 SettingsCard(title: l10n.s.mixerSection) {
                     mixerControls
                 }

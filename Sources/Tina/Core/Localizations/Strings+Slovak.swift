@@ -1018,7 +1018,7 @@ extension Strings {
         cleanerHistoryEmpty: "Zatiaľ nie sú zaznamenané žiadne čistenia.",
         cleanerHistoryManual: "Manuálne",
         cleanerHistoryAutomatic: "Plánované",
-        cleanerHistorySummaryFormat: "%1$@ uvoľnených · %2$d zostalo",
+        cleanerHistorySummaryFormat: "%1$@ do Koša · %2$@ uvoľnených · %3$d zostalo",
         cleanerHistoryShowInFinder: "Zobraziť vo Finderi",
         cleanerHistoryClear: "Vymazať históriu",
         cleanerNothingFound: "Nie je čo čistiť. Váš Mac je uprataný.",

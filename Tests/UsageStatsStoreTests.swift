@@ -5,6 +5,31 @@ import Foundation
 
 enum UsageStatsStoreTests {
     static func run(_ suite: TestSuite) {
+        var clock = Calendar(identifier: .gregorian)
+        clock.timeZone = TimeZone(secondsFromGMT: 0)!
+        let midnight = Date(timeIntervalSince1970: 86_400)
+        var timeline = UsageStatsTimeline(date: midnight.addingTimeInterval(-10),
+                                          uptime: 100, bundleID: "com.a", screenAwake: true)
+        let split = timeline.settle(at: midnight.addingTimeInterval(20), uptime: 130, calendar: clock)
+        suite.expect(split.map(\.seconds) == [10, 20] && split.map(\.day) == [Date(timeIntervalSince1970: 0), midnight],
+                     "a screen-on interval crossing midnight is split between the days")
+        suite.expect(split.allSatisfy { $0.bundleID == "com.a" },
+                     "a late activation does not receive the previous app's interval")
+        timeline.bundleID = "com.b"
+        let next = timeline.settle(at: midnight.addingTimeInterval(21), uptime: 131, calendar: clock)
+        suite.expect(next.count == 1 && next.first?.bundleID == "com.b" && next.first?.seconds == 1,
+                     "the new app receives only its own time")
+        timeline.systemAwake = false
+        suite.expect(timeline.settle(at: midnight.addingTimeInterval(3_621), uptime: 3_731, calendar: clock).isEmpty,
+                     "neither app nor screen time is charged during system sleep")
+        timeline.systemAwake = true
+        timeline.screenAwake = false
+        suite.expect(timeline.settle(at: midnight.addingTimeInterval(3_626), uptime: 3_736, calendar: clock).isEmpty,
+                     "waking with the screen off still does not charge screen time")
+        timeline.screenAwake = true
+        suite.expect(timeline.settle(at: midnight.addingTimeInterval(8_000), uptime: 3_741, calendar: clock)
+            .map(\.seconds) == [5], "a wall-clock adjustment does not manufacture elapsed time")
+
         let fm = FileManager.default
         let root = fm.temporaryDirectory.appendingPathComponent("tina-usage-\(UUID().uuidString)",
                                                                 isDirectory: true)

@@ -254,6 +254,19 @@ extension AppFeature {
         defaults.bool(forKey: availabilityKey)
     }
 
+    /// These tools are explicitly enabled separately from installation. A
+    /// saved switch is not permission to keep running after uninstall.
+    func shouldRunOptInService(in defaults: UserDefaults = .standard) -> Bool {
+        let key: String
+        switch self {
+        case .automation: key = DefaultsKey.automationEnabled
+        case .inputRemapping: key = DefaultsKey.inputRemapEnabled
+        case .usageStats: key = DefaultsKey.usageStatsEnabled
+        default: return false
+        }
+        return isAvailable(in: defaults) && defaults.bool(forKey: key)
+    }
+
     /// The feature's own enable keys; any one being true means the feature is
     /// engaged. Empty means the feature works on demand (a panel tile, a
     /// context-menu action), so being available already counts as engaged for

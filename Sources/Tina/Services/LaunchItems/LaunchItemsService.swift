@@ -11,11 +11,12 @@ final class LaunchItemsService: ObservableObject {
     static let shared = LaunchItemsService()
 
     enum Phase: Equatable {
-        case idle, loading, loaded, failed
+        case idle, loading, loaded
     }
 
     @Published private(set) var items: [LaunchItem] = []
     @Published private(set) var phase: Phase = .idle
+    @Published private(set) var hasUnreadableFolders = false
     @Published private(set) var busyLabels: Set<String> = []
 
     private let queue = DispatchQueue(label: "com.tina.utils.launch-items", qos: .userInitiated)
@@ -31,44 +32,46 @@ final class LaunchItemsService: ObservableObject {
             let result = Self.enumerate()
             DispatchQueue.main.async {
                 guard let self, self.generation == current else { return }
-                switch result {
-                case let .success(items):
-                    self.items = items
-                    self.phase = .loaded
-                case .failure:
-                    self.items = []
-                    self.phase = .failed
-                }
+                self.items = result.items
+                self.hasUnreadableFolders = result.unreadable
+                self.phase = .loaded
             }
         }
     }
 
-    /// Stops or starts one user agent. The answer is verified by asking
-    /// launchd again, so a refused command is reported instead of guessed.
-    func setEnabled(_ item: LaunchItem, _ enabled: Bool,
-                    completion: @escaping (Bool) -> Void) {
-        guard item.canToggle, !busyLabels.contains(item.label) else {
+    /// Revalidates the plist, runs the requested user-agent action, and reads
+    /// launchd's same GUI domain to verify its effect.
+    func perform(_ action: LaunchItemsSupport.Action, on item: LaunchItem,
+                 completion: @escaping (Bool) -> Void) {
+        guard item.allows(action), let identity = item.plistIdentity,
+              !busyLabels.contains(item.label) else {
             completion(false)
             return
         }
         busyLabels.insert(item.label)
         queue.async { [weak self] in
             let uid = getuid()
-            let result: Bool
-            if enabled {
-                result = Self.run("/bin/launchctl",
-                                  LaunchItemsSupport.bootstrapArguments(uid: uid, url: item.url)).status == 0
-            } else {
-                result = Self.run("/bin/launchctl",
-                                  LaunchItemsSupport.bootoutArguments(uid: uid, label: item.label)).status == 0
+            let home = URL(fileURLWithPath: NSHomeDirectory())
+            let isCurrent = {
+                LaunchItemsSupport.ownedPlistIdentity(item.url, home: home, uid: uid) == identity
+                    && Self.readPlist(item.url)?.label == item.label
             }
-            let verified = result && Self.isLoaded(label: item.label)
+            let fresh = LaunchItemsSupport.ownedPlistIdentity(item.url, home: home, uid: uid) == identity
+                ? Self.readPlist(item.url) : nil
+            let changesLogin = action == .enableAtLogin || action == .disableAtLogin
+            let verified = fresh.map { plist in
+                plist.label == item.label
+                    && (!changesLogin || Self.userOwnsLabel(item.label, at: item.url, home: home))
+                    && LaunchItemsSupport.perform(action, uid: uid, label: item.label, plist: item.url,
+                                                  defaultDisabled: plist.disabled, run: Self.run,
+                                                  isCurrent: isCurrent)
+            } ?? false
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.busyLabels.remove(item.label)
-                if verified {
-                    self.setDisabled(enabled ? false : true, label: item.label)
-                }
+                // Refresh even if the command changed something but the
+                // subsequent verification was inconclusive.
+                self.refresh()
                 completion(verified)
             }
         }
@@ -76,81 +79,84 @@ final class LaunchItemsService: ObservableObject {
 
     // MARK: - Reading
 
-    private static func enumerate() -> Result<[LaunchItem], Error> {
-        let home = URL(fileURLWithPath: NSHomeDirectory())
-        let loaded = loadedLabels()
-        let disabled = Set(UserDefaults.standard
-            .stringArray(forKey: DefaultsKey.launchItemsDisabledLabels) ?? [])
-        var found: [LaunchItem] = []
-        for root in [home.appendingPathComponent("Library/LaunchAgents", isDirectory: true),
-                     URL(fileURLWithPath: "/Library/LaunchAgents", isDirectory: true),
-                     URL(fileURLWithPath: "/Library/LaunchDaemons", isDirectory: true)] {
-            guard let entries = try? FileManager.default.contentsOfDirectory(at: root,
-                                                                             includingPropertiesForKeys: nil)
-            else { continue }
-            for url in entries where url.pathExtension == "plist" {
-                guard let scope = LaunchItemsSupport.scope(for: url, home: home),
-                      let data = try? Data(contentsOf: url),
-                      let parsed = LaunchItemsSupport.parse(data)
-                else { continue }
-                found.append(LaunchItem(url: url,
-                                        label: parsed.label,
-                                        program: parsed.program,
-                                        scope: scope,
-                                        loaded: scope == .userAgent && loaded.contains(parsed.label),
-                                        disabledByTina: disabled.contains(parsed.label)))
+    private static func readPlist(_ url: URL) -> (label: String, program: String?, disabled: Bool)? {
+        var info = stat()
+        guard lstat(url.path, &info) == 0, (info.st_mode & S_IFMT) == S_IFREG,
+              let data = try? Data(contentsOf: url) else { return nil }
+        return LaunchItemsSupport.parse(data)
+    }
+
+    private static func entries(in folder: URL) -> [URL]? {
+        do {
+            return try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+                .filter { $0.pathExtension == "plist" }
+        } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
+            return []
+        } catch {
+            return nil
+        }
+    }
+
+    private static let localAgents = URL(fileURLWithPath: "/Library/LaunchAgents", isDirectory: true)
+    private static let systemAgents = URL(fileURLWithPath: "/System/Library/LaunchAgents", isDirectory: true)
+
+    private static func userOwnsLabel(_ label: String, at selected: URL, home: URL) -> Bool {
+        for root in [home.appendingPathComponent("Library/LaunchAgents"), localAgents, systemAgents] {
+            guard let plists = entries(in: root) else { return false }
+            for other in plists where other.standardizedFileURL != selected.standardizedFileURL {
+                guard let peer = readPlist(other), peer.label != label else { return false }
             }
         }
-        found.sort { lhs, rhs in
+        return true
+    }
+
+    private static func enumerate() -> (items: [LaunchItem], unreadable: Bool) {
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        let uid = getuid()
+        let overrides = LaunchItemsSupport.disabledOverrides(uid: uid, run: run)
+        var unreadable = false
+        var found: [LaunchItem] = []
+        for root in [home.appendingPathComponent("Library/LaunchAgents"), localAgents,
+                     URL(fileURLWithPath: "/Library/LaunchDaemons", isDirectory: true)] {
+            guard let plists = entries(in: root) else { unreadable = true; continue }
+            for url in plists {
+                guard let scope = LaunchItemsSupport.scope(for: url, home: home) else { continue }
+                guard let plist = readPlist(url) else { unreadable = true; continue }
+                let state = scope.isWritable
+                    ? LaunchItemsSupport.serviceState(uid: uid, label: plist.label, run: run)
+                    : .unknown
+                found.append(LaunchItem(
+                    url: url, label: plist.label, program: plist.program, scope: scope, state: state,
+                    disabledAtLogin: scope.isWritable ? overrides.map { $0[plist.label] ?? plist.disabled } : nil,
+                    plistIdentity: scope.isWritable
+                        ? LaunchItemsSupport.ownedPlistIdentity(url, home: home, uid: uid) : nil))
+            }
+        }
+        return (found.sorted { lhs, rhs in
             lhs.scope == rhs.scope ? lhs.label.localizedStandardCompare(rhs.label) == .orderedAscending
                 : lhs.scope.rawValue < rhs.scope.rawValue
-        }
-        return .success(found)
-    }
-
-    private static func loadedLabels() -> Set<String> {
-        let result = run("/bin/launchctl", ["list"])
-        guard result.status == 0,
-              let text = String(data: result.output, encoding: .utf8)
-        else { return [] }
-        return LaunchItemsSupport.loadedLabels(from: text)
-    }
-
-    private static func isLoaded(label: String) -> Bool {
-        loadedLabels().contains(label)
-    }
-
-    private func setDisabled(_ disabled: Bool, label: String) {
-        var labels = Set(UserDefaults.standard
-            .stringArray(forKey: DefaultsKey.launchItemsDisabledLabels) ?? [])
-        if disabled { labels.insert(label) } else { labels.remove(label) }
-        UserDefaults.standard.set(Array(labels).sorted(),
-                                  forKey: DefaultsKey.launchItemsDisabledLabels)
-        refresh()
+        }, unreadable)
     }
 
     // MARK: - Process
 
-    struct CommandResult {
-        let status: Int32
-        let output: Data
-    }
-
     @discardableResult
-    static func run(_ executable: String, _ arguments: [String]) -> CommandResult {
+    private static func run(_ arguments: [String]) -> LaunchItemsSupport.CommandResult {
         let process = Process()
         let output = Pipe()
-        process.executableURL = URL(fileURLWithPath: executable)
+        process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
         process.arguments = arguments
+        process.environment = ProcessInfo.processInfo.environment.merging(["LC_ALL": "C"]) { _, new in new }
         process.standardOutput = output
-        process.standardError = FileHandle.nullDevice
+        process.standardError = output
         do {
             try process.run()
         } catch {
-            return CommandResult(status: -1, output: Data())
+            return LaunchItemsSupport.CommandResult(status: -1, output: Data())
         }
         let data = output.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
-        return CommandResult(status: process.terminationStatus, output: data)
+        return LaunchItemsSupport.CommandResult(
+            status: process.terminationReason == .exit ? process.terminationStatus : -1, output: data)
     }
 }

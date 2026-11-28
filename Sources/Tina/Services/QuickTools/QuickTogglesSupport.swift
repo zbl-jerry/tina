@@ -131,6 +131,38 @@ enum QuickTogglesSupport {
         preferenceFlag(value, default: systemSwitch.defaultValue)
     }
 
+    enum SystemSwitchResult: Equatable {
+        case applied, failed, rollbackFailed
+    }
+
+    /// Write and verify the new value, then let the owning process pick it up.
+    /// Both write/read-back failures and relaunch failures restore the precise
+    /// previous property-list value (including absence), not the inverse Bool.
+    static func set(_ systemSwitch: SystemSwitch, enabled: Bool, read: () -> CFPropertyList?,
+                    write: (CFPropertyList?) -> Bool, refresh: (SystemSwitchPlan) -> Bool,
+                    refreshAfterRollback: () -> Bool = { true }) -> SystemSwitchResult {
+        let previous = read()
+        guard switchState(systemSwitch, value: previous) != enabled else { return .applied }
+        let plan = plan(for: systemSwitch, enabled: enabled)
+        let value = plan.value as CFBoolean
+        func verifiedWrite(_ value: CFPropertyList?) -> Bool {
+            guard write(value) else { return false }
+            switch (value, read()) {
+            case (nil, nil): return true
+            case let (expected?, actual?):
+                return CFGetTypeID(expected) == CFGetTypeID(actual) && CFEqual(expected, actual)
+            default: return false
+            }
+        }
+        guard verifiedWrite(value) else {
+            return verifiedWrite(previous) ? .failed : .rollbackFailed
+        }
+        guard refresh(plan) else {
+            return verifiedWrite(previous) && refreshAfterRollback() ? .failed : .rollbackFailed
+        }
+        return .applied
+    }
+
     /// Which mounted volumes "Eject all disks" offers. The system flags
     /// describe two different things: the bus tells whether the drive is
     /// external, while removable and ejectable describe media that leaves the

@@ -1195,6 +1195,7 @@ final class WindowLayoutService: ObservableObject {
                 SystemShortcutTakeover.claim(action.shortcutKey, shortcut: shortcut)
             } else {
                 failures.insert(action)
+                ShortcutRegistrationAudit.shared.report(key: action.shortcutKey, failed: true)
             }
         }
         registeredShortcuts = shortcuts
@@ -1253,7 +1254,16 @@ final class WindowLayoutService: ObservableObject {
         }
         hotKeyRefs.removeAll()
         registeredShortcuts.removeAll()
+        for action in failedShortcutActions {
+            ShortcutRegistrationAudit.shared.clear(key: action.shortcutKey)
+        }
         failedShortcutActions.removeAll()
+    }
+
+    func retryFailedShortcuts() {
+        guard !failedShortcutActions.isEmpty else { return }
+        unregisterHotkeys()
+        syncWithPreferences()
     }
 
     private func registerDirectionalHotkey() {

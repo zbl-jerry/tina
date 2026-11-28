@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Vorssaint
 
 import AppKit
+import ApplicationServices
 import Foundation
 import IOKit.ps
 
@@ -22,62 +23,80 @@ final class AutomationService: ObservableObject {
 
     private var rules: [AutomationRule] = []
     private var timer: Timer?
-    private var observers: [NSObjectProtocol] = []
+    private var appObserver: NSKeyValueObservation?
+    private var runningApps: Set<NSRunningApplication> = []
     private var displayObserver: NSObjectProtocol?
     private var powerSource: CFRunLoopSource?
-    private var lastMinuteSignature = ""
-    private var screenCount = NSScreen.screens.count
+    private var lastScheduleCheck: Date?
+    private var lastOccurrence: [UUID: Date] = [:]
+    private var generation = 0
+    private var screenCount = 0
     private var wasOnPower = true
 
     private init() {}
 
-    var isRunning: Bool { timer != nil }
+    var isRunning: Bool { !rules.isEmpty }
 
     func start(rules: [AutomationRule]) {
         stop()
-        self.rules = AutomationSupport.sanitized(
-            rules,
-            knownFeatures: Set(AppFeature.allCases.map(\.rawValue)),
-            knownToggles: Set<String>())
+        let configured = AutomationSupport.configuredRules(rules)
+        let currentIDs = Set(configured.map(\.id))
+        lastOccurrence = lastOccurrence.filter { currentIDs.contains($0.key) }
+        self.rules = configured.filter(\.enabled)
         guard !self.rules.isEmpty else { return }
-        screenCount = NSScreen.screens.count
-        wasOnPower = Self.onPower()
-        let center = NSWorkspace.shared.notificationCenter
-        observers.append(center.addObserver(forName: NSWorkspace.didLaunchApplicationNotification,
-                                            object: nil, queue: .main) { [weak self] note in
-            guard let bundleID = (note.userInfo?[NSWorkspace.applicationUserInfoKey]
-                as? NSRunningApplication)?.bundleIdentifier else { return }
-            self?.evaluate(.app(bundleID: bundleID))
-        })
-        displayObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didChangeScreenParametersNotification,
-            object: nil, queue: .main) { [weak self] _ in
-            self?.displayChanged()
+        let current = generation
+        if self.rules.contains(where: { if case .app = $0.trigger { return true }; return false }) {
+            let workspace = NSWorkspace.shared
+            runningApps = Set(workspace.runningApplications)
+            // The launch notification omits menu bar and background apps.
+            appObserver = workspace.observe(\.runningApplications) { [weak self] workspace, _ in
+                let snapshot = workspace.runningApplications
+                DispatchQueue.main.async {
+                    guard let self, self.generation == current else { return }
+                    self.appsChanged(snapshot)
+                }
+            }
         }
-        let powerSource = IOPSNotificationCreateRunLoopSource({ context in
-            guard let context else { return }
-            let service = Unmanaged<AutomationService>.fromOpaque(context)
-                .takeUnretainedValue()
-            DispatchQueue.main.async { service.powerChanged() }
-        }, Unmanaged.passUnretained(self).toOpaque())
-        if let source = powerSource?.takeRetainedValue() {
-            CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
-            self.powerSource = source
+        if self.rules.contains(where: { if case .display = $0.trigger { return true }; return false }) {
+            screenCount = NSScreen.screens.count
+            displayObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didChangeScreenParametersNotification,
+                object: nil, queue: .main) { [weak self] _ in
+                self?.displayChanged()
+            }
         }
-        let timer = Timer(timeInterval: 30, repeats: true) { [weak self] _ in
-            self?.checkSchedule()
+        if self.rules.contains(where: { if case .power = $0.trigger { return true }; return false }) {
+            wasOnPower = Self.onPower()
+            let source = IOPSNotificationCreateRunLoopSource({ context in
+                guard let context else { return }
+                Unmanaged<AutomationService>.fromOpaque(context).takeUnretainedValue().powerChanged()
+            }, Unmanaged.passUnretained(self).toOpaque())
+            if let source = source?.takeRetainedValue() {
+                CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+                powerSource = source
+            }
         }
-        timer.tolerance = 5
-        RunLoop.main.add(timer, forMode: .common)
-        self.timer = timer
+        if self.rules.contains(where: { if case .schedule = $0.trigger { return true }; return false }) {
+            let now = Date()
+            lastScheduleCheck = Calendar.current.dateInterval(of: .minute, for: now)?.start
+                .addingTimeInterval(-1) ?? now
+            let timer = Timer(timeInterval: 30, repeats: true) { [weak self] _ in
+                self?.checkSchedule()
+            }
+            timer.tolerance = 5
+            RunLoop.main.add(timer, forMode: .common)
+            self.timer = timer
+        }
     }
 
     func stop() {
+        generation += 1
         timer?.invalidate()
         timer = nil
-        let center = NSWorkspace.shared.notificationCenter
-        observers.forEach { center.removeObserver($0) }
-        observers = []
+        lastScheduleCheck = nil
+        appObserver?.invalidate()
+        appObserver = nil
+        runningApps = []
         if let displayObserver {
             NotificationCenter.default.removeObserver(displayObserver)
         }
@@ -93,13 +112,25 @@ final class AutomationService: ObservableObject {
 
     private func checkSchedule() {
         let now = Date()
-        let signature = ISO8601DateFormatter().string(from: now).prefix(16).description
-        guard signature != lastMinuteSignature else { return }
-        lastMinuteSignature = signature
-        for rule in rules where rule.enabled {
-            if AutomationSupport.scheduleMatches(rule.trigger, at: now) {
-                execute(rule)
-            }
+        guard let previous = lastScheduleCheck else { return }
+        lastScheduleCheck = now
+        let due = rules.enumerated().compactMap { index, rule -> (Date, Int, AutomationRule)? in
+            guard let minute = AutomationSupport.dueMinute(rule.trigger, after: previous, through: now),
+                  lastOccurrence[rule.id].map({ $0 < minute }) ?? true else { return nil }
+            return (minute, index, rule)
+        }.sorted { ($0.0, $0.1) < ($1.0, $1.1) }
+        for (minute, _, rule) in due {
+            lastOccurrence[rule.id] = minute
+            execute(rule)
+        }
+    }
+
+    private func appsChanged(_ apps: [NSRunningApplication]) {
+        let next = Set(apps)
+        let launched = next.subtracting(runningApps)
+        runningApps = next
+        for app in apps where launched.contains(app) {
+            if let id = app.bundleIdentifier { evaluate(.app(bundleID: id)) }
         }
     }
 
@@ -127,14 +158,20 @@ final class AutomationService: ObservableObject {
     // MARK: - Actions
 
     private func execute(_ rule: AutomationRule) {
+        let defaults = UserDefaults.standard
         guard case .feature(let id, let enabled) = rule.action,
               let feature = AppFeature(rawValue: id),
-              feature.isAvailable else { return }
-        for key in feature.enabledKeys {
-            UserDefaults.standard.set(enabled, forKey: key)
-        }
+              feature.isAvailable,
+              let key = AutomationSupport.featureSwitches[feature],
+              AutomationSupport.canApply(
+                feature, notchActive: AppFeature.notch.isAvailable && defaults.bool(forKey: DefaultsKey.notchEnabled),
+                accessibility: AXIsProcessTrusted()
+              ) else { return }
+        guard defaults.bool(forKey: key) != enabled else { return }
+        defaults.set(enabled, forKey: key)
+        guard defaults.bool(forKey: key) == enabled else { return }
         FeatureRuntime.shared.sync([feature])
-        let detail = "\(feature.rawValue) \(enabled ? "on" : "off")"
+        let detail = "\(feature.rawValue) = \(enabled ? "on" : "off")"
         let record = RunRecord(date: Date(),
                                ruleName: rule.name.isEmpty ? rule.trigger.triggerDescription : rule.name,
                                detail: detail)

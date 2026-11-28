@@ -41,11 +41,6 @@ struct AppRepairSettings: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            case .failed:
-                Section {
-                    Text(text.empty)
-                        .foregroundStyle(.secondary)
-                }
             case .loaded:
                 if service.candidates.isEmpty {
                     Section {
@@ -71,7 +66,7 @@ struct AppRepairSettings: View {
             } label: {
                 Label(text.title, systemImage: "arrow.clockwise")
             }
-            .disabled(service.phase == .scanning)
+            .disabled(service.phase == .scanning || service.repairingID != nil)
         }
         .alert(text.confirmTitle,
                isPresented: Binding(get: { pendingRepair != nil },
@@ -79,10 +74,13 @@ struct AppRepairSettings: View {
                presenting: pendingRepair) { candidate in
             Button(l10n.s.uninstallerCancel, role: .cancel) { pendingRepair = nil }
             Button(text.removeQuarantine, role: .destructive) {
-                if !service.removeQuarantine(candidate) {
-                    errorText = text.empty
-                }
+                errorText = nil
                 pendingRepair = nil
+                service.removeQuarantine(candidate) { repaired in
+                    if !repaired {
+                        errorText = text.verificationFailure
+                    }
+                }
             }
         } message: { candidate in
             Text(String(format: text.confirmMessage, candidate.name))
@@ -116,10 +114,13 @@ struct AppRepairSettings: View {
             }
             .buttonStyle(.borderless)
             .help(text.caption)
-            if candidate.canRemoveQuarantine {
+            if candidate.id == service.repairingID {
+                ProgressView().controlSize(.small).accessibilityLabel(text.removeQuarantine)
+            } else if candidate.canRemoveQuarantine {
                 Button(text.removeQuarantine) {
                     pendingRepair = candidate
                 }
+                .disabled(service.repairingID != nil)
             }
         }
     }
@@ -129,6 +130,7 @@ struct AppRepairSettings: View {
         case .quarantined: return text.quarantined
         case .invalidSignature: return text.invalidSignature
         case .notAccepted: return text.notAccepted
+        case .assessmentUnavailable: return text.verificationFailure
         }
     }
 }

@@ -23,6 +23,7 @@ enum SystemMonitorPlanTests {
     class PanelFixture {
         var selectedMetric: MetricDetailKind?
         var activeSection = PanelSectionID.keepAwake
+        var showsDirectOutput = false
     }
 
     static func run(_ suite: TestSuite) {
@@ -86,6 +87,10 @@ enum SystemMonitorPlanTests {
 
         let panel = Panel()
         panel.activeSection = .power
+        panel.showsDirectOutput = true
+        suite.expect(panel.monitorNeeds == .none,
+                     "opening the direct output slider does not sample the previous system section")
+        panel.showsDirectOutput = false
         monitor.menuPanelNeeds = panel.monitorNeeds
         defaults.set(true, forKey: AppFeature.monitorPower.availabilityKey)
         defaults.set(false, forKey: DefaultsKey.menuBarPeripheralBattery)

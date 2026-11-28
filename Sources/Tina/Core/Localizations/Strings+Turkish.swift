@@ -1018,7 +1018,7 @@ extension Strings {
         cleanerHistoryEmpty: "Henüz temizlik kaydı yok.",
         cleanerHistoryManual: "Elle",
         cleanerHistoryAutomatic: "Zamanlanmış",
-        cleanerHistorySummaryFormat: "%1$@ boşaltıldı · %2$d kaldı",
+        cleanerHistorySummaryFormat: "%1$@ Çöp Sepeti’nde · %2$@ boşaltıldı · %3$d kaldı",
         cleanerHistoryShowInFinder: "Finder’da göster",
         cleanerHistoryClear: "Geçmişi temizle",
         cleanerNothingFound: "Temizlenecek bir şey yok. Mac düzenli.",

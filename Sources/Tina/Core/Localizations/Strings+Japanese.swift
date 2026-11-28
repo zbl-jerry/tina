@@ -1018,7 +1018,7 @@ extension Strings {
         cleanerHistoryEmpty: "まだ記録がありません。",
         cleanerHistoryManual: "手動",
         cleanerHistoryAutomatic: "スケジュール",
-        cleanerHistorySummaryFormat: "%1$@ 解放 · %2$d 件残り",
+        cleanerHistorySummaryFormat: "ゴミ箱に %1$@ 移動 · %2$@ 解放 · %3$d 件残り",
         cleanerHistoryShowInFinder: "Finder に表示",
         cleanerHistoryClear: "履歴を消去",
         cleanerNothingFound: "掃除するものはありません。Mac は整っています。",

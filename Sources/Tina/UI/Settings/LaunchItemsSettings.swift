@@ -11,6 +11,12 @@ struct LaunchItemsSettings: View {
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var service = LaunchItemsService.shared
     @State private var errorLabel: String?
+    @State private var pending: PendingAction?
+
+    private struct PendingAction {
+        let action: LaunchItemsSupport.Action
+        let item: LaunchItem
+    }
 
     private var text: LaunchItemsStrings { FeatureStrings.launchItems(l10n.language) }
 
@@ -30,6 +36,14 @@ struct LaunchItemsSettings: View {
                 }
             }
 
+            if service.hasUnreadableFolders {
+                Section {
+                    Text(text.unreadable)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+
             if service.phase == .loading && service.items.isEmpty {
                 Section {
                     ProgressView()
@@ -44,6 +58,17 @@ struct LaunchItemsSettings: View {
         }
         .formStyle(.grouped)
         .onAppear { service.refresh() }
+        .confirmationDialog(pending.map { title(for: $0.action) } ?? "",
+                            isPresented: Binding(get: { pending != nil },
+                                                 set: { if !$0 { pending = nil } }),
+                            titleVisibility: .visible, presenting: pending) { pending in
+            Button(title(for: pending.action), role: .destructive) {
+                perform(pending.action, on: pending.item)
+            }
+            Button(l10n.s.uninstallerCancel, role: .cancel) {}
+        } message: { pending in
+            Text(pending.item.label)
+        }
         .toolbar {
             Button {
                 service.refresh()
@@ -82,8 +107,16 @@ struct LaunchItemsSettings: View {
                 }
                 Text(status(item))
                     .font(.caption2)
-                    .foregroundStyle(item.canToggle && !item.loaded && item.disabledByTina
-                                     ? .orange : .secondary)
+                    .foregroundStyle(.secondary)
+                if item.canToggle && item.disabledAtLogin == true {
+                    Text(text.disabled)
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                } else if item.canToggle && item.state != .unknown && item.disabledAtLogin == nil {
+                    Text(text.unreadable)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer()
             Button {
@@ -94,13 +127,24 @@ struct LaunchItemsSettings: View {
             .buttonStyle(.borderless)
             .help(text.reveal)
             .accessibilityLabel(text.reveal)
-            if item.canToggle {
-                Button(item.loaded ? text.stop : text.start) {
-                    errorLabel = nil
-                    service.setEnabled(item, !item.loaded) { ok in
-                        if !ok { errorLabel = item.label }
+            let actions: [LaunchItemsSupport.Action] =
+                [.startForSession, .stopForSession, .enableAtLogin, .disableAtLogin]
+            let available = actions.filter { item.allows($0) }
+            if !available.isEmpty {
+                Menu {
+                    ForEach(available) { action in
+                        Button(title(for: action)) {
+                            if action == .stopForSession || action == .disableAtLogin {
+                                pending = PendingAction(action: action, item: item)
+                            } else {
+                                perform(action, on: item)
+                            }
+                        }
                     }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
+                .accessibilityLabel(Text(item.label))
                 .disabled(service.busyLabels.contains(item.label))
             }
         }
@@ -108,7 +152,27 @@ struct LaunchItemsSettings: View {
 
     private func status(_ item: LaunchItem) -> String {
         if !item.canToggle { return text.readOnly }
-        if item.loaded { return text.loaded }
-        return item.disabledByTina ? text.stopped : text.notRunning
+        switch item.state {
+        case .unknown: return text.unreadable
+        case .unloaded: return text.unloaded
+        case .loaded(_, let running):
+            return item.state.matches(item.url) ? (running ? text.loaded : text.loadedIdle) : text.unreadable
+        }
+    }
+
+    private func title(for action: LaunchItemsSupport.Action) -> String {
+        switch action {
+        case .startForSession: return text.start
+        case .stopForSession: return text.stop
+        case .enableAtLogin: return text.enable
+        case .disableAtLogin: return text.disable
+        }
+    }
+
+    private func perform(_ action: LaunchItemsSupport.Action, on item: LaunchItem) {
+        errorLabel = nil
+        service.perform(action, on: item) { ok in
+            if !ok { errorLabel = item.label }
+        }
     }
 }

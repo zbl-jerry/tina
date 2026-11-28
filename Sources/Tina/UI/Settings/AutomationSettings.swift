@@ -14,15 +14,15 @@ struct AutomationSettings: View {
     @State private var adding = false
 
     private var text: AutomationStrings { FeatureStrings.automation(l10n.language) }
+    private var installedSwitches: [AppFeature] {
+        AppFeature.allCases.filter { $0.isAvailable && AutomationSupport.featureSwitches[$0] != nil }
+    }
 
     var body: some View {
         Form {
             Section {
                 Toggle(text.title, isOn: $enabled)
-                    .onChange(of: enabled) { _, _ in
-                        save()
-                        FeatureRuntime.shared.sync([.automation])
-                    }
+                    .onChange(of: enabled) { _, _ in features.sync([.automation]) }
                 Text(text.caption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -33,6 +33,7 @@ struct AutomationSettings: View {
                     ruleRow(rule)
                 }
                 Button(text.addRule) { adding = true }
+                    .disabled(rules.count >= AutomationSupport.maximumRules || installedSwitches.isEmpty)
             }
 
             if !service.recentRuns.isEmpty {
@@ -47,14 +48,13 @@ struct AutomationSettings: View {
         .formStyle(.grouped)
         .onAppear(perform: load)
         .sheet(isPresented: $adding) {
-            AddAutomationRuleView { rule in
+            AddAutomationRuleView(installed: installedSwitches, existing: rules) { rule in
                 rules.append(rule)
                 save()
                 adding = false
             } onCancel: {
                 adding = false
             }
-            .environmentObject(features)
         }
     }
 
@@ -111,15 +111,13 @@ struct AutomationSettings: View {
 
     private func load() {
         let data = UserDefaults.standard.data(forKey: DefaultsKey.automationRules) ?? Data()
-        rules = (try? JSONDecoder().decode([AutomationRule].self, from: data)) ?? []
+        rules = AutomationSupport.configuredRules(
+            (try? JSONDecoder().decode([AutomationRule].self, from: data)) ?? [])
     }
 
     private func save() {
-        let cleaned = AutomationSupport.sanitized(
-            rules,
-            knownFeatures: Set(AppFeature.allCases.map(\.rawValue)),
-            knownToggles: Set<String>())
-        if let data = try? JSONEncoder().encode(cleaned) {
+        rules = AutomationSupport.configuredRules(rules)
+        if let data = try? JSONEncoder().encode(rules) {
             UserDefaults.standard.set(data, forKey: DefaultsKey.automationRules)
         }
         FeatureRuntime.shared.sync([.automation])
@@ -128,7 +126,8 @@ struct AutomationSettings: View {
 
 private struct AddAutomationRuleView: View {
     @ObservedObject private var l10n = L10n.shared
-    @EnvironmentObject private var features: FeatureRuntime
+    let installed: [AppFeature]
+    let existing: [AutomationRule]
     let onSave: (AutomationRule) -> Void
     let onCancel: () -> Void
 
@@ -142,12 +141,22 @@ private struct AddAutomationRuleView: View {
     @State private var minute = 0
     @State private var connected = true
     @State private var bundleID = ""
-    @State private var featureID = AppFeature.nightWarmth.rawValue
+    @State private var featureID: String?
     @State private var turnOn = true
 
     private var text: AutomationStrings { FeatureStrings.automation(l10n.language) }
-    private var installed: [AppFeature] {
-        AppFeature.allCases.filter(\.isAvailable)
+    private var draft: AutomationRule? {
+        guard let featureID, installed.contains(where: { $0.rawValue == featureID }),
+              kind != .app || !bundleID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return AutomationRule(trigger: trigger, action: .feature(id: featureID, enabled: turnOn))
+    }
+
+    private var isDuplicate: Bool {
+        guard let draft else { return false }
+        let signature = AutomationSupport.signature(draft)
+        return existing.contains { AutomationSupport.signature($0) == signature }
     }
 
     var body: some View {
@@ -178,7 +187,7 @@ private struct AddAutomationRuleView: View {
                     ForEach(installed, id: \.self) { feature in
                         Text(feature.hubTitle(l10n.s,
                                               hub: FeatureStrings.hub(l10n.language)))
-                            .tag(feature.rawValue)
+                            .tag(Optional(feature.rawValue))
                     }
                 }
                 Toggle(text.turnOn, isOn: $turnOn)
@@ -188,14 +197,19 @@ private struct AddAutomationRuleView: View {
                 Spacer()
                 Button(l10n.s.uninstallerCancel, action: onCancel)
                 Button(text.addRule) {
-                    onSave(AutomationRule(trigger: trigger, action: .feature(id: featureID,
-                                                                             enabled: turnOn)))
+                    if let draft, !isDuplicate { onSave(draft) }
                 }
-                .disabled(kind == .app && bundleID.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(draft == nil || isDuplicate || existing.count >= AutomationSupport.maximumRules)
+            }
+            if isDuplicate {
+                Text(text.duplicateRule)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(18)
         .frame(width: 420)
+        .onAppear { featureID = installed.first?.rawValue }
     }
 
     private var trigger: AutomationTrigger {
@@ -204,7 +218,7 @@ private struct AddAutomationRuleView: View {
                                          weekdays: Array(1...7))
         case .power: return .power(connected: connected)
         case .display: return .display(connected: connected)
-        case .app: return .app(bundleID: bundleID.trimmingCharacters(in: .whitespaces))
+        case .app: return .app(bundleID: bundleID.trimmingCharacters(in: .whitespacesAndNewlines))
         }
     }
 }

@@ -241,7 +241,7 @@ final class FeatureRuntime: ObservableObject {
     private static let bindings: [AppFeature: () -> Void] = [
         .automation: {
             let defaults = UserDefaults.standard
-            guard defaults.bool(forKey: DefaultsKey.automationEnabled) else {
+            guard AppFeature.automation.shouldRunOptInService(in: defaults) else {
                 AutomationService.shared.stop()
                 return
             }
@@ -250,7 +250,7 @@ final class FeatureRuntime: ObservableObject {
             AutomationService.shared.start(rules: rules)
         },
         .usageStats: {
-            if UserDefaults.standard.bool(forKey: DefaultsKey.usageStatsEnabled) {
+            if AppFeature.usageStats.shouldRunOptInService() {
                 UsageStatsService.shared.start()
             } else {
                 UsageStatsService.shared.stop()
@@ -258,14 +258,15 @@ final class FeatureRuntime: ObservableObject {
         },
         .inputRemapping: {
             let defaults = UserDefaults.standard
-            guard defaults.bool(forKey: DefaultsKey.inputRemapEnabled) else {
+            guard AppFeature.inputRemapping.shouldRunOptInService(in: defaults),
+                  Permissions.shared.accessibility else {
                 InputRemapService.shared.stop()
                 return
             }
             let data = defaults.data(forKey: DefaultsKey.inputRemapRules) ?? Data()
             let rules = (try? JSONDecoder().decode([InputRemapRule].self, from: data)) ?? []
             InputRemapService.shared.setRules(rules)
-            _ = InputRemapService.shared.start()
+            _ = InputRemapService.shared.start(isCapturingShortcut: { ShortcutCapture.isCapturing })
         },
         .switcher: {
             WindowUseTracker.shared.syncWithFeatures()

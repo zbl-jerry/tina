@@ -26,8 +26,9 @@ enum MacSetting: String, CaseIterable, Codable, Identifiable {
     var domain: String {
         switch self {
         case .dockAutoHide, .dockOrientation, .dockMinimizeEffect: return "com.apple.dock"
-        case .finderShowHidden, .finderShowExtensions, .finderShowPathBar: return "com.apple.finder"
-        case .keyboardRepeatRate, .keyboardRepeatDelay: return kCFPreferencesAnyApplication as String
+        case .finderShowHidden, .finderShowPathBar: return "com.apple.finder"
+        case .finderShowExtensions, .keyboardRepeatRate, .keyboardRepeatDelay:
+            return kCFPreferencesAnyApplication as String
         case .screenshotLocation, .screenshotFormat: return "com.apple.screencapture"
         }
     }
@@ -90,6 +91,14 @@ enum MacSettingValue: Codable, Equatable {
     case number(Int)
     case text(String)
 
+    var rawPreference: Any {
+        switch self {
+        case .bool(let value): return value
+        case .number(let value): return value
+        case .text(let value): return value
+        }
+    }
+
     var displayString: String {
         switch self {
         case .bool(let value): return value ? "On" : "Off"
@@ -107,6 +116,77 @@ struct MacSettingsProfile: Codable, Equatable, Identifiable {
 }
 
 enum MacSettingsSupport {
+    /// A single application only journals touched keys. An entry with no
+    /// previous value means Undo removes the key from this exact domain.
+    struct UndoEntry {
+        let setting: MacSetting
+        let previousValue: Any?
+    }
+
+    struct ChangeResult {
+        let undo: [UndoEntry]
+        let changed: [MacSetting]
+        let succeeded: Bool
+    }
+
+    static func apply(_ profile: MacSettingsProfile,
+                      prepare: (MacSetting) -> Bool = { _ in true },
+                      read: (MacSetting) -> Any?,
+                      write: (MacSetting, Any?) -> Bool) -> ChangeResult {
+        var undo: [UndoEntry] = []
+        var changed: [MacSetting] = []
+        var succeeded = true
+        for setting in MacSetting.allCases {
+            guard let wanted = profile.values[setting.rawValue] else { continue }
+            let raw = wanted.rawPreference
+            guard value(for: setting, raw: raw) == wanted, prepare(setting) else {
+                succeeded = false
+                continue
+            }
+            let previous = read(setting)
+            guard value(for: setting, raw: previous) != wanted else { continue }
+            if write(setting, raw) {
+                undo.append(UndoEntry(setting: setting, previousValue: previous))
+                changed.append(setting)
+            } else {
+                succeeded = false
+                // A failed synchronization may still have changed the live
+                // preference cache. Roll back or leave a retriable undo.
+                if !sameRawValue(previous, read(setting)), !write(setting, previous) {
+                    undo.append(UndoEntry(setting: setting, previousValue: previous))
+                }
+            }
+        }
+        return ChangeResult(undo: undo, changed: changed, succeeded: succeeded)
+    }
+
+    static func restore(_ undo: [UndoEntry],
+                        write: (MacSetting, Any?) -> Bool) -> ChangeResult {
+        var pending: [UndoEntry] = []
+        var changed: [MacSetting] = []
+        for entry in undo {
+            // A failed prior write may have changed the in-memory cache but
+            // not disk. Always synchronize an entry until it succeeds.
+            if write(entry.setting, entry.previousValue) {
+                changed.append(entry.setting)
+            } else {
+                pending.append(entry)
+            }
+        }
+        return ChangeResult(undo: pending, changed: changed, succeeded: pending.isEmpty)
+    }
+
+    static func sameRawValue(_ lhs: Any?, _ rhs: Any?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil): return true
+        case let (lhs?, rhs?):
+            let lhs = lhs as CFTypeRef
+            let rhs = rhs as CFTypeRef
+            return CFGetTypeID(lhs) == CFGetTypeID(rhs) && CFEqual(lhs, rhs)
+        default: return false
+        }
+    }
+
     /// Folds a raw preference into the typed value the setting expects, or
     /// nil when it does not fit (wrong type, out of range, unknown choice).
     static func value(for setting: MacSetting, raw: Any?) -> MacSettingValue? {
@@ -135,16 +215,6 @@ enum MacSettingsSupport {
             guard let text = raw as? String else { return nil }
             if let choices = setting.textChoices, !choices.contains(text) { return nil }
             return .text(text)
-        }
-    }
-
-    /// Settings whose current value differs from the profile. Missing current
-    /// values count as differences.
-    static func differences(between current: [String: MacSettingValue],
-                            and profile: MacSettingsProfile) -> [MacSetting] {
-        MacSetting.allCases.filter { setting in
-            guard let wanted = profile.values[setting.rawValue] else { return false }
-            return current[setting.rawValue] != wanted
         }
     }
 

@@ -18,6 +18,13 @@ enum AppRepairTests {
             issues: [.quarantined, .notAccepted], quarantineReadable: true),
             "an app Gatekeeper refuses is never repaired")
         suite.expect(!AppRepairPolicy.canRemoveQuarantine(
+            issues: [.quarantined, .assessmentUnavailable], quarantineReadable: true),
+            "an absent or failed assessment does not authorize repair")
+        suite.expect(AppRepairService.assessmentIsEnabled(status: 0, output: Data("assessments enabled\n".utf8))
+                     && !AppRepairService.assessmentIsEnabled(status: 0, output: Data("assessments disabled\n".utf8))
+                     && !AppRepairService.assessmentIsEnabled(status: 1, output: Data("assessments enabled\n".utf8)),
+                     "repair requires an explicit successful enabled status")
+        suite.expect(!AppRepairPolicy.canRemoveQuarantine(
             issues: [.quarantined], quarantineReadable: false),
             "an unreadable quarantine attribute is not treated as present")
         suite.expect(!AppRepairPolicy.canRemoveQuarantine(
@@ -39,6 +46,21 @@ enum AppRepairTests {
         do {
             try fm.createDirectory(at: root, withIntermediateDirectories: true)
             defer { try? fm.removeItem(at: root) }
+            let candidate = root.appendingPathComponent("Sample.app")
+            let moved = root.appendingPathComponent("Moved.app")
+            let alias = root.appendingPathComponent("Alias.app")
+            try fm.createDirectory(at: candidate, withIntermediateDirectories: false)
+            let confirmed = AppRepairService.identity(at: candidate)
+            try fm.moveItem(at: candidate, to: moved)
+            try fm.createDirectory(at: candidate, withIntermediateDirectories: false)
+            try fm.createSymbolicLink(at: alias, withDestinationURL: moved)
+            suite.expect(confirmed != nil && AppRepairService.identity(at: moved) == confirmed
+                         && AppRepairService.identity(at: candidate) != confirmed
+                         && AppRepairService.identity(at: alias) == nil,
+                         "a pathname replacement or symlink cannot stand in for the confirmed bundle")
+            suite.expect(AppRepairService.signatureArguments(for: candidate) ==
+                         ["--verify", "--deep", "--strict", candidate.path],
+                         "signature verification checks nested code without changing it")
             let file = root.appendingPathComponent("probe")
             fm.createFile(atPath: file.path, contents: Data("x".utf8))
             suite.expect(AppRepairService.quarantineState(at: file) == .absent,

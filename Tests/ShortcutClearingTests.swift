@@ -434,6 +434,28 @@ enum ShortcutClearingTests {
             for key in role.requiredEnableKeys { defaults.set(true, forKey: key) }
             row.reset()
         }
+        let remapRecorder = RecorderButton()
+        remapRecorder.requiresModifier = false
+        remapRecorder.capturesEditingKeys = true
+        remapRecorder.shortcut = nil
+        remapRecorder.emptyTitle = "Not assigned"
+        remapRecorder.refreshTitle()
+        suite.expect(remapRecorder.title == "Not assigned",
+                     "a remap recorder can display an empty selection without a sentinel key code")
+        var remapCaptures: [GlobalShortcut] = []
+        var remapClears = 0
+        remapRecorder.captureAction = { remapCaptures.append($0) }
+        remapRecorder.clearAction = { remapClears += 1 }
+        for key in [kVK_ANSI_A, kVK_Escape, kVK_Delete, kVK_ForwardDelete] {
+            remapRecorder.beginRecording()
+            ShortcutRecordingTap.press(Int64(key))
+            let expected = GlobalShortcut(keyCode: Int64(key), modifiers: [])
+            suite.expect(remapCaptures.last == expected && remapRecorder.title == expected.displayString
+                         && ShortcutRecordingTap.handler == nil && remapClears == 0,
+                         "remap recorder captures bare key \(key) once and shows the selected key")
+        }
+        suite.expect(remapCaptures.count == 4, "each remap press produced one capture")
+
         let unsupported = Row(.shelf)
         let previous = unsupported.rawValue
         unsupported.clear()

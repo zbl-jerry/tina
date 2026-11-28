@@ -67,7 +67,7 @@ struct UsageStatsSettings: View {
 
             Section {
                 Button(role: .destructive) {
-                    store.clear()
+                    UsageStatsService.shared.clear()
                 } label: {
                     Text(text.clear)
                 }

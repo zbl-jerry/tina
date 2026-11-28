@@ -34,7 +34,7 @@ final class JunkCleaner: ObservableObject {
         case scanning
         case results
         case cleaning
-        case done(freed: Int64, failed: Int)
+        case done(freed: Int64, failed: Int, moved: Int64 = 0)
     }
 
     struct Item: Identifiable, Equatable {
@@ -101,7 +101,7 @@ final class JunkCleaner: ObservableObject {
     }
 
     func setInclude(_ include: Bool, forCategory category: CleanerSupport.Category) {
-        for index in items.indices where items[index].category == category {
+        for index in items.indices where items[index].category == category && items[index].groupSelectable {
             items[index].include = include
         }
     }
@@ -117,8 +117,8 @@ final class JunkCleaner: ObservableObject {
 
     // MARK: - Scan
 
-    /// `attended: false` is a pass nobody watches: it skips the screenshot
-    /// search, which reads the user's own folders and can ask for access.
+    /// `attended: false` skips the screenshot search and release archive
+    /// discovery. Both produce only items a person can select manually.
     func scan(attended: Bool) {
         guard phase != .scanning else { return }
         let token = UUID()
@@ -146,7 +146,7 @@ final class JunkCleaner: ObservableObject {
                 (.loginItems, { Self.scanOrphanedLaunchPlists(installed: installedApps.union(audioPluginIDs)) }),
                 (.caches, { Self.scanCaches(excluding: claimed, audioPluginIDs: audioPluginIDs) }),
                 (.logs, { Self.scanLogs(excluding: claimed) }),
-                (.developer, { Self.scanDeveloperJunk() }),
+                (.developer, { Self.scanDeveloperJunk(includingArchives: attended) }),
                 (.trash, { Self.scanTrash() }),
                 (.deviceBackups, { Self.scanDeviceBackups() }),
             ] + (screenshots.map { search in
@@ -203,8 +203,6 @@ final class JunkCleaner: ObservableObject {
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let fm = FileManager.default
-            var freed: Int64 = 0
-            var failed = 0
             var stubborn: [Item] = []
             var entries: [CleanerRunEntry] = []
 
@@ -214,11 +212,6 @@ final class JunkCleaner: ObservableObject {
             // as "nothing ever went to the Trash".
             for item in chosen where item.category == .trash {
                 let emptied = Self.emptyTrash()
-                if emptied {
-                    freed += item.size
-                } else {
-                    failed += 1
-                }
                 entries.append(Self.runEntry(item,
                                              outcome: emptied ? .emptied : .failed))
             }
@@ -227,17 +220,15 @@ final class JunkCleaner: ObservableObject {
             let canRemove = Self.removalCheck(for: chosen)
             for item in chosen where item.category != .trash {
                 guard canRemove(item) else {
-                    failed += 1
                     entries.append(Self.runEntry(item, outcome: .skipped))
                     continue
                 }
                 do {
                     var resultingURL: NSURL?
                     try fm.trashItem(at: item.url, resultingItemURL: &resultingURL)
-                    freed += item.size
                     entries.append(Self.runEntry(item,
                                                  outcome: .trashed,
-                                                 trashPath: resultingURL?.path))
+                                                 trashURL: resultingURL.map { $0 as URL }))
                 } catch {
                     stubborn.append(item)
                 }
@@ -255,10 +246,6 @@ final class JunkCleaner: ObservableObject {
                 }
                 let removed = stillSafe.filter { UninstallerSupport.isConfirmedAbsent(at: $0.url) }
                 removedViaFinder = Set(removed.map(\.url.path))
-                freed += removed.reduce(0) { $0 + $1.size }
-                failed += stubborn.count - removed.count
-            } else {
-                failed += stubborn.count
             }
             for item in stubborn {
                 entries.append(Self.runEntry(item,
@@ -266,27 +253,29 @@ final class JunkCleaner: ObservableObject {
                                                  ? .trashed : .failed))
             }
 
+            let run = CleanerRun(id: UUID(), date: Date(), origin: origin, entries: entries)
+            let result = Phase.done(freed: run.freed, failed: run.leftBehindCount, moved: run.moved)
             DispatchQueue.main.async { [weak self] in
+                CleanerRunHistory.shared.record(run)
                 guard let self, self.phase == .cleaning else { return }
                 self.items = []
-                self.phase = .done(freed: freed, failed: failed)
-                CleanerRunHistory.shared.record(CleanerRun(id: UUID(),
-                                                           date: Date(),
-                                                           origin: origin,
-                                                           entries: entries))
+                self.phase = result
             }
         }
     }
 
     private static func runEntry(_ item: Item,
                                  outcome: CleanerRunOutcome,
-                                 trashPath: String? = nil) -> CleanerRunEntry {
+                                 trashURL: URL? = nil) -> CleanerRunEntry {
         CleanerRunEntry(path: item.url.path,
                         category: item.category.historyKey,
                         detail: item.detail,
                         size: item.size,
                         outcome: outcome,
-                        trashPath: trashPath)
+                        trashPath: trashURL?.path,
+                        trashIdentity: trashURL.flatMap {
+                            CleanerRunEntry.TrashIdentity(at: $0, matching: item.fileIdentity)
+                        })
     }
 
     /// Exact match guard against ever removing a critical root, even if a
@@ -668,10 +657,10 @@ final class JunkCleaner: ObservableObject {
         return sorted(found)
     }
 
-    private static func scanDeveloperJunk() -> [Item] {
+    private static func scanDeveloperJunk(includingArchives: Bool) -> [Item] {
         let fm = FileManager.default
         var found: [Item] = []
-        for path in CleanerPolicy.developerJunkPaths where path != CleanerPolicy.xcodeArchivePath {
+        for path in CleanerPolicy.developerJunkPaths {
             let url = URL(fileURLWithPath: NSHomeDirectory() + path)
             guard fm.fileExists(atPath: url.path) else { continue }
             let size = directorySize(of: url, fm: fm)
@@ -680,7 +669,7 @@ final class JunkCleaner: ObservableObject {
                               detail: url.lastPathComponent,
                               recommended: CleanerPolicy.developerIsPrechecked(path)))
         }
-        found += scanXcodeArchives(fm: fm)
+        if includingArchives { found += scanXcodeArchives(fm: fm) }
         return sorted(found)
     }
 
@@ -688,26 +677,16 @@ final class JunkCleaner: ObservableObject {
     /// takes a bundle the user did not select. A missing or unreadable folder
     /// simply offers nothing.
     private static func scanXcodeArchives(fm: FileManager) -> [Item] {
-        let ageDays = CleanerPolicy.sanitizedArchiveAgeDays(
-            UserDefaults.standard.object(forKey: DefaultsKey.cleanerArchiveAgeDays) as? Int
-                ?? CleanerPolicy.defaultArchiveAgeDays)
-        guard ageDays > 0 else { return [] }
-        let root = NSHomeDirectory() + CleanerPolicy.xcodeArchivePath
-        guard let entries = try? fm.contentsOfDirectory(atPath: root) else { return [] }
-        let cutoff = Date().addingTimeInterval(-Double(ageDays) * 86_400)
-        var found: [Item] = []
-        for entry in entries where entry.hasSuffix(".xcarchive") {
-            let url = URL(fileURLWithPath: root).appendingPathComponent(entry)
-            guard let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .isDirectoryKey]),
-                  values.isDirectory == true,
-                  let modified = values.contentModificationDate,
-                  modified < cutoff else { continue }
+        let ageDays = UserDefaults.standard.object(forKey: DefaultsKey.cleanerArchiveAgeDays) as? Int
+            ?? CleanerPolicy.defaultArchiveAgeDays
+        let root = URL(fileURLWithPath: NSHomeDirectory() + CleanerPolicy.xcodeArchivePath,
+                       isDirectory: true)
+        return CleanerPolicy.xcodeArchives(at: root, ageDays: ageDays, fileManager: fm).compactMap { url in
             let size = directorySize(of: url, fm: fm)
-            guard size > 0 else { continue }
-            found.append(Item(url: url, category: .developer, size: size,
-                              detail: entry, recommended: false, groupSelectable: false))
+            guard size > 0 else { return nil }
+            return Item(url: url, category: .developer, size: size,
+                        detail: url.lastPathComponent, recommended: false, groupSelectable: false)
         }
-        return found
     }
 
     /// Old iPhone and iPad backups under MobileSync: with caches, the other

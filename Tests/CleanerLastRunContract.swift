@@ -20,7 +20,8 @@ enum CleanerLastRunContract {
         typealias JunkCleaner = Cleaner
         typealias UserDefaults = Preferences
         var runObserver: AnyCancellable?
-        func notifyIfWanted(freed: Int64, failed: Int) {}
+        var notifiedMoved: Int64 = 0
+        func notifyIfWanted(freed: Int64, failed: Int, moved: Int64) { notifiedMoved = moved }
         func scheduleNext() {}
     }
     final class Localization {
@@ -52,5 +53,9 @@ enum CleanerLastRunContract {
             suite.expect(card.lastRunLine == line,
                          "a scheduled run freeing \(freed) bytes and leaving \(failed) items reads \"\(card.lastRunLine)\"")
         }
+        scheduler.finishRun(freed: 0, failed: 0, moved: 45)
+        suite.expect(scheduler.notifiedMoved == 45
+                     && (Preferences.standard.values[DefaultsKey.cleanerLastAutoFreed] as? Int64) == 0,
+                     "a scheduled Trash move reaches the notification without counting toward reclaimed space")
     }
 }
