@@ -40,11 +40,20 @@ enum RecorderFastGIFExportTests {
         defer { try? FileManager.default.removeItem(at: folder) }
         print("fast GIF export: Metal device \(MTLCreateSystemDefaultDevice() == nil ? "absent, fallback encoder" : "present")")
         eligibility(suite)
-        try await variableFrameRate(suite, folder: folder)
-        try await editedTimeline(suite, folder: folder)
-        try await orientation(suite, folder: folder)
-        try await importedFormats(suite, folder: folder)
-        try await cancellation(suite, folder: folder)
+        try await timeScenario("variable-frame-rate") { try await variableFrameRate(suite, folder: folder) }
+        try await timeScenario("edited-timeline") { try await editedTimeline(suite, folder: folder) }
+        try await timeScenario("orientation") { try await orientation(suite, folder: folder) }
+        try await timeScenario("imported-formats") { try await importedFormats(suite, folder: folder) }
+        try await timeScenario("cancellation") { try await cancellation(suite, folder: folder) }
+    }
+
+    private static func timeScenario(_ name: String, _ work: () async throws -> Void) async rethrows {
+        let started = ProcessInfo.processInfo.systemUptime
+        defer {
+            let elapsed = ProcessInfo.processInfo.systemUptime - started
+            print("timing recorder.gif.\(name): \(String(format: "%.2f", elapsed))s")
+        }
+        try await work()
     }
 
     // MARK: - Eligibility
@@ -178,16 +187,18 @@ enum RecorderFastGIFExportTests {
     /// over the top of it must follow the frame that is actually shown.
     private static func editedTimeline(_ suite: TestSuite, folder: URL) async throws {
         let take = try makeTake(in: folder, named: "edited")
+        // The checkerboard is identical in every frame; only the frame code changes.
+        let lightTiles = (0..<25).flatMap { row in
+            stride(from: row % 2, to: 40, by: 2).map { column in
+                CGRect(x: column * 16, y: row * 16, width: 16, height: 16)
+            }
+        }
         try await writeMovie(to: take.videoURL, times: (0..<180).map { CMTime(value: Int64($0), timescale: 60) },
                              end: CMTime(value: 180, timescale: 60)) { context, index in
             context.setFillColor(gray: 0, alpha: 1)
             context.fill(CGRect(x: 0, y: 0, width: width, height: height))
             context.setFillColor(gray: 1, alpha: 1)
-            for row in 0..<25 {
-                for column in 0..<40 where (row + column) % 2 == 0 {
-                    context.fill(CGRect(x: column * 16, y: row * 16, width: 16, height: 16))
-                }
-            }
+            context.fill(lightTiles)
             drawCode(index, in: context)
         }
         try await expectQualifiesForFastPath(suite, take.videoURL, "edited fixture")

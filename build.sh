@@ -28,19 +28,41 @@ trap 'exit 1' INT TERM HUP
 
 # Flags: --dev builds the local-only "Tina (Developer)" variant (its own
 # bundle id, so it coexists with the official app); --install puts it in /Applications.
+# CI can compile the test executable once with --test-build-only and run it
+# on a clean checkout with --test-run-only, or run the shell checks on their own.
 DEV=0
 INSTALL=0
 TEST=0
+TEST_EXPLICIT=0
+TEST_BUILD_ONLY=0
+TEST_RUN_ONLY=0
+TEST_SHELL_ONLY=0
 TEST_ARGS=()
 for arg in "$@"; do
     case "$arg" in
         --dev)     DEV=1 ;;
         --install) INSTALL=1 ;;
-        --test)    TEST=1 ;;
+        --test)    TEST=1; TEST_EXPLICIT=1 ;;
+        --test-build-only) TEST=1; TEST_BUILD_ONLY=1 ;;
+        --test-run-only) TEST=1; TEST_RUN_ONLY=1 ;;
+        --test-shell-only) TEST=1; TEST_SHELL_ONLY=1 ;;
         --test-suite=*) TEST=1; TEST_ARGS+=("--suite=${arg#*=}") ;;
         --list-tests) TEST=1; TEST_ARGS+=(--list) ;;
     esac
 done
+
+if (( TEST_EXPLICIT + TEST_BUILD_ONLY + TEST_RUN_ONLY + TEST_SHELL_ONLY > 1 )); then
+    echo "✗ Choose only one of --test, --test-build-only, --test-run-only and --test-shell-only." >&2
+    exit 2
+fi
+if (( (TEST_BUILD_ONLY || TEST_SHELL_ONLY) && ${#TEST_ARGS} )); then
+    echo "✗ Test selection requires running the test executable." >&2
+    exit 2
+fi
+if (( (TEST_BUILD_ONLY || TEST_RUN_ONLY || TEST_SHELL_ONLY) && (DEV || INSTALL) )); then
+    echo "✗ Split test modes cannot be combined with --dev or --install." >&2
+    exit 2
+fi
 
 if (( DEV )); then
     APP_NAME="Tina (Developer)"
@@ -194,28 +216,6 @@ if (( INSTALL && ! TEST )) && [[ "${TINA_INSTALL_CHILD:-0}" != "1" ]]; then
     exit 0
 fi
 
-# Prefer the macOS 26 SDK when present: the 27 SDK turns SwiftUI property wrappers
-# into macros (SwiftUIMacros plugin) that the Command Line Tools cannot load yet.
-PINNED_SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk"
-if [[ -n "${DEVELOPER_DIR:-}" ]]; then
-    SDK="$(xcrun --show-sdk-path)"
-elif [[ -d "$PINNED_SDK" ]]; then
-    SDK="$PINNED_SDK"
-else
-    SDK="$(xcrun --show-sdk-path)"
-fi
-SDK_COMPAT_FLAGS=()
-VM_STATISTICS_COMPAT_FLAGS=(-I Sources/VMStatisticsCompat)
-HID_EVENT_SYSTEM_FLAGS=(-I Sources/HIDEventSystem)
-CORE_AUDIO_TAP_FLAGS=(-I Sources/CoreAudioTapCompat)
-GIF_CODEC_FLAGS=(-I Sources/RecorderGIFCodec)
-GIF_CODEC_OBJECTS=(build/objects/recorder-gif-codec/RecorderGIFCodec.o
-                   build/objects/recorder-gif-codec/cgif_raw.o)
-if [[ "$SDK" == "$PINNED_SDK" ]]; then
-    # Swift 6.4 can read the SDK 26 interfaces when given their compiler version.
-    SDK_COMPAT_FLAGS=(-Xfrontend -interface-compiler-version -Xfrontend 6.3.2)
-fi
-
 # The defaults migrations under test need a real UserDefaults suite, and every
 # suite leaves an empty plist in ~/Library/Preferences. The tests already clear
 # the domains, but cfprefsd writes the emptied file back out around the time the
@@ -246,6 +246,58 @@ discard_test_preferences() {
     echo "✗ test preferences did not settle in $preferences ($survivors remaining)" >&2
     return 1
 }
+
+run_shell_tests() {
+    local test_status=0
+    ./Tests/PreferenceCleanupTests.sh || test_status=1
+    ./Tests/UninstallSpacesTests.sh || test_status=1
+    ./Tests/DeveloperInstallIsolationTests.sh || test_status=1
+    return $test_status
+}
+
+run_test_binary() {
+    local test_status=0
+    if [[ ! -f build/metrics-tests || ! -x build/metrics-tests ]]; then
+        echo "✗ build/metrics-tests is missing or not executable; run ./build.sh --test-build-only first." >&2
+        return 1
+    fi
+    ./build/metrics-tests "${TEST_ARGS[@]}" || test_status=$?
+    if (( ${#TEST_ARGS} == 0 )); then
+        run_shell_tests || test_status=1
+    fi
+    discard_test_preferences || test_status=1
+    return $test_status
+}
+
+if (( TEST_RUN_ONLY )); then
+    run_test_binary
+    exit 0
+elif (( TEST_SHELL_ONLY )); then
+    run_shell_tests
+    exit 0
+fi
+
+# Prefer the macOS 26 SDK when present: the 27 SDK turns SwiftUI property wrappers
+# into macros (SwiftUIMacros plugin) that the Command Line Tools cannot load yet.
+PINNED_SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk"
+if [[ -n "${DEVELOPER_DIR:-}" ]]; then
+    SDK="$(xcrun --show-sdk-path)"
+elif [[ -d "$PINNED_SDK" ]]; then
+    SDK="$PINNED_SDK"
+else
+    SDK="$(xcrun --show-sdk-path)"
+fi
+SDK_COMPAT_FLAGS=()
+VM_STATISTICS_COMPAT_FLAGS=(-I Sources/VMStatisticsCompat)
+HID_EVENT_SYSTEM_FLAGS=(-I Sources/HIDEventSystem)
+CORE_AUDIO_TAP_FLAGS=(-I Sources/CoreAudioTapCompat)
+GIF_CODEC_FLAGS=(-I Sources/RecorderGIFCodec)
+GIF_CODEC_OBJECTS=(build/objects/recorder-gif-codec/RecorderGIFCodec.o
+                   build/objects/recorder-gif-codec/cgif_raw.o)
+if [[ "$SDK" == "$PINNED_SDK" ]]; then
+    # Swift 6.4 can read the SDK 26 interfaces when given their compiler version.
+    SDK_COMPAT_FLAGS=(-Xfrontend -interface-compiler-version -Xfrontend 6.3.2)
+fi
 
 # Standalone automated tests: pure contracts plus isolated disk, subprocess,
 # keyboard-data and media fixtures. No application windows or device capture.
@@ -668,21 +720,20 @@ if (( TEST )); then
     )
     TEST_OUTPUT_FILE_MAP="$TEST_OBJECT_DIR/output-file-map.json"
     write_swift_output_file_map "$TEST_OUTPUT_FILE_MAP" "$TEST_OBJECT_DIR" "${TEST_SOURCES[@]}"
-    echo "▸ Building & running tests against $(basename "$SDK")…"
+    if (( TEST_BUILD_ONLY )); then
+        echo "▸ Building tests against $(basename "$SDK")…"
+    else
+        echo "▸ Building & running tests against $(basename "$SDK")…"
+    fi
     swiftc -Onone -incremental -enable-batch-mode -j "$(sysctl -n hw.logicalcpu)" \
         -module-name TinaTests -output-file-map "$TEST_OUTPUT_FILE_MAP" \
         -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" \
         "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${CORE_AUDIO_TAP_FLAGS[@]}" "${GIF_CODEC_FLAGS[@]}" \
         "${TEST_SOURCES[@]}" "${GIF_CODEC_OBJECTS[@]}" -o build/metrics-tests
-    test_status=0
-    ./build/metrics-tests "${TEST_ARGS[@]}" || test_status=$?
-    if (( ${#TEST_ARGS} == 0 )); then
-        ./Tests/PreferenceCleanupTests.sh || test_status=1
-        ./Tests/UninstallSpacesTests.sh || test_status=1
-        ./Tests/DeveloperInstallIsolationTests.sh || test_status=1
+    if (( ! TEST_BUILD_ONLY )); then
+        run_test_binary
     fi
-    discard_test_preferences || test_status=1
-    exit $test_status
+    exit 0
 fi
 
 echo "▸ Compiling ($BUILD_CONFIGURATION) against $(basename "$SDK")…"

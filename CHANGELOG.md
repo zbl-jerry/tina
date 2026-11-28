@@ -9,6 +9,13 @@ window reads the entries between the version a person updated from and the
 version they are running, so every release needs a dated `## [version]` section
 here before the version in `Resources/Info.plist` is bumped.
 
+## [3.8.1-beta.1] - 2026-11-29
+
+### Fixed
+- Shortcut recording leaves keys that were already held with their original handlers, so mapped keys can release normally.
+- Launch Items can change future login behavior on macOS installations that provide stock system agents through Apple Cryptex links.
+- The compact output picker now shows the same device-switch errors as the full mixer.
+
 ## [3.8.0] - 2026-11-28
 
 ### Added

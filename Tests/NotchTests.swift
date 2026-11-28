@@ -1842,6 +1842,12 @@ enum NotchTests {
     }
 
     static func run(_ suite: TestSuite) {
+        var phaseStarted = ProcessInfo.processInfo.systemUptime
+        func timePhase(_ name: String) {
+            let now = ProcessInfo.processInfo.systemUptime
+            print("timing notch.\(name): \(String(format: "%.2f", now - phaseStarted))s")
+            phaseStarted = now
+        }
         shortcutContracts(suite)
         let previewStrip: CGFloat = 37
         suite.expect(NotchTranslucentTint.opacity(atDepth: previewStrip, stripHeight: previewStrip,
@@ -1887,6 +1893,7 @@ enum NotchTests {
         cameraFitContracts(suite)
         outlineRoomContracts(suite)
         musicLabelContracts(suite)
+        timePhase("layout-contracts")
         NotchPanelTests.run { suite.expect($0, $1) }
         NotchHoverTests.run(suite)
         NotchScreenEdgeClickTests.run(suite)
@@ -1900,6 +1907,7 @@ enum NotchTests {
         NotchEqualizerTests.run { suite.expect($0, $1) }
         WindowVisibilityTests.run { suite.expect($0, $1) }
         NotchLyricsTimelineTests.run { suite.expect($0, $1) }
+        timePhase("window-and-visibility")
         NotchUpdateTests.run(suite)
         NotchCaptureKeyboardTests.run(suite)
         NotchKeyMonitorTests.run(suite)
@@ -1908,6 +1916,7 @@ enum NotchTests {
         NotchSliderEditingTests.run(suite)
         NotchFileToolsTests.run(suite)
         NotchAudioLevelTests.run { suite.expect($0, $1) }
+        timePhase("updates-and-controls")
         calendarContracts(suite)
         NotchNotificationTests.run(suite)
         NotchNotificationReaderTests.run(suite)
@@ -1918,10 +1927,13 @@ enum NotchTests {
         NotchWatchTests.run(suite)
         NotchMascotTests.run(suite)
         NotchMascotHidingContract.run(suite)
+        timePhase("calendar-and-activity")
         NotchMusicExtrasTests.run(suite)
         NotchLockScreenTests.run(suite)
         NowPlayingOpenContract.run(suite)
         NotchClipboardPageTests.run(suite)
+        timePhase("music-and-clipboard")
+        defer { timePhase("models-and-localization") }
         for language in AppLanguage.allCases {
             let strings = Mirror(reflecting: FeatureStrings.notchClipboardSize(language)).children.compactMap { $0.value as? String }
             suite.expect(strings.count == 4 && strings.allSatisfy { !$0.isEmpty && !$0.contains("—") },

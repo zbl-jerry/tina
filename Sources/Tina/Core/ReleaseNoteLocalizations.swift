@@ -52,6 +52,11 @@ enum ReleaseNoteLocalization {
     }
 
     private static let zhHans: [String: String] = [
+        // 3.8.1-beta.1
+        "Shortcut recording leaves keys that were already held with their original handlers, so mapped keys can release normally.": "录制快捷键时，已按住的按键仍由原来的处理逻辑接收，映射键因此可以正常释放。",
+        "Launch Items can change future login behavior on macOS installations that provide stock system agents through Apple Cryptex links.": "即使 macOS 通过 Apple Cryptex 链接提供系统自带的启动代理，也可以在启动项中更改自己的代理在以后登录时的状态。",
+        "The compact output picker now shows the same device-switch errors as the full mixer.": "精简输出选择器现在会显示与完整混音器相同的设备切换错误。",
+
         // 3.8.0
         "Cleaner now finds older Xcode archives for manual review, includes a read-only System Data breakdown, and shows what each cleanup moved, freed, or left behind.": "清理工具现在会找出较旧的 Xcode 归档供手动检查，提供只读的系统数据明细，并显示每次清理移动了哪些内容、释放了多少空间、留下了哪些项目。",
         "Quick toggles add Dock auto-hide and locking, menu bar auto-hide, and Stage Manager.": "快捷开关新增 Dock 自动隐藏、Dock 锁定、菜单栏自动隐藏和台前调度。",
@@ -130,6 +135,11 @@ enum ReleaseNoteLocalization {
     ]
 
     private static let zhHant: [String: String] = [
+        // 3.8.1-beta.1
+        "Shortcut recording leaves keys that were already held with their original handlers, so mapped keys can release normally.": "錄製快速鍵時，已按住的按鍵仍由原本的處理邏輯接收，映射鍵因此可以正常放開。",
+        "Launch Items can change future login behavior on macOS installations that provide stock system agents through Apple Cryptex links.": "即使 macOS 透過 Apple Cryptex 連結提供系統內建的啟動代理程式，也可以在啟動項目中變更自己的代理程式在之後登入時的狀態。",
+        "The compact output picker now shows the same device-switch errors as the full mixer.": "精簡輸出選擇器現在會顯示與完整混音器相同的裝置切換錯誤。",
+
         // 3.8.0
         "Cleaner now finds older Xcode archives for manual review, includes a read-only System Data breakdown, and shows what each cleanup moved, freed, or left behind.": "清理工具現在會找出較舊的 Xcode 封存供手動檢查，提供唯讀的系統資料明細，並顯示每次清理搬移了哪些內容、釋放了多少空間、留下了哪些項目。",
         "Quick toggles add Dock auto-hide and locking, menu bar auto-hide, and Stage Manager.": "快速開關新增 Dock 自動隱藏、Dock 鎖定、選單列自動隱藏和幕前調度。",
