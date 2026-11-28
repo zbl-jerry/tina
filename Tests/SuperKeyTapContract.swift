@@ -442,8 +442,10 @@ enum SuperKeyTapContract {
             suite.expect(false, "the recorder fixture can hold a local port during drain")
             return
         }
-        defer { ShortcutRecordingTap.tearDown() }
-        RecordingState.tap = port
+        defer {
+            ShortcutRecordingTap.tearDown()
+            CFMachPortInvalidate(port)
+        }
 
         let trigger = SuperKeySupport.triggerKeyCode
         let superKey = SuperKeyService()
@@ -465,7 +467,8 @@ enum SuperKeyTapContract {
             superKey.handle(type: $0.type, event: $0)?.takeUnretainedValue()
         }
         pipeline.install("recorder", recordingRequest) {
-            ShortcutRecordingTap.handle(type: $0.type, event: $0)?.takeUnretainedValue()
+            guard RecordingState.tap != nil else { return $0 }
+            return ShortcutRecordingTap.handle(type: $0.type, event: $0)?.takeUnretainedValue()
         }
         pipeline.install("session remapper", consumer) { event in
             let code = event.getIntegerValueField(.keyboardEventKeycode)
@@ -493,6 +496,7 @@ enum SuperKeyTapContract {
         pipeline.send(key(1))
         suite.expect(superKey.state.isHeld && sent.map(\.keyCode) == [10, 11],
                      "Super Key and both replacements are held before recording")
+        RecordingState.tap = port
         suite.expect(ShortcutRecordingTap.begin(capture), "recording starts on the stub tap")
         pipeline.send(repeatKey(trigger))
         pipeline.send(key(trigger, down: false))
