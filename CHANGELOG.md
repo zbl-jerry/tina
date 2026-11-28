@@ -9,6 +9,20 @@ window reads the entries between the version a person updated from and the
 version they are running, so every release needs a dated `## [version]` section
 here before the version in `Resources/Info.plist` is bumped.
 
+## [3.8.0] - 2026-11-28
+
+### Added
+- Cleaner now finds older Xcode archives for manual review, includes a read-only System Data breakdown, and shows what each cleanup moved, freed, or left behind.
+- Quick toggles add Dock auto-hide and locking, menu bar auto-hide, and Stage Manager.
+- The menu bar can show Wi-Fi status and output volume. Click the volume reading to open output controls even when the mixer section is hidden.
+- Launch Items lists launch agents and lets you manage your own agents for the current session or future logins. System items stay read-only.
+- macOS Settings Snapshot saves selected Dock, Finder, keyboard, and screenshot settings. Undo restores only the settings the last apply changed.
+- Usage Statistics keeps daily screen time, app usage, and input counts on this Mac without storing what you type.
+- Input Remapping maps one key or shortcut to another and supports single keys without modifiers.
+- App Repair helps explain why an installed app will not open and offers a repair only after its signature and system security checks pass.
+- Automation rules turn one supported feature on or off on a schedule, when power or displays connect or disconnect, or when an app launches.
+- Keyboard Shortcuts shows shortcuts that could not be registered and lets you retry them from one page.
+
 ## [3.7.4] - 2026-11-26
 
 ### Fixed

@@ -52,6 +52,18 @@ enum ReleaseNoteLocalization {
     }
 
     private static let zhHans: [String: String] = [
+        // 3.8.0
+        "Cleaner now finds older Xcode archives for manual review, includes a read-only System Data breakdown, and shows what each cleanup moved, freed, or left behind.": "清理工具现在会找出较旧的 Xcode 归档供手动检查，提供只读的系统数据明细，并显示每次清理移动了哪些内容、释放了多少空间、留下了哪些项目。",
+        "Quick toggles add Dock auto-hide and locking, menu bar auto-hide, and Stage Manager.": "快捷开关新增 Dock 自动隐藏、Dock 锁定、菜单栏自动隐藏和台前调度。",
+        "The menu bar can show Wi-Fi status and output volume. Click the volume reading to open output controls even when the mixer section is hidden.": "菜单栏可显示 Wi-Fi 状态和输出音量。即使隐藏了混音器区，也可点击音量读数打开输出控制。",
+        "Launch Items lists launch agents and lets you manage your own agents for the current session or future logins. System items stay read-only.": "启动项会列出启动代理，可管理自己的代理在本次会话或以后登录时的状态。系统项保持只读。",
+        "macOS Settings Snapshot saves selected Dock, Finder, keyboard, and screenshot settings. Undo restores only the settings the last apply changed.": "macOS 设置快照可保存部分 Dock、访达、键盘和截图设置。撤销只恢复上次应用时实际改动的设置。",
+        "Usage Statistics keeps daily screen time, app usage, and input counts on this Mac without storing what you type.": "使用统计会把每日亮屏时长、App 使用时长和输入次数保存在本机，不记录键入内容。",
+        "Input Remapping maps one key or shortcut to another and supports single keys without modifiers.": "输入重映射可将按键或快捷键映射为另一个按键或快捷键，支持不带修饰键的单键。",
+        "App Repair helps explain why an installed app will not open and offers a repair only after its signature and system security checks pass.": "App 修复可帮助了解已安装的 App 无法打开的原因，仅在签名和系统安全检查均通过后提供修复。",
+        "Automation rules turn one supported feature on or off on a schedule, when power or displays connect or disconnect, or when an app launches.": "自动化规则可在指定时间，或在电源、显示器状态变化或 App 启动时，开启或关闭一项受支持的功能。",
+        "Keyboard Shortcuts shows shortcuts that could not be registered and lets you retry them from one page.": "键盘快捷键页面会显示注册失败的快捷键，并可在同一页面重试。",
+
         // 3.7.4
         "The window switcher keeps the window you focused before the shortcut: it resolves a newly focused window before individual switching, honors focus outside its inventory, and keeps the focused source while switching app groups or while unrelated windows are discovered. Shortcuts stay live during an inventory refresh, and the all-window selection refreshes after a window is created.": "窗口切换器会保留按下快捷键前聚焦的窗口：在逐窗口切换前先解析新聚焦的窗口，接受不在清单内的焦点，并在切换 App 组或发现其他无关窗口时保留聚焦来源。清单刷新期间快捷键保持可用，创建窗口后全窗口选择会随之刷新。",
         "Microphone mute reports muted only after each adjustable input reads zero gain. Monitor speakers show mute only when the monitor confirms it, and mute controls are offered only on connections that can safely restore sound. The volume feedback sound stays on the output that was playing when the slider moved.": "麦克风静音只有在每个可调输入都读到零增益后才会报告已静音。显示器扬声器只有在显示器确认静音时才显示静音，并且只在能安全恢复声音的连接上提供静音控制。音量反馈音仍从滑块移动时正在播放的输出发出。",
@@ -118,6 +130,18 @@ enum ReleaseNoteLocalization {
     ]
 
     private static let zhHant: [String: String] = [
+        // 3.8.0
+        "Cleaner now finds older Xcode archives for manual review, includes a read-only System Data breakdown, and shows what each cleanup moved, freed, or left behind.": "清理工具現在會找出較舊的 Xcode 封存供手動檢查，提供唯讀的系統資料明細，並顯示每次清理搬移了哪些內容、釋放了多少空間、留下了哪些項目。",
+        "Quick toggles add Dock auto-hide and locking, menu bar auto-hide, and Stage Manager.": "快速開關新增 Dock 自動隱藏、Dock 鎖定、選單列自動隱藏和幕前調度。",
+        "The menu bar can show Wi-Fi status and output volume. Click the volume reading to open output controls even when the mixer section is hidden.": "選單列可顯示 Wi-Fi 狀態和輸出音量。即使隱藏了混音器區，也可點一下音量讀數開啟輸出控制。",
+        "Launch Items lists launch agents and lets you manage your own agents for the current session or future logins. System items stay read-only.": "啟動項目會列出啟動代理程式，可管理自己的代理程式在本次工作階段或日後登入時的狀態。系統項目維持唯讀。",
+        "macOS Settings Snapshot saves selected Dock, Finder, keyboard, and screenshot settings. Undo restores only the settings the last apply changed.": "macOS 設定快照可儲存部分 Dock、Finder、鍵盤和螢幕截圖設定。復原只恢復上次套用時實際變更的設定。",
+        "Usage Statistics keeps daily screen time, app usage, and input counts on this Mac without storing what you type.": "使用統計會將每天的螢幕亮屏時間、App 使用時間和輸入次數儲存在這台 Mac，不記錄鍵入內容。",
+        "Input Remapping maps one key or shortcut to another and supports single keys without modifiers.": "輸入重映射可將按鍵或快速鍵映射為另一個按鍵或快速鍵，支援不帶修飾鍵的單鍵。",
+        "App Repair helps explain why an installed app will not open and offers a repair only after its signature and system security checks pass.": "App 修復可協助了解已安裝的 App 無法開啟的原因，僅在簽章和系統安全檢查均通過後提供修復。",
+        "Automation rules turn one supported feature on or off on a schedule, when power or displays connect or disconnect, or when an app launches.": "自動化規則可在指定時間，或在電源、顯示器狀態變更或 App 啟動時，開啟或關閉一項受支援的功能。",
+        "Keyboard Shortcuts shows shortcuts that could not be registered and lets you retry them from one page.": "鍵盤快速鍵頁面會顯示註冊失敗的快速鍵，並可在同一頁面重試。",
+
         // 3.7.4
         "The window switcher keeps the window you focused before the shortcut: it resolves a newly focused window before individual switching, honors focus outside its inventory, and keeps the focused source while switching app groups or while unrelated windows are discovered. Shortcuts stay live during an inventory refresh, and the all-window selection refreshes after a window is created.": "視窗切換器會保留按下快速鍵前聚焦的視窗：在逐視窗切換前先解析新聚焦的視窗，接受不在清單內的焦點，並在切換 App 群組或發現其他無關視窗時保留聚焦來源。清單重新整理期間快速鍵保持可用，建立視窗後全視窗選取會隨之重新整理。",
         "Microphone mute reports muted only after each adjustable input reads zero gain. Monitor speakers show mute only when the monitor confirms it, and mute controls are offered only on connections that can safely restore sound. The volume feedback sound stays on the output that was playing when the slider moved.": "麥克風靜音只有在每個可調輸入都讀到零增益後才會回報已靜音。顯示器揚聲器只有在顯示器確認靜音時才顯示靜音，並且只在能安全恢復聲音的連線上提供靜音控制。音量回饋音仍從滑桿移動時正在播放的輸出發出。",
